@@ -4,19 +4,18 @@
 #  / __/ / /_/ __/
 # /_/   /___/_/-completion.bash
 #
-# **** Not dynamic variables ****
 # - $FZF_OBC_PATH              (default: fzf-obc/bash_completion.d)
 #
-# **** All modes ****
-# - $FZF_OBC_TMUX                         (default: 0)
-# - $FZF_OBC_TMUX_HEIGHT                  (default: '40%')
-# - $FZF_OBC_OPTS              (default: --select-1 --exit-0)
-# - $LINES                            (default: '40')
+# - $FZF_OBC_TMUX             (default: 0)
+# - $FZF_OBC_TMUX_HEIGHT      (default: '40%')
+# - $FZF_OBC_OPTS             (default: --select-1 --exit-0)
+# - $FZF_OBC_GLOBS_OPTS       (default: -m --select-1 --exit-0)
+# - $FZF_OBC_BINDINGS         (default: --bind tab:accept)
+# - $FZF_OBC_GLOBS_BINDINGS   (default: )
+# - $LINES                    (default: '40')
 #
-# **** Only when FZF_OBC_COMPAT_MODE=0 ****
-# - $FZF_OBC_MAXDEPTH          (default: 999999999)
-# - $FZF_OBC_PATH_OPTS         (default: empty)
-# - $FZF_OBC_DIR_OPTS          (default: empty)
+# **** Only when using globs pattern ****
+# - $FZF_OBC_MAXDEPTH         (default: 999999999)
 
 __fzf_obc_init_vars() {
   : "${FZF_OBC_PATH:=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/bash_completion.d}"
@@ -25,24 +24,25 @@ __fzf_obc_init_vars() {
   : "${FZF_OBC_TMUX:=0}"
   : "${FZF_OBC_TMUX_HEIGHT:='40%'}"
   : "${FZF_OBC_OPTS:=--select-1 --exit-0}"
+  : "${FZF_OBC_GLOBS_OPTS:=-m --select-1 --exit-0}"
+  : "${FZF_OBC_BINDINGS:=--bind tab:accept}"
+  : "${FZF_OBC_GLOBS_BINDINGS:=}"
   : "${LINES:=40}"
 
-  : "${FZF_OBC_MAXDEPTH:=10}"
-  : "${FZF_OBC_PATH_OPTS:=}"
-  : "${FZF_OBC_DIR_OPTS:=}"
+  : "${FZF_OBC_GLOBS_MAXDEPTH:=10}"
 }
 
 ###########################################################
 
-# To use custom commands instead of find, override _fzf_compgen_{path,dir}
+# To use custom commands instead of find, override _fzf_compgen_{path,dir} later
   _fzf_obc_files() {
-    command find -L "$1" -maxdepth "${FZF_OBC_MAXDEPTH}" \
+    command find -L "$1" -maxdepth "${FZF_OBC_GLOBS_MAXDEPTH}" \
       -name .git -prune -o -name .svn -prune -o \( -type f -o -type l \) \
       -a -not -path "$1" -print 2> /dev/null
   }
 
   _fzf_obc_dirs() {
-    command find -L "$1" -maxdepth "${FZF_OBC_MAXDEPTH}" \
+    command find -L "$1" -maxdepth "${FZF_OBC_GLOBS_MAXDEPTH}" \
       -name .git -prune -o -name .svn -prune -o -type d \
       -a -not -path "$1" -printf "%p/\n" 2> /dev/null
   }
@@ -94,13 +94,12 @@ __fzf_obc_add_trap() {
     # Quit if already surcharged with the same trap
     [[ "${origin}" =~ ${trap} ]] && return
     # Reset fzf-obc params if trap changed
-    origin=$(echo "${origin}" | sed -r "/(__fzf_obc_default_trap|__fzf_obc_trap${f}|fzf_original_args|fzf_defaults_opts)/d")
+    origin=$(echo "${origin}" | sed -r "/(__fzf_obc_default_trap|__fzf_obc_trap${f}|fzf_original_args)/d")
     local add_trap='trap '"'"''${trap}' "$?" "${fzf_original_args}"; trap - RETURN'"'"' RETURN'
     # Add trap function
     eval "
       ${f}() {
         local fzf_original_args=\"\$@\"
-        [ ! -z \${fzf_defaults_opts+x} ] || local fzf_defaults_opts='--bind tab:accept'
         ${add_trap}
         ${origin}
       }
@@ -138,7 +137,7 @@ __fzf_obc_default_trap() {
       IFS=$'\n' read -r -a COMPREPLY <<<$(
         printf "%s\n" "${COMPREPLY[@]}" \
         | awk '! a[$0]++' \
-        | FZF_DEFAULT_OPTS="--height ${FZF_OBC_TMUX_HEIGHT} --reverse ${fzf_defaults_opts} ${FZF_OBC_OPTS}" \
+        | FZF_DEFAULT_OPTS="--height ${FZF_OBC_TMUX_HEIGHT} --reverse ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
           __fzf_obc_cmd \
         | while read -r item;do printf "%q " "${item}";done \
         | sed 's/ $//'
@@ -147,7 +146,7 @@ __fzf_obc_default_trap() {
       IFS=$'\n' read -r -a COMPREPLY <<<$(
         printf "%s\n" "${COMPREPLY[@]}" \
         | awk '! a[$0]++' \
-        | FZF_DEFAULT_OPTS="--height ${FZF_OBC_TMUX_HEIGHT} --reverse ${fzf_defaults_opts} ${FZF_OBC_OPTS}" \
+        | FZF_DEFAULT_OPTS="--height ${FZF_OBC_TMUX_HEIGHT} --reverse ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
           __fzf_obc_cmd
       )
     fi
