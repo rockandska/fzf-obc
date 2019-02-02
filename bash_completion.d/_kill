@@ -22,7 +22,7 @@ __fzf_obc_trap_kill() {
         command ps -ef \
         | sed 1d \
         | FZF_DEFAULT_OPTS="--height ${FZF_TMUX_HEIGHT} --min-height 15 --reverse $FZF_DEFAULT_OPTS --preview 'echo {}' --preview-window down:3:wrap $FZF_COMPLETION_OPTS" \
-          __fzf_obc_cmd -m \
+          __fzf_obc_cmd \
         | awk '{print $2}' \
         | tr '\n' ' ' \
         | sed 's/ $//'

@@ -21,8 +21,6 @@
 # - $FZF_COMPLETION_DIR_OPTS          (default: empty)
 
 __fzf_obc_init_vars() {
-  : "${FZF_COMPLETION_COMPAT_MODE:=1}"
-  : "${FZF_COMPLETION_EXCLUDE:=}"
   : "${FZF_COMPLETION_PATH:=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/bash_completion.d}"
   IFS=':' read -r -a FZF_COMPLETION_PATH_ARRAY <<< "${FZF_COMPLETION_PATH}"
 
@@ -83,7 +81,8 @@ __fzf_obc_add_traps() {
 }
 
 __fzf_obc_add_trap() {
-    f="$1"
+    local f="$1"
+    shift
     # Ensure that the function exist
     type -t "${f}" 2>&1 > /dev/null || return 1
     # Get the original definition
@@ -92,18 +91,18 @@ __fzf_obc_add_trap() {
     local trap='__fzf_obc_default_trap'
     # If a specific trap exist, use it
     if type -t "__fzf_obc_trap${f}" 2>&1 > /dev/null;then
-      trap="__fzf_obc_trap${f}"
+      trap='__fzf_obc_trap'${f}
     fi
     # Quit if already surcharged
     [[ "${origin}" =~ ${trap} ]] && return
     # Reset trap in case is changed
-    origin="${origin/__fzf_obc_default_trap/}"
-    origin="${origin/__fzf_obc_trap${f}/}"
+    origin=$(echo "${origin}" | sed -r "/(__fzf_obc_default_trap|__fzf_obc_trap${f}|fzf_original_args|fzf_defaults_opts)/d")
     local add_trap='trap '"'"''${trap}' "$?" "${fzf_original_args}"; trap - RETURN'"'"' RETURN'
     # Add trap function
     eval "
       ${f}() {
         local fzf_original_args=\"\$@\"
+        [ ! -z \${fzf_defaults_opts+x} ] || local fzf_defaults_opts='--bind tab:accept'
         ${add_trap}
         ${origin}
       }
@@ -135,12 +134,25 @@ __fzf_obc_default_trap() {
   local status=$1
 
   if [[ ${#COMPREPLY[@]} -ne 0 ]];then
-    IFS=$'\n' read -r -a COMPREPLY <<<"$(
-      printf "%s\n" "${COMPREPLY[@]}" \
-      | awk '! a[$0]++' \
-      | FZF_DEFAULT_OPTS="--height ${FZF_TMUX_HEIGHT} --reverse ${FZF_DEFAULT_OPTS} ${FZF_COMPLETION_OPTS}" \
-        __fzf_obc_cmd --bind tab:accept \
-    )"
+    if [[ "${cur}" == *"/**" ]];then
+      local item
+      compopt +o filenames
+      IFS=$'\n' read -r -a COMPREPLY <<<$(
+        printf "%s\n" "${COMPREPLY[@]}" \
+        | awk '! a[$0]++' \
+        | FZF_DEFAULT_OPTS="--height ${FZF_TMUX_HEIGHT} --reverse ${fzf_defaults_opts} ${FZF_COMPLETION_OPTS}" \
+          __fzf_obc_cmd \
+        | while read -r item;do printf "%q " "${item}";done \
+        | sed 's/ $//'
+      )
+    else
+      IFS=$'\n' read -r -a COMPREPLY <<<$(
+        printf "%s\n" "${COMPREPLY[@]}" \
+        | awk '! a[$0]++' \
+        | FZF_DEFAULT_OPTS="--height ${FZF_TMUX_HEIGHT} --reverse ${fzf_defaults_opts} ${FZF_COMPLETION_OPTS}" \
+          __fzf_obc_cmd
+      )
+    fi
     printf '\e[5n'
   fi
   return ${status}

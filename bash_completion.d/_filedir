@@ -14,6 +14,7 @@ __fzf_obc_trap_filedir()
     # Add recursivity to native _filedir
     local IFS=$'\n'
     cur=${cur/\*\*/}
+    fzf_defaults_opts='-m --bind tab:toggle+down'
 
     _tilde "$cur" || return
 
@@ -40,18 +41,19 @@ __fzf_obc_trap_filedir()
         #  Munge xspec to contain uppercase version too
         # http://thread.gmane.org/gmane.comp.shells.bash.bugs/15294/focus=15306
         local xspec=${1:+"*.@($1|${1^^})"}
-        while read path;do
+        while read -r path;do
           [ ! -z "${path}" ] && COMPREPLY+=( "${path/${cur}/${oldcur}}" )
         done <<<$(
           _fzf_obc_files "${startdir}" \
           | (shopt -s extglob; while read -r line; do if [[ "${line}" == ${xspec} ]];then echo "${line}"; fi;done) \
         )
       else
-        while read path;do
+        while read -r path;do
           [ ! -z "${path}" ] && COMPREPLY+=( "${path/${cur}/${oldcur}}" )
         done <<<$(_fzf_obc_files "${startdir}")
       fi
     fi
+    cur="${cur}**"
   fi
 }
 __fzf_obc_add_trap _filedir
