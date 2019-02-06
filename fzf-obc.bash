@@ -4,48 +4,86 @@
 #  / __/ / /_/ __/
 # /_/   /___/_/-completion.bash
 #
-# - $FZF_OBC_PATH              (default: fzf-obc/bash_completion.d)
+# - $FZF_OBC_PATH             (default: fzf-obc/bash_completion.d)
 #
 # - $FZF_OBC_TMUX             (default: 0)
 # - $FZF_OBC_TMUX_HEIGHT      (default: '40%')
+# - $FZF_OBC_EXCLUDE_PATH     (default: '.git:.svn')
 # - $FZF_OBC_OPTS             (default: --select-1 --exit-0)
-# - $FZF_OBC_GLOBS_OPTS       (default: -m --select-1 --exit-0)
 # - $FZF_OBC_BINDINGS         (default: --bind tab:accept)
-# - $FZF_OBC_GLOBS_BINDINGS   (default: )
 # - $LINES                    (default: '40')
 #
 # **** Only when using globs pattern ****
-# - $FZF_OBC_MAXDEPTH         (default: 999999999)
+# - $FZF_OBC_GLOBS_MAXDEPTH   (default: 999999)
+# - $FZF_OBC_GLOBS_OPTS       (default: -m --select-1 --exit-0)
+# - $FZF_OBC_GLOBS_BINDINGS   (default: )
 
 __fzf_obc_init_vars() {
   : "${FZF_OBC_PATH:=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/bash_completion.d}"
-  IFS=':' read -r -a FZF_OBC_PATH_ARRAY <<< "${FZF_OBC_PATH}"
-
   : "${FZF_OBC_TMUX:=0}"
   : "${FZF_OBC_TMUX_HEIGHT:='40%'}"
+  : "${FZF_OBC_EXCLUDE_PATH:=.git:.svn}"
   : "${FZF_OBC_OPTS:=--select-1 --exit-0}"
-  : "${FZF_OBC_GLOBS_OPTS:=-m --select-1 --exit-0}"
   : "${FZF_OBC_BINDINGS:=--bind tab:accept}"
+  : "${FZF_OBC_GLOBS_OPTS:=-m --select-1 --exit-0}"
   : "${FZF_OBC_GLOBS_BINDINGS:=}"
   : "${LINES:=40}"
 
-  : "${FZF_OBC_GLOBS_MAXDEPTH:=10}"
+  : "${FZF_OBC_GLOBS_MAXDEPTH:=999999}"
 }
 
 ###########################################################
 
-# To use custom commands instead of find, override _fzf_compgen_{path,dir} later
-  _fzf_obc_files() {
-    command find -L "$1" -maxdepth "${FZF_OBC_GLOBS_MAXDEPTH}" \
-      -name .git -prune -o -name .svn -prune -o \( -type f -o -type l \) \
-      -a -not -path "$1" -print 2> /dev/null
-  }
+# get find exclude pattern
+_fzf_obc_globs_exclude() {
+  local var=$1
+  local sep str fzf_obc_globs_exclude_array
+  IFS=':' read -r -a fzf_obc_globs_exclude_array <<< "${FZF_OBC_EXCLUDE_PATH}"
+  if [[ ${#fzf_obc_globs_exclude_array[@]} -ne 0 ]];then
+    str="\( -path '*/${fzf_obc_globs_exclude_array[0]%/}"
+    for pattern in "${fzf_obc_globs_exclude_array[@]:1}";do
+      __expand_tilde_by_ref pattern
+      if [[ "${pattern}" =~ ^/ ]];then
+        sep="' -o -path '"
+      else
+        sep="' -o -path '*/"
+      fi
+      pattern=${pattern%\/}
+      str+=$(printf "%s" "${pattern/#/$sep}")
+    done
+    str+="' \) -prune -o"
+  fi
+  eval "${var}=\"${str}\""
+}
 
-  _fzf_obc_dirs() {
-    command find -L "$1" -maxdepth "${FZF_OBC_GLOBS_MAXDEPTH}" \
-      -name .git -prune -o -name .svn -prune -o -type d \
-      -a -not -path "$1" -printf "%p/\n" 2> /dev/null
-  }
+
+# To use custom commands instead of find, override _fzf_compgen_{path,dir} later
+_fzf_obc_path() {
+  local opt_str cmd startdir
+  _fzf_obc_globs_exclude opt_str
+  cmd="command find -L $1 -mindepth 1 -maxdepth '${FZF_OBC_GLOBS_MAXDEPTH}' \
+    ${opt_str} \
+    \( -type d -printf '%p/\n' -or -print \) 2> /dev/null"
+  eval "$cmd"
+}
+
+_fzf_obc_file() {
+  local opt_str cmd
+  _fzf_obc_globs_exclude opt_str
+  cmd="command find -L $1 -mindepth 1 -maxdepth '${FZF_OBC_GLOBS_MAXDEPTH}' \
+    ${opt_str} \
+    \( -type f -or -type l \) -print 2> /dev/null"
+  eval "$cmd"
+}
+
+_fzf_obc_dirs() {
+  local opt_str cmd
+  _fzf_obc_globs_exclude opt_str
+  cmd="command find -L $1 -mindepth 1 -maxdepth '${FZF_OBC_GLOBS_MAXDEPTH}' \
+    ${opt_str} \
+    -type d -print 2> /dev/null"
+  eval "$cmd"
+}
 
 ###########################################################
 
@@ -58,8 +96,9 @@ __fzf_obc_cmd() {
 }
 
 __fzf_obc_load() {
-  local path file
-  for path in "${FZF_OBC_PATH_ARRAY[@]}";do
+  local fzf_obc_path_array path file
+  IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH}"
+  for path in "${fzf_obc_path_array[@]}";do
     for file in ${path}/* ; do
       [ -e "${file}" -a ! -d "${file}" ] || continue
       source "${file}"
@@ -130,18 +169,22 @@ __fzf_obc_add_dynamic_trap() {
 __fzf_obc_default_trap() {
   local status=$1
 
-  if [[ ${#COMPREPLY[@]} -ne 0 ]];then
-    if [[ "${cur}" == *"/**" ]];then
-      local item
-      compopt +o filenames
-      IFS=$'\n' read -r -a COMPREPLY <<<$(
-        printf "%s\n" "${COMPREPLY[@]}" \
-        | awk '! a[$0]++' \
-        | FZF_DEFAULT_OPTS="--height ${FZF_OBC_TMUX_HEIGHT} --reverse ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
-          __fzf_obc_cmd \
-        | while read -r item;do printf "%q " "${item}";done \
-        | sed 's/ $//'
-      )
+    if [[ "${cur}" == *"**" ]];then
+      if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
+        local item
+        compopt +o filenames
+        IFS=$'\n' read -r -a COMPREPLY <<<$(
+          printf "%s\n" "${COMPREPLY[@]}" \
+          | awk '! a[$0]++' \
+          | FZF_DEFAULT_OPTS="--height ${FZF_OBC_TMUX_HEIGHT} --reverse ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
+            __fzf_obc_cmd \
+          | while read -r item;do [[ -n "${item}" ]] && printf "%q " "${item}" | sed 's/^\\~/~/';done \
+          | sed 's/ $//'
+        )
+      else
+          compopt -o nospace
+          COMPREPLY=( "${cur%\*\*}" )
+      fi
     else
       IFS=$'\n' read -r -a COMPREPLY <<<$(
         printf "%s\n" "${COMPREPLY[@]}" \
@@ -151,7 +194,6 @@ __fzf_obc_default_trap() {
       )
     fi
     printf '\e[5n'
-  fi
   return ${status}
 }
 

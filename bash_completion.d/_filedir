@@ -2,19 +2,31 @@ __fzf_obc_trap_filedir()
 {
   local status=$1
   shift
-  # In compat mode, only had / to directories
-  local i
+  # Add / for directories to the original COMPREPLY
+  # Exclude from COMPREPLY directories listed into FZF_OBC_EXCLUDE_PATH
+  local i reply_expand exclude_arr exclude exclude_expand
+  IFS=':' read -r -a exclude_arr <<< "${FZF_OBC_EXCLUDE_PATH}"
   for i in ${!COMPREPLY[@]};do
+    reply_expand="${COMPREPLY[$i]}"
+    __expand_tilde_by_ref reply_expand
+    for exclude in "${exclude_arr[@]}";do
+      exclude_expand=${exclude}
+      __expand_tilde_by_ref exclude_expand
+      if [[ "${exclude_expand}" =~ ^/ ]];then
+        [[ "${reply_expand}" == "${exclude_expand}" ]] && unset "COMPREPLY[$i]" && break
+      else
+        [[ "${reply_expand}" == *"/${exclude_expand}" ]] && unset "COMPREPLY[$i]" && break
+      fi
+    done
     if test -d "${COMPREPLY[$i]}";then
       COMPREPLY[$i]=${COMPREPLY[$i]}/
     fi
   done
-  if [[ "${cur}" == *"/**" ]];then
-    # Replace COMPREPLY with our own results
+  if [[ "${cur}" == *"**" ]];then
+    # Add to COMPREPLY our own results
     # Add recursivity to native _filedir
     local IFS=$'\n'
     cur=${cur/\*\*/}
-    fzf_defaults_opts='-m --bind tab:toggle+down'
 
     _tilde "$cur" || return
 
@@ -28,32 +40,37 @@ __fzf_obc_trap_filedir()
       startdir="${cur}"
     fi
 
-    # Populate directories
-    local dir
-    while read dir;do
-      [ ! -z "${dir}" ] && COMPREPLY+=( "${dir/${cur}/${oldcur}}" )
-    done <<<$(_fzf_obc_dirs "${startdir}")
-
-    # Files asked (with eventually an extension filter)
+    # Files/Path asked
     if [[ "$1" != -d ]]; then
-      local path
+      local path line
+      # With an extension filter
       if [[ -n "$1" ]];then
         #  Munge xspec to contain uppercase version too
         # http://thread.gmane.org/gmane.comp.shells.bash.bugs/15294/focus=15306
         local xspec=${1:+"*.@($1|${1^^})"}
         while read -r path;do
-          [ ! -z "${path}" ] && COMPREPLY+=( "${path/${cur}/${oldcur}}" )
+          [[ -n "${path}" ]] && COMPREPLY+=( "${path/${cur}/${oldcur}}" )
         done <<<$(
-          _fzf_obc_files "${startdir}" \
-          | (shopt -s extglob; while read -r line; do if [[ "${line}" == ${xspec} ]];then echo "${line}"; fi;done) \
+          (shopt -s extglob; _fzf_obc_file "${startdir}" \
+          | while read -r line; do \
+              [[ "${line}" == ${xspec} ]] && echo "${line}"; \
+            done \
+          ) \
         )
       else
+        # Without extension filter
         while read -r path;do
-          [ ! -z "${path}" ] && COMPREPLY+=( "${path/${cur}/${oldcur}}" )
-        done <<<$(_fzf_obc_files "${startdir}")
+          [[ -n "${path}" ]] && COMPREPLY+=( "${path/${cur}/${oldcur}}" )
+        done <<<$(_fzf_obc_path "${startdir}")
       fi
+    else
+      # Only populate directories
+      local dir
+      while read dir;do
+        [[ -n "${dir}" ]] && COMPREPLY+=( "${dir/${cur}/${oldcur}}" )
+      done <<<$(_fzf_obc_dirs "${startdir}")
     fi
-    cur="${cur}**"
+    cur="${oldcur}**"
   fi
 }
 __fzf_obc_add_trap _filedir
