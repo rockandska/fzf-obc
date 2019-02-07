@@ -6,6 +6,7 @@ __fzf_obc_trap_filedir()
   # Exclude from COMPREPLY directories listed into FZF_OBC_EXCLUDE_PATH
   local i reply_expand exclude_arr exclude exclude_expand
   IFS=':' read -r -a exclude_arr <<< "${FZF_OBC_EXCLUDE_PATH}"
+
   for i in ${!COMPREPLY[@]};do
     reply_expand="${COMPREPLY[$i]}"
     __expand_tilde_by_ref reply_expand
@@ -22,6 +23,7 @@ __fzf_obc_trap_filedir()
       COMPREPLY[$i]=${COMPREPLY[$i]}/
     fi
   done
+
   if [[ "${cur}" == *"**" ]];then
     # Add to COMPREPLY our own results
     # Add recursivity to native _filedir
@@ -30,47 +32,21 @@ __fzf_obc_trap_filedir()
 
     _tilde "$cur" || return
 
-    local oldcur=${cur}
-    __expand_tilde_by_ref cur
-
-    local startdir
-    if [[ -n "${cur}" ]] && [[ ! "${cur}" =~ (\.|/)$ ]];then
-      startdir="${cur}*"
-    else
-      startdir="${cur}"
-    fi
-
     # Files/Path asked
     if [[ "$1" != -d ]]; then
-      local path line
       # With an extension filter
       if [[ -n "$1" ]];then
-        #  Munge xspec to contain uppercase version too
-        # http://thread.gmane.org/gmane.comp.shells.bash.bugs/15294/focus=15306
-        local xspec=${1:+"*.@($1|${1^^})"}
-        while read -r path;do
-          [[ -n "${path}" ]] && COMPREPLY+=( "${path/${cur}/${oldcur}}" )
-        done <<<$(
-          (shopt -s extglob; _fzf_obc_file "${startdir}" \
-          | while read -r line; do \
-              [[ "${line}" == ${xspec} ]] && echo "${line}"; \
-            done \
-          ) \
-        )
+        COMPREPLY+=( $(_fzf_obc_search "files" "$1") )
       else
         # Without extension filter
-        while read -r path;do
-          [[ -n "${path}" ]] && COMPREPLY+=( "${path/${cur}/${oldcur}}" )
-        done <<<$(_fzf_obc_path "${startdir}")
+        COMPREPLY+=( $(_fzf_obc_search "paths") )
       fi
     else
       # Only populate directories
-      local dir
-      while read dir;do
-        [[ -n "${dir}" ]] && COMPREPLY+=( "${dir/${cur}/${oldcur}}" )
-      done <<<$(_fzf_obc_dirs "${startdir}")
+      COMPREPLY+=( $(_fzf_obc_search "dirs") )
     fi
-    cur="${oldcur}**"
+
+    cur="${cur}**"
   fi
 }
 __fzf_obc_add_trap _filedir
