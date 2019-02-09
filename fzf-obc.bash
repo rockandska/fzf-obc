@@ -6,11 +6,10 @@
 #
 # - $FZF_OBC_PATH             (default: fzf-obc/bash_completion.d)
 #
-# - $FZF_OBC_HEIGHT           (default: '40%')
-# - $FZF_OBC_EXCLUDE_PATH     (default: '.git:.svn')
+# - $FZF_OBC_HEIGHT           (default: 40%)
+# - $FZF_OBC_EXCLUDE_PATH     (default: .git:.svn)
 # - $FZF_OBC_OPTS             (default: --select-1 --exit-0)
 # - $FZF_OBC_BINDINGS         (default: --bind tab:accept)
-# - $LINES                    (default: '40')
 #
 # **** Only when using globs pattern ****
 # - $FZF_OBC_GLOBS_MAXDEPTH   (default: 999999)
@@ -19,13 +18,12 @@
 
 __fzf_obc_init_vars() {
   : "${FZF_OBC_PATH:=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/bash_completion.d}"
-  : "${FZF_OBC_HEIGHT:='40%'}"
+  : "${FZF_OBC_HEIGHT:=40%}"
   : "${FZF_OBC_EXCLUDE_PATH:=.git:.svn}"
   : "${FZF_OBC_OPTS:=--select-1 --exit-0}"
   : "${FZF_OBC_BINDINGS:=--bind tab:accept}"
   : "${FZF_OBC_GLOBS_OPTS:=-m --select-1 --exit-0}"
   : "${FZF_OBC_GLOBS_BINDINGS:=}"
-  : "${LINES:=40}"
 
   : "${FZF_OBC_GLOBS_MAXDEPTH:=999999}"
 }
@@ -124,7 +122,9 @@ __fzf_obc_add_traps() {
   IFS=$'\n' read -r -a loaded_array -d '' <<< "${loaded_functions}"
   # Loop over existing loaded function to add an fzf trap
   for f in "${loaded_array[@]}";do
-    __fzf_obc_add_trap $f
+    if [[ "${f}" != "_completion_loader" ]];then
+      __fzf_obc_add_trap $f
+    fi
   done
 }
 
@@ -157,7 +157,7 @@ __fzf_obc_add_trap() {
 }
 
 __fzf_obc_add_dynamic_trap() {
-  local f='__load_completion'
+  local f='_completion_loader'
   # Ensure that the function exist
   type -t "${f}" 2>&1 > /dev/null || return 1
   # Get the original definition
