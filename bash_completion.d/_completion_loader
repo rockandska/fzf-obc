@@ -1,0 +1,3 @@
+__fzf_obc_post__completion_loader() {
+  __fzf_obc_update_complete || return $?
+}

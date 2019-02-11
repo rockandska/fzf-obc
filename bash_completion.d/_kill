@@ -1,27 +1,24 @@
-__fzf_obc_trap_kill() {
-  local status=$1
+__fzf_obc_post__kill() {
+  local IFS=$'\n'
   case $prev in
     -s|-l)
-      __fzf_obc_default_trap "${status}"
-      return $?
+      return 0
       ;;
   esac;
   if [[ $cword -eq 1 && "$cur" == -* ]]; then
-    __fzf_obc_default_trap "${status}"
-    return $?
+    return 0
   else
     # Only surcharged if it is not an option
-    local selected fzf
-    IFS=$'\n' read -r -a COMPREPLY <<<"$(
+    read -r -a COMPREPLY <<<"$(
       command ps -ef \
       | sed 1d \
       | FZF_DEFAULT_OPTS="--height ${FZF_OBC_HEIGHT} --min-height 15 --reverse $FZF_DEFAULT_OPTS --preview 'echo {}' --preview-window down:3:wrap $FZF_COMPLETION_OPTS" \
-        __fzf_obc_cmd \
+        __fzf_obc_cmd -m \
       | awk '{print $2}' \
       | tr '\n' ' ' \
       | sed 's/ $//'
     )"
     printf '\e[5n'
-    return ${status}
+    return 0
   fi
 }

@@ -1,52 +1,47 @@
-__fzf_obc_trap_filedir()
+__fzf_obc_trap__filedir()
 {
-  local status=$1
+  local last_status=$1
   shift
+  local IFS=$'\n'
   # Add / for directories to the original COMPREPLY
   # Exclude from COMPREPLY directories listed into FZF_OBC_EXCLUDE_PATH
   local i reply_expand exclude_arr exclude exclude_expand
   IFS=':' read -r -a exclude_arr <<< "${FZF_OBC_EXCLUDE_PATH}"
-
   for i in ${!COMPREPLY[@]};do
     reply_expand="${COMPREPLY[$i]}"
-    __expand_tilde_by_ref reply_expand
+    __fzf_obc_expand_tilde_by_ref reply_expand
     for exclude in "${exclude_arr[@]}";do
       exclude_expand=${exclude}
-      __expand_tilde_by_ref exclude_expand
+      __fzf_obc_expand_tilde_by_ref exclude_expand
       if [[ "${exclude_expand}" =~ ^/ ]];then
         [[ "${reply_expand}" == "${exclude_expand}" ]] && unset "COMPREPLY[$i]" && break
       else
         [[ "${reply_expand}" == *"/${exclude_expand}" ]] && unset "COMPREPLY[$i]" && break
       fi
     done
-    if test -d "${COMPREPLY[$i]}";then
+    if test -d "${reply_expand}";then
       COMPREPLY[$i]=${COMPREPLY[$i]}/
     fi
   done
 
+  # Add to COMPREPLY our own results
+  # Add recursivity to native _filedir
   if [[ "${cur}" == *"**" ]];then
-    # Add to COMPREPLY our own results
-    # Add recursivity to native _filedir
-    local IFS=$'\n'
     cur=${cur/\*\*/}
-
-    _tilde "$cur" || return
-
+    __fzf_obc_tilde "$cur" || return
     # Files/Path asked
     if [[ "$1" != -d ]]; then
       # With an extension filter
       if [[ -n "$1" ]];then
-        COMPREPLY+=( $(_fzf_obc_search "files" "$1") )
+        COMPREPLY+=( $(__fzf_obc_search "files" "$1") )
       else
         # Without extension filter
-        COMPREPLY+=( $(_fzf_obc_search "paths") )
+        COMPREPLY+=( $(__fzf_obc_search "paths") )
       fi
     else
       # Only populate directories
-      COMPREPLY+=( $(_fzf_obc_search "dirs") )
+      COMPREPLY+=( $(__fzf_obc_search "dirs") )
     fi
-
     cur="${cur}**"
   fi
 }
-__fzf_obc_add_trap _filedir
