@@ -64,6 +64,22 @@ __fzf_obc_search() {
   eval "${cmd}"
 }
 
+__fzf_obc_realpath_by_ref()
+{
+    local f v base dir
+    v=$1
+    eval f=\$${v}
+    if [ -d "$f" ]; then
+        base=""
+        dir="$f"
+    else
+        base="/$(basename "$f")"
+        dir=$(dirname "$f")
+    fi
+    dir=$(cd "$dir" && /bin/pwd)
+    eval $v="$dir$base"
+}
+
 __fzf_obc_expand_tilde_by_ref ()
 {
   # Copy from original bash complete
@@ -91,8 +107,8 @@ __fzf_obc_cmd() {
 __fzf_obc_read_compreply() {
   local IFS=$'\n'
   local status=$1
-  if [[ "${cur}" == *"**" ]];then
-    if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
+  if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
+    if [[ "${cur}" == *"**" ]];then
       local item
       compopt +o filenames
       read -r -a COMPREPLY <<<$(
@@ -104,18 +120,20 @@ __fzf_obc_read_compreply() {
         | sed 's/ $//'
       )
     else
+      read -r -a COMPREPLY <<<$(
+        printf "%s\n" "${COMPREPLY[@]}" \
+        | awk '! a[$0]++' \
+        | FZF_DEFAULT_OPTS="--height ${FZF_OBC_HEIGHT} --reverse ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
+          __fzf_obc_cmd
+      )
+    fi
+    printf '\e[5n'
+  else
+    if [[ "${cur}" == *"**" ]];then
       compopt -o nospace
       COMPREPLY=( "${cur%\*\*}" )
     fi
-  else
-    read -r -a COMPREPLY <<<$(
-      printf "%s\n" "${COMPREPLY[@]}" \
-      | awk '! a[$0]++' \
-      | FZF_DEFAULT_OPTS="--height ${FZF_OBC_HEIGHT} --reverse ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
-        __fzf_obc_cmd
-    )
   fi
-  printf '\e[5n'
   return ${status}
 }
 
