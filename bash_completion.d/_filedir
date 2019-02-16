@@ -10,14 +10,11 @@ __fzf_obc_trap__filedir()
   for i in ${!COMPREPLY[@]};do
     reply_expand="${COMPREPLY[$i]}"
     __fzf_obc_expand_tilde_by_ref reply_expand
-    __fzf_obc_realpath_by_ref reply_expand
     for exclude in "${exclude_arr[@]}";do
       exclude_expand=${exclude}
       __fzf_obc_expand_tilde_by_ref exclude_expand
-      if [[ "${exclude_expand}" =~ ^/ ]];then
-        [[ "${reply_expand}" == "${exclude_expand}" ]] && unset "COMPREPLY[$i]" && break 2
-      else
-        [[ "${reply_expand}" == *"/${exclude_expand}" ]] && unset "COMPREPLY[$i]" && break 2
+      if [[ "${reply_expand}" == "${exclude_expand}" ]] || [[ "${reply_expand}" == *"/${exclude_expand}" ]];then
+        unset "COMPREPLY[$i]" && continue 2
       fi
     done
     if test -d "${reply_expand}";then

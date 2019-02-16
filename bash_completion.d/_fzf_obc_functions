@@ -64,22 +64,6 @@ __fzf_obc_search() {
   eval "${cmd}"
 }
 
-__fzf_obc_realpath_by_ref()
-{
-    local f v base dir
-    v=$1
-    eval f=\$${v}
-    if [ -d "$f" ]; then
-        base=""
-        dir="$f"
-    else
-        base="/$(basename "$f")"
-        dir=$(dirname "$f")
-    fi
-    dir=$(cd "$dir" && /bin/pwd)
-    eval $v="$dir$base"
-}
-
 __fzf_obc_expand_tilde_by_ref ()
 {
   # Copy from original bash complete
