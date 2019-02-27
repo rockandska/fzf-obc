@@ -55,34 +55,52 @@ __fzf_obc_add_trap() {
 }
 
 __fzf_obc_cleanup() {
+  [[ -z "${wrapper_prefix}" ]] && 1>&2 echo '${wrapper_prefix} not defined for __fzf_cleanup' && return 1
+  [[ -z "${trap_prefix}" ]] && 1>&2 echo '${trap_prefix} not defined for __fzf_obc_cleanup' && return 1
+  local IFS=$'\n'
   # Revert back to the original complete definitions
-  local existing_complete_arr=($(complete | grep -o -- "-F ${wrapper_prefix}*" | awk '{print $2}' | sort -u))
+  local existing_complete_arr
+  read -r -d '' -a existing_complete_arr <<<$(
+    complete | grep -o -- "-F ${wrapper_prefix}.*" | awk '{print $2}' | sort -u
+  )
   local f
   for f in "${existing_complete_arr[@]}";do
     # Remove the wrapper to complete definition
-    local new_complete=($(complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${wrapper_prefix}/-F /;s/ $//"))
+    local new_complete_arr
+    read -r -d '' -a new_complete_arr <<<$(
+      complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${wrapper_prefix}/-F /;s/ +$//"
+    )
     local w
-    for w in "${new_complete[@]}";do
-      if [[ "${w}" != "complete -F ${wrapper_name}" ]];then
+    for w in "${new_complete_arr[@]}";do
+      if echo "${w}" | awk '{ if(NF==3){exit 0}else{exit 1} }';then
+        eval "${w} ''"
+      else
         eval "${w}"
       fi
     done
   done
   # Unset existing fzf_obc functions
-  local existing_wrappers_arr=($(declare -F | grep -E -o -- "-f (${wrapper_prefix}|${post_prefix}).*" | awk '{print $2}' | sort -u))
-  for f in "${existing_wrappers_traps_arr[@]}";do
+  local existing_wrappers_arr
+  read -r -d '' -a existing_wrappers_arr <<<$(
+    declare -F | grep -E -o -- "-f (${wrapper_prefix}|${post_prefix}).*" | awk '{print $2}' | sort -u
+  )
+  for f in "${existing_wrappers_arr[@]}";do
     unset -f $f
   done
   # Remove traps
-  local existing_traps_arr=($(declare -F | grep -E -o -- "-f ${trap_prefix}.*" | awk '{print $2}' | sort -u))
+  local existing_traps_arr
+  read -r -d '' -a existing_traps_arr<<<$(
+    declare -F | grep -E -o -- "-f ${trap_prefix}.*" | awk '{print $2}' | sort -u
+  )
   for f in "${existing_traps_arr[@]}";do
     unset -f $f
     # Get the actual function definition
     f=${f/${trap_prefix}/}
     if type -t "${f}" 2>&1 > /dev/null;then
-      local origin=$(declare -f "${f}" | tail -n +3 | head -n -1)
-      # Remove also the trap from the orgiinal function
-      origin=$(echo "${origin}" | sed -r "/(${trap_prefix})/d")
+      local origin
+      read -d '' origin < <(
+        declare -f "${f}" | tail -n +3 | head -n -1 | sed -r "/(${trap_prefix})/d"
+      )
       eval "
         ${f}() {
           ${origin}
@@ -137,10 +155,12 @@ __fzf_obc_update_complete() {
       "
     fi
     # Apply the wrapper to complete definition
-    local new_complete=($(complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${f}( |$)/-F ${wrapper_name}\1/;s/ $//"))
+    local new_complete=($(complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${f}( |$)/-F ${wrapper_name}\1/;s/ +$//"))
     local w
     for w in "${new_complete[@]}";do
-      if [[ "${w}" != "complete -F ${wrapper_name}" ]];then
+      if echo "${w}" | awk '{ if(NF==3){exit 0}else{exit 1} }';then
+        eval "${w} ''"
+      else
         eval "${w}"
       fi
     done
