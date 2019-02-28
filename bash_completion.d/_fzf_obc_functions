@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # get find exclude pattern
 __fzf_obc_globs_exclude() {
   local var=$1
@@ -66,9 +67,11 @@ __fzf_obc_search() {
 
 __fzf_obc_expand_tilde_by_ref ()
 {
+  local expand
   # Copy from original bash complete
   if [[ ${!1} == \~* ]]; then
-      eval $1=$(printf ~%q "${!1#\~}");
+    read -r -d '' expand < <(printf ~%q "${!1#\~}")
+    eval "$1"="${expand}";
   fi
 }
 
@@ -81,21 +84,20 @@ __fzf_obc_tilde ()
       result=${#COMPREPLY[@]};
       [[ $result -gt 0 ]] && compopt -o filenames 2> /dev/null;
   fi;
-  return $result
+  return "${result}"
 }
 
 __fzf_obc_cmd() {
-    fzf $@
+    fzf
 }
 
 __fzf_obc_read_compreply() {
   local IFS=$'\n'
-  local status=$1
   if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
     if [[ "${cur}" == *"**" ]];then
       local item
       compopt +o filenames
-      read -r -a COMPREPLY <<<$(
+      read -r -a COMPREPLY < <(
         printf "%s\n" "${COMPREPLY[@]}" \
         | awk '! a[$0]++' \
         | FZF_DEFAULT_OPTS="--height ${FZF_OBC_HEIGHT} --reverse ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
@@ -104,7 +106,7 @@ __fzf_obc_read_compreply() {
         | sed 's/ $//'
       )
     else
-      read -r -a COMPREPLY <<<$(
+      read -r -a COMPREPLY < <(
         printf "%s\n" "${COMPREPLY[@]}" \
         | awk '! a[$0]++' \
         | FZF_DEFAULT_OPTS="--height ${FZF_OBC_HEIGHT} --reverse ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
@@ -118,6 +120,5 @@ __fzf_obc_read_compreply() {
       COMPREPLY=( "${cur%\*\*}" )
     fi
   fi
-  return ${status}
 }
 

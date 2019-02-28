@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #     ____      ____
 #    / __/___  / __/
 #   / /_/_  / / /_
@@ -38,9 +39,10 @@ __fzf_obc_add_trap() {
     shift
     local trap=${trap_prefix}${f}
     # Ensure that the function exist
-    type -t "${f}" 2>&1 > /dev/null || return 1
+    type -t "${f}" > /dev/null 2>&1 || return 1
     # Get the original definition
-    local origin=$(declare -f "${f}" | tail -n +3 | head -n -1)
+    local origin
+    origin=$(declare -f "${f}" | tail -n +3 | head -n -1)
     # Quit if already surcharged
     [[ "${origin}" =~ ${trap} ]] && return 0
     # Add trap
@@ -55,19 +57,18 @@ __fzf_obc_add_trap() {
 }
 
 __fzf_obc_cleanup() {
-  [[ -z "${wrapper_prefix}" ]] && 1>&2 echo '${wrapper_prefix} not defined for __fzf_cleanup' && return 1
-  [[ -z "${trap_prefix}" ]] && 1>&2 echo '${trap_prefix} not defined for __fzf_obc_cleanup' && return 1
+  [[ -z "${wrapper_prefix}" || -z "${trap_prefix}" ]] && 1>&2 echo '__fzf_cleanup : wrapper_prefix/trap_prefix variables not defined' && return 1
   local IFS=$'\n'
   # Revert back to the original complete definitions
   local existing_complete_arr
-  read -r -d '' -a existing_complete_arr <<<$(
+  read -r -d '' -a existing_complete_arr < <(
     complete | grep -o -- "-F ${wrapper_prefix}.*" | awk '{print $2}' | sort -u
   )
   local f
   for f in "${existing_complete_arr[@]}";do
     # Remove the wrapper to complete definition
     local new_complete_arr
-    read -r -d '' -a new_complete_arr <<<$(
+    read -r -d '' -a new_complete_arr < <(
       complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${wrapper_prefix}/-F /;s/ +$//"
     )
     local w
@@ -81,24 +82,24 @@ __fzf_obc_cleanup() {
   done
   # Unset existing fzf_obc functions
   local existing_wrappers_arr
-  read -r -d '' -a existing_wrappers_arr <<<$(
+  read -r -d '' -a existing_wrappers_arr < <(
     declare -F | grep -E -o -- "-f (${wrapper_prefix}|${post_prefix}).*" | awk '{print $2}' | sort -u
   )
   for f in "${existing_wrappers_arr[@]}";do
-    unset -f $f
+    unset -f "$f"
   done
   # Remove traps
   local existing_traps_arr
-  read -r -d '' -a existing_traps_arr<<<$(
+  read -r -d '' -a existing_traps_arr < <(
     declare -F | grep -E -o -- "-f ${trap_prefix}.*" | awk '{print $2}' | sort -u
   )
   for f in "${existing_traps_arr[@]}";do
-    unset -f $f
+    unset -f "$f"
     # Get the actual function definition
     f=${f/${trap_prefix}/}
-    if type -t "${f}" 2>&1 > /dev/null;then
+    if type -t "${f}" > /dev/null 2>&1 ;then
       local origin
-      read -d '' origin < <(
+      read -r -d '' origin < <(
         declare -f "${f}" | tail -n +3 | head -n -1 | sed -r "/(${trap_prefix})/d"
       )
       eval "
@@ -113,37 +114,41 @@ __fzf_obc_cleanup() {
 __fzf_obc_load() {
   local IFS=$'\n'
   # Load functions / traps
-  local fzf_obc_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/bash_completion.d"
+  local fzf_obc_path
+  fzf_obc_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/bash_completion.d"
   local fzf_obc_path_array path file
   IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH}"
   for path in "${fzf_obc_path}" "${fzf_obc_path_array[@]}";do
     for file in ${path}/* ; do
-      [ -e "${file}" -a ! -d "${file}" ] || continue
+      [[ -e "${file}" && ! -d "${file}" ]] || continue
+      # shellcheck disable=SC1090
       source "${file}"
     done
   done
 }
 
 __fzf_obc_update_complete() {
+  [[ -z "${wrapper_prefix}" || -z "${trap_prefix}" ]] && 1>&2 echo '__fzf_obc_update_complete : wrapper_prefix/trap_prefix variables not defined' && return 1
   local IFS=$'\n'
-  [[ -z "${wrapper_prefix}" ]] && 1>&2 echo '${wrapper_prefix} not defined for __fzf_obc_update_complete' && return 1
-  [[ -z "${trap_prefix}" ]] && 1>&2 echo '${trap_prefix} not defined for __fzf_obc_update_complete' && return 1
   # Get complete function not already wrapped
-  local complete_loaded_functions_arr=($(complete | grep -o -- '-F.*' | cut -d ' ' -f 2 | sort -u | grep -v "^${wrapper_prefix}"))
+  local complete_loaded_functions_arr
+  read -r -d '' -a complete_loaded_functions_arr < <(
+    complete | grep -o -- '-F.*' | cut -d ' ' -f 2 | sort -u | grep -v "^${wrapper_prefix}"
+  )
   # Loop over loaded function to create a wrapper to it
   local f
   for f in "${complete_loaded_functions_arr[@]}";do
     wrapper_name="${wrapper_prefix}${f}"
     wrapper_function='__fzf_obc_read_compreply'
     # Create the wrapper if not exist
-    if ! type -t "${wrapper_name}" 2>&1 > /dev/null; then
+    if ! type -t "${wrapper_name}" > /dev/null 2>&1 ; then
       eval "
         ${wrapper_name}() {
           shopt -u globstar
           local cur prev words cword split cpl_status;
           _init_completion -s || return;
           ${f} \$@ || cpl_status=\$?
-          if type -t __fzf_obc_post_${f} 2>&1 > /dev/null;then
+          if type -t __fzf_obc_post_${f} > /dev/null 2>&1;then
             local wrapper_prefix='${wrapper_prefix}'
             local post_prefix='${post_prefix}'
             local trap_prefix='${trap_prefix}'
@@ -155,7 +160,10 @@ __fzf_obc_update_complete() {
       "
     fi
     # Apply the wrapper to complete definition
-    local new_complete=($(complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${f}( |$)/-F ${wrapper_name}\1/;s/ +$//"))
+    local new_complete
+    read -r -d '' -a new_complete < <(
+      complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${f}( |$)/-F ${wrapper_name}\1/;s/ +$//"
+    )
     local w
     for w in "${new_complete[@]}";do
       if echo "${w}" | awk '{ if(NF==3){exit 0}else{exit 1} }';then
@@ -166,7 +174,10 @@ __fzf_obc_update_complete() {
     done
   done
   # Loop over existing trap and add them
-  local loaded_traps_arr=($(declare -F | grep -E -o -- "-f ${trap_prefix}.*" | awk '{print $2}' | sort -u))
+  local loaded_traps_arr
+  read -r -d '' -a loaded_traps_arr < <(
+    declare -F | grep -E -o -- "-f ${trap_prefix}.*" | awk '{print $2}' | sort -u
+  )
   local f
   for f in "${loaded_traps_arr[@]}";do
     f="${f/${trap_prefix}}"
@@ -179,10 +190,11 @@ _fzf_obc() {
   local post_prefix='__fzf_obc_post_'
   local trap_prefix='__fzf_obc_trap_'
   complete -p fzf &> /dev/null || complete -F _longopt fzf
-  __fzf_obc_cleanup
-  __fzf_obc_init_vars
-  __fzf_obc_load
-  __fzf_obc_update_complete
+  [[ -z "${1}" || "${1}" == "cleanup" ]] && __fzf_obc_cleanup
+  [[ -z "${1}" || "${1}" == "init" ]] && __fzf_obc_init_vars
+  [[ -z "${1}" || "${1}" == "load" ]] && __fzf_obc_load
+  [[ -z "${1}" || "${1}" == "update" ]] && __fzf_obc_update_complete
+  return 0
 }
 
-_fzf_obc
+_fzf_obc "$@"
