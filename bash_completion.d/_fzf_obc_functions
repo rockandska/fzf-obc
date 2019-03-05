@@ -37,13 +37,13 @@ __fzf_obc_search() {
   if [[ -n "${cur_expanded}" ]] && [[ ! "${cur_expanded}" =~ (\.\.?|/)$ ]];then
     startdir="${cur_expanded}*"
   else
-    startdir="${cur_expanded}"
+    startdir="${cur_expanded} -mindepth 1"
   fi
 
   local exclude_string
   __fzf_obc_globs_exclude exclude_string
 
-  cmd="command find -L $startdir -mindepth 1 -maxdepth '${FZF_OBC_GLOBS_MAXDEPTH}' ${exclude_string}"
+  cmd="command find -L $startdir -maxdepth '${FZF_OBC_GLOBS_MAXDEPTH}' ${exclude_string}"
 
   case ${type} in
     paths)
@@ -58,9 +58,18 @@ __fzf_obc_search() {
   esac
 
   if [[ "${type}" == "files" ]] && [[ -n ${xspec} ]];then
-    cmd+=" -exec bash -c 'shopt -s extglob; for file;do [[ \"\$file\" == ${xspec} ]] && echo \"\${file/${cur_expanded//\//\\/}/${cur//\//\\/}}\";done' internalsh {} + 2> /dev/null"
+    cmd+=" -exec bash -c 'shopt -s extglob; for file;do [[ \"\$file\" == ${xspec} ]]"
+    if [[ "${cur_expanded}" != "${cur}" ]];then
+      cmd+=" && echo \"\${file/${cur_expanded//\//\\/}/${cur//\//\\/}}\""
+    else
+      cmd+=" && echo \"\${file}\""
+    fi
+    cmd+=";done' internalsh {} + 2> /dev/null"
   else
-    cmd+=" 2> /dev/null | sed 's/${cur_expanded//\//\\/}/${cur//\//\\/}/'"
+    cmd+=" 2> /dev/null"
+    if [[ "${cur_expanded}" != "${cur}" ]];then
+      cmd+=" | sed 's/${cur_expanded//\//\\/}/${cur//\//\\/}/'"
+    fi
   fi
   eval "${cmd}"
 }
