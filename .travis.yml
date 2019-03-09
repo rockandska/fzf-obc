@@ -1,0 +1,44 @@
+---
+language: ruby
+dist: xenial
+addons:
+  apt:
+    sources:
+      - sourceline: "ppa:kimura-o/ppa-tmux"
+    packages:
+      - tmux
+stages:
+  - name: tests
+  - name: mkrelease
+    if: |
+      branch = master \
+      AND type != pull_request
+jobs:
+  include:
+    - stage: tests
+      rvm: "2.5"
+      install:
+        - git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+        - ~/.fzf/install --no-key-bindings --no-completion --update-rc
+        - source ~/.bashrc
+        - cd test
+        - gem install bundler -v $(cat Gemfile.lock | grep -A 1 "BUNDLED WITH" | tail -n1 | sed "s/ //g")
+        - bundle
+      script:
+        - bundle exec ruby test-fzf-obc.rb
+
+    - stage: mkrelease
+      install:
+        - wget --quiet -O /tmp/mkrelease.sh https://raw.githubusercontent.com/rockandska/scripts/${MKRELEASE_REF:-master}/CI/mkrelease.sh
+        - chmod +x /tmp/mkrelease.sh
+        - wget --quiet -O /tmp/pubrelease.sh https://raw.githubusercontent.com/rockandska/scripts/${PUBRELEASE_REF:-master}/CI/pubrelease.sh
+        - chmod +x /tmp/pubrelease.sh
+      script:
+        - TRAVIS_TAG=$(/tmp/mkrelease.sh || travis_terminate 1)
+        - export TRAVIS_TAG
+      deploy:
+        provider: script
+        script: /tmp/pubrelease.sh
+        skip_cleanup: true
+        on:
+          tags: true
