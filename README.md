@@ -2,7 +2,7 @@
 
 ## What is fzf-obc
 
-A bash completion script intend to add [fzf](https://github.com/junegunn/fzf) over all known bash completion functions on your system without minimal modifications on original completion scripts.  
+A bash completion script intend to add [fzf](https://github.com/junegunn/fzf) over all known bash completion functions on your system with minimal modifications on original completion scripts.  
 It is a replacement to the completion script natively provided by [fzf](https://github.com/junegunn/fzf) who replace original completion functions with its own (and create some behavior originally well implemented into original completion scripts).
 
 ## Prerequisites
@@ -174,6 +174,8 @@ $ echo "FZF_OBC_PATH='~/.local/opt/myfzfcomplete:~/.local/opt/fzf-test'" >> ~/.b
   - use `$FZF_OBC_GLOBS_OPTIONS` if `**` detected in `$cur`
 - `__fzf_obc_post__kill`
   - post function to `_kill`
+- `__fzf_obc_sort_cmd`
+  - sort command used to sort results from `compgen` / `find` results
 - `__fzf_obc_trap__filedir`
   - trap for `_filedir` private complete function
   - add `/` to directories
