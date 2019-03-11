@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+# sort cmd used to show results
+__fzf_obc_sort_cmd() {
+    (LC_ALL=C sort -ufr -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -ufr)
+}
+
 # get find exclude pattern
 __fzf_obc_globs_exclude() {
   local var=$1
@@ -36,13 +42,13 @@ __fzf_obc_search() {
   if [[ -n "${cur_expanded}" ]] && [[ ! "${cur_expanded}" =~ (\.\.?|/)$ ]];then
     startdir="${cur_expanded}*"
   else
-    startdir="${cur_expanded}"
+    startdir="${cur_expanded} -mindepth 1"
   fi
 
   local exclude_string
   __fzf_obc_globs_exclude exclude_string
 
-  cmd="command find -L $startdir -mindepth 1 -maxdepth '${FZF_OBC_GLOBS_MAXDEPTH}' ${exclude_string}"
+  cmd="command find -L $startdir -maxdepth '${FZF_OBC_GLOBS_MAXDEPTH}' ${exclude_string}"
 
   case ${type} in
     paths)
@@ -57,18 +63,29 @@ __fzf_obc_search() {
   esac
 
   if [[ "${type}" == "files" ]] && [[ -n ${xspec} ]];then
-    cmd+=" -exec bash -c 'shopt -s extglob; for file;do [[ \"\$file\" == ${xspec} ]] && echo \"\${file/${cur_expanded//\//\\/}/${cur//\//\\/}}\";done' internalsh {} + 2> /dev/null"
+    cmd+=" -exec bash -c 'shopt -s extglob; for file;do [[ \"\$file\" == ${xspec} ]]"
+    if [[ "${cur_expanded}" != "${cur}" ]];then
+      cmd+=" && echo \"\${file/${cur_expanded//\//\\/}/${cur//\//\\/}}\""
+    else
+      cmd+=" && echo \"\${file}\""
+    fi
+    cmd+=";done' internalsh {} + 2> /dev/null"
   else
-    cmd+=" 2> /dev/null | sed 's/${cur_expanded//\//\\/}/${cur//\//\\/}/'"
+    cmd+=" 2> /dev/null"
+    if [[ "${cur_expanded}" != "${cur}" ]];then
+      cmd+=" | sed 's/${cur_expanded//\//\\/}/${cur//\//\\/}/'"
+    fi
   fi
   eval "${cmd}"
 }
 
 __fzf_obc_expand_tilde_by_ref ()
 {
+  local expand
   # Copy from original bash complete
   if [[ ${!1} == \~* ]]; then
-      eval $1=$(printf ~%q "${!1#\~}");
+    read -r -d '' expand < <(printf ~%q "${!1#\~}")
+    eval "$1"="${expand}";
   fi
 }
 
@@ -81,33 +98,32 @@ __fzf_obc_tilde ()
       result=${#COMPREPLY[@]};
       [[ $result -gt 0 ]] && compopt -o filenames 2> /dev/null;
   fi;
-  return $result
+  return "${result}"
 }
 
 __fzf_obc_cmd() {
-    fzf $@
+    fzf
 }
 
 __fzf_obc_read_compreply() {
   local IFS=$'\n'
-  local status=$1
   if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
     if [[ "${cur}" == *"**" ]];then
       local item
       compopt +o filenames
-      read -r -a COMPREPLY <<<$(
+      read -r -a COMPREPLY < <(
         printf "%s\n" "${COMPREPLY[@]}" \
-        | awk '! a[$0]++' \
-        | FZF_DEFAULT_OPTS="--height ${FZF_OBC_HEIGHT} --reverse ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
+        | __fzf_obc_sort_cmd \
+        | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
           __fzf_obc_cmd \
         | while read -r item;do printf "%q " "${item}" | sed 's/^\\~/~/';done \
         | sed 's/ $//'
       )
     else
-      read -r -a COMPREPLY <<<$(
+      read -r -a COMPREPLY < <(
         printf "%s\n" "${COMPREPLY[@]}" \
-        | awk '! a[$0]++' \
-        | FZF_DEFAULT_OPTS="--height ${FZF_OBC_HEIGHT} --reverse ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
+        | __fzf_obc_sort_cmd \
+        | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
           __fzf_obc_cmd
       )
     fi
@@ -118,6 +134,5 @@ __fzf_obc_read_compreply() {
       COMPREPLY=( "${cur%\*\*}" )
     fi
   fi
-  return ${status}
 }
 
