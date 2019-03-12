@@ -21,7 +21,11 @@ require 'mkmf'
 
 puts "\nChecking for binaries required for those tests\n\n"
 
-check_cmds('fzf,git')
+check_cmds(%w{
+  fzf
+  git
+  insmod
+})
 
 
 class FzfObcTest < Minitest::Test
@@ -30,15 +34,8 @@ class FzfObcTest < Minitest::Test
 
   def setup
     prepare_tmux
+    cleanup
     @@tty.clear_screen()
-  end
-
-  def teardown
-    if !TTYtest.debug
-      Dir.chdir BASE
-      FileUtils.rm_rf "#{TEST_DIR}"
-      FileUtils.rm_rf "#{ENV['HOME']}/#{HOME_TEST_DIR}"
-    end
   end
 
   def prepare_tmux
@@ -138,6 +135,35 @@ class FzfObcTest < Minitest::Test
 
   def files_glob_creation
     files_creation
+  end
+
+  def create_files_dirs(
+    dest: TEST_DIR,
+    subdirs: %w{
+      d1
+      d10
+      d1\ 0
+      d2
+      d\ 20
+    },
+    files: %w{
+      file1.test
+      file\ 1.test
+      file2.test
+      file\ 2.test
+    }
+  )
+    dest = File.expand_path(dest)
+    FileUtils.mkdir_p "#{dest}"
+    for file in files
+      FileUtils.touch "#{dest}/#{file}"
+    end
+    for dir in subdirs
+      FileUtils.mkdir_p "#{dest}/#{dir}"
+      for file in files
+        FileUtils.touch "#{dest}/#{dir}/#{file}"
+      end
+    end
   end
 
   def files_home_completion
@@ -302,4 +328,70 @@ class FzfObcTest < Minitest::Test
     TTY
   end
 
+  def test__filedir_with_insmod
+    # insmod use _filedir with extension filter
+    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
+    create_files_dirs(
+      subdirs: %w{d1},
+      files: %w{
+        test.ko.gz
+        test\ 1.ko.gz
+        test.log
+        test.mp3
+      }
+    )
+    @@tty.send_keys(<<~EOF)
+      insmod #{TEST_DIR}/
+      #{TAB}
+    EOF
+    @@tty.assert_matches(<<~EOF)
+      $ insmod #{TEST_DIR}/
+      >
+        3/3
+      > #{TEST_DIR}/test.ko.gz
+        #{TEST_DIR}/test 1.ko.gz
+        #{TEST_DIR}/d1/
+    EOF
+  end
+
+  def test__filedir_with_insmod_in_home
+    # insmod use _filedir with extension filter
+    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
+    create_files_dirs(
+      dest: "~/#{HOME_TEST_DIR}",
+      subdirs: %w{d1},
+      files: %w{
+        test.ko.gz
+        test\ 1.ko.gz
+        test.log
+        test.mp3
+      }
+    )
+    @@tty.send_keys(<<~EOF)
+      insmod ~/#{HOME_TEST_DIR}/
+      #{TAB}
+    EOF
+    @@tty.assert_matches(<<~EOF)
+      $ insmod ~/#{HOME_TEST_DIR}/
+      >
+        3/3
+      > ~/#{HOME_TEST_DIR}/test.ko.gz
+        ~/#{HOME_TEST_DIR}/test 1.ko.gz
+        ~/#{HOME_TEST_DIR}/d1/
+    EOF
+  end
+
+end
+
+def cleanup
+  Dir.chdir BASE
+  FileUtils.rm_rf "#{TEST_DIR}"
+  FileUtils.rm_rf "#{ENV['HOME']}/#{HOME_TEST_DIR}"
+end
+
+MiniTest.after_run do
+  if !TTYtest.debug
+    # Don't cleanup in debug mode to keep the last test structure
+    cleanup
+  end
 end
