@@ -71,13 +71,14 @@ module TTYtest
             sleep 0.05
           end
         end
-        driver.tmux(*%W[send-keys -Rt #{name}], 'Escape')
-        driver.tmux(*%W[send-keys -Rt #{name}], 'Escape')
         driver.tmux(*%W[send-keys -Rt #{name}], 'C-c')
+        sleep TTYtest.send_keys_delay
         driver.tmux(*%W[send-keys -Rt #{name}], 'C-c')
-        driver.tmux(*%W[send-keys -Rt #{name}], 'Enter')
+        sleep TTYtest.send_keys_delay
         driver.tmux(*%W[send-keys -Rt #{name}], 'printf "\\033c"')
+        sleep TTYtest.send_keys_delay
         driver.tmux(*%W[send-keys -Rt #{name}], 'Enter')
+        sleep TTYtest.send_keys_delay
       end
     end
   end

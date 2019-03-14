@@ -25,6 +25,7 @@ check_cmds(%w{
   fzf
   git
   insmod
+  vi
 })
 
 
@@ -139,19 +140,8 @@ class FzfObcTest < Minitest::Test
 
   def create_files_dirs(
     dest: TEST_DIR,
-    subdirs: %w{
-      d1
-      d10
-      d1\ 0
-      d2
-      d\ 20
-    },
-    files: %w{
-      file1.test
-      file\ 1.test
-      file2.test
-      file\ 2.test
-    }
+    subdirs: %w{},
+    files: %w{}
   )
     dest = File.expand_path(dest)
     FileUtils.mkdir_p "#{dest}"
@@ -379,6 +369,76 @@ class FzfObcTest < Minitest::Test
         ~/#{HOME_TEST_DIR}/test 1.ko.gz
         ~/#{HOME_TEST_DIR}/d1/
     EOF
+  end
+
+  def test__filedir_xspec_with_vi
+    # vi use _filedir_xspec with extension filter
+    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
+    create_files_dirs(
+      subdirs: %w{d1},
+      files: %w{
+        test.conf
+        test\ 1.conf
+        test.class
+        test.mp3
+      }
+    )
+    @@tty.send_keys(<<~EOF)
+      vi #{TEST_DIR}/
+      #{TAB}
+    EOF
+    @@tty.assert_matches(<<~EOF)
+      $ vi #{TEST_DIR}/
+      >
+        3/3
+      > #{TEST_DIR}/test.conf
+        #{TEST_DIR}/test 1.conf
+        #{TEST_DIR}/d1/
+    EOF
+  end
+
+  def test__filedir_xspec_with_vi_in_home
+    # vi use _filedir_xspec with extension filter
+    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
+    create_files_dirs(
+      dest: "~/#{HOME_TEST_DIR}",
+      subdirs: %w{d1},
+      files: %w{
+        test.conf
+        test\ 1.conf
+        test.class
+        test.mp3
+      }
+    )
+    @@tty.send_keys(<<~EOF)
+      vi ~/#{HOME_TEST_DIR}/
+      #{TAB}
+    EOF
+    @@tty.assert_matches(<<~EOF)
+      $ vi ~/#{HOME_TEST_DIR}/
+      >
+        3/3
+      > ~/#{HOME_TEST_DIR}/test.conf
+        ~/#{HOME_TEST_DIR}/test 1.conf
+        ~/#{HOME_TEST_DIR}/d1/
+    EOF
+
+    # With globs
+    @@tty.clear_screen()
+    @@tty.send_keys(<<~EOF)
+      vi ~/#{HOME_TEST_DIR}/**
+      #{TAB}
+    EOF
+    @@tty.assert_matches(<<~EOF)
+      $ vi ~/#{HOME_TEST_DIR}/**
+      >
+        4/4
+      > ~/#{HOME_TEST_DIR}/test.conf
+        ~/#{HOME_TEST_DIR}/test 1.conf
+        ~/#{HOME_TEST_DIR}/d1/test.conf
+        ~/#{HOME_TEST_DIR}/d1/test 1.conf
+    EOF
+
   end
 
 end

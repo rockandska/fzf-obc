@@ -89,8 +89,17 @@ The default binding to select an entry is the key \<TAB\> ( you already have you
 
 Like the original [fzf](https://github.com/junegunn/fzf) completion script, you could use recursive search with some bash complete functions by adding `**` at the end of your path, then hit key \<TAB\> to recursively looking for corresponding files / path / directories.
 
-- **Only _filedir function works with globs right now( cd, ls, and many others) , vi use _filedir_xspec and is not globs compatible right now (need to add it)**.
-- **If there is no results, you will be aware by seeing the \** removed from your current search**
+- **Works with complete functions who use for path/files lookup :**
+  - **_filedir**
+    - cd
+    - ls
+    - and more than 400 commands
+  - **_filedir_xspec**
+    - vi(m)
+    - bunzip2
+    - lynx
+    - and more than 140 commands
+- **If there is no results, you will be aware by seeing the "\*\*" removed from your current search**
 - **Be cautious that using this capability on huge directories could freeze your shell for ages without be able to cancel it with CTRL-C (need to fix it)**
 - **The bindings with globs are different ( \<TAB\>, \<SHIFT-TAB\> are used to (un)select multiples results and \<ENTER\> to validate )**
 

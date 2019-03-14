@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+__fzf_obc_trap__filedir_xspec()
+{
+  local last_status=$1
+  shift
+  local IFS=$'\n'
+  # Add / for directories to the original COMPREPLY
+  # Exclude from COMPREPLY directories listed into FZF_OBC_EXCLUDE_PATH
+  local i reply_expand exclude_arr exclude exclude_expand
+  IFS=':' read -r -a exclude_arr <<< "${FZF_OBC_EXCLUDE_PATH}"
+  for i in "${!COMPREPLY[@]}";do
+    reply_expand="${COMPREPLY[$i]}"
+    __fzf_obc_expand_tilde_by_ref reply_expand
+    for exclude in "${exclude_arr[@]}";do
+      exclude_expand=${exclude}
+      __fzf_obc_expand_tilde_by_ref exclude_expand
+      if [[ "${reply_expand}" == "${exclude_expand}" ]] || [[ "${reply_expand}" == *"/${exclude_expand}" ]];then
+        unset "COMPREPLY[$i]" && continue 2
+      fi
+    done
+    if test -d "${reply_expand}";then
+      COMPREPLY[$i]=${COMPREPLY[$i]}/
+    fi
+  done
+
+  # Add to COMPREPLY our own results
+  # Add recursivity to native _filedir
+  if [[ "${cur}" == *"**" ]];then
+    cur=${cur/\*\*/}
+    __fzf_obc_tilde "$cur" || return
+    local xspec
+    # shellcheck disable=SC2154
+    xspec="${_xspecs[${1##*/}]}"
+    local matchop=!;
+    if [[ $xspec == !* ]]; then
+        xspec=${xspec#!};
+        matchop=@;
+    fi;
+    xspec="$matchop($xspec|${xspec^^})";
+    COMPREPLY+=( $(__fzf_obc_search "files" "${xspec}") )
+    cur="${cur}**"
+  fi
+  return "${last_status}"
+}
