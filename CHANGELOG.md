@@ -1,5 +1,11 @@
 # Change Log
 
+## [**Next release**](https://github.com/rockandska/fzf-obc/tree/HEAD)
+
+**Merged pull requests:**
+
+- Add \_filedir\_xspec trap [\#2](https://github.com/rockandska/fzf-obc/pull/2) ([rockandska](https://github.com/rockandska))
+
 ## [0.0.1](https://github.com/rockandska/fzf-obc/tree/0.0.1) (2019-03-11)
 **Merged pull requests:**
 
