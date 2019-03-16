@@ -33,7 +33,7 @@ __fzf_obc_search() {
   local type xspec
   type="${1}"
   shift
-  xspec=${1:+"*.@($1|${1^^})"}
+  xspec=${1}
 
   local cur_expanded=${cur:-./}
   __fzf_obc_expand_tilde_by_ref cur_expanded
