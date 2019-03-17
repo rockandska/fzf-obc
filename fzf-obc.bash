@@ -144,7 +144,6 @@ __fzf_obc_update_complete() {
     if ! type -t "${wrapper_name}" > /dev/null 2>&1 ; then
       eval "
         ${wrapper_name}() {
-          shopt -u globstar
           local cur prev words cword split cpl_status;
           _init_completion -s || return;
           ${f} \$@ || cpl_status=\$?

@@ -37,7 +37,7 @@ __fzf_obc_trap__filedir_xspec()
         matchop=@;
     fi;
     xspec="$matchop($xspec|${xspec^^})";
-    COMPREPLY+=( $(__fzf_obc_search "files" "${xspec}") )
+    __fzf_add2compreply < <(__fzf_obc_search "${cur}" "files" "${xspec}")
     cur="${cur}**"
   fi
   return "${last_status}"

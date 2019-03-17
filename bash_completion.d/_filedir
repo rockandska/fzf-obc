@@ -33,14 +33,14 @@ __fzf_obc_trap__filedir()
       # With an extension filter
       if [[ -n "$1" ]];then
         local xspec=${1:+"!*.@($1|${1^^})"};
-        COMPREPLY+=( $(__fzf_obc_search "files" "${xspec}") )
+        __fzf_add2compreply < <(__fzf_obc_search "${cur}" "files" "${xspec}")
       else
         # Without extension filter
-        COMPREPLY+=( $(__fzf_obc_search "paths") )
+        __fzf_add2compreply < <(__fzf_obc_search "${cur}" "paths")
       fi
     else
       # Only populate directories
-      COMPREPLY+=( $(__fzf_obc_search "dirs") )
+      __fzf_add2compreply < <(__fzf_obc_search "${cur}" "dirs")
     fi
     cur="${cur}**"
   fi
