@@ -1,7 +1,22 @@
 #!/usr/bin/env bash
-# sort cmd used to show results
+
+
+__fzf_add2compreply() {
+  # Input: string separated by $'\0'
+  if ! readarray -d $'\0' -O "${#COMPREPLY[@]}" COMPREPLY 2> /dev/null;then
+    while IFS=$'\0' read -r -d '' line;do COMPREPLY+=( "${line}" );done
+  fi
+}
+
+__fzf_compreply() {
+  # Input: string separated by $'\0'
+  if ! readarray -d $'\0' COMPREPLY 2> /dev/null;then
+    IFS=$'\0' read -r -d '' -a COMPREPLY
+  fi
+}
 __fzf_obc_sort_cmd() {
-    (LC_ALL=C sort -ufr -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -ufr)
+  # sort cmd used to show results
+  (LC_ALL=C sort -ufrz -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -ufrz)
 }
 
 # get find exclude pattern
@@ -28,56 +43,82 @@ __fzf_obc_globs_exclude() {
 
 
 # To use custom commands instead of find, override __fzf_obc_search later
+# Return: list of files/directories separated by $'\0'
 __fzf_obc_search() {
   local IFS=$'\n'
-  local type xspec
-  type="${1}"
-  shift
-  xspec=${1}
+  local cur type xspec
+  cur="${1}"
+  type="${2}"
+  xspec="${3}"
 
-  local cur_expanded=${cur:-./}
+  local cur_clean
+  cur_clean="${cur%%\**}"
+
+  local cur_expanded
+  cur_expanded=${cur_clean:-./}
+
   __fzf_obc_expand_tilde_by_ref cur_expanded
 
   local startdir
-  if [[ -n "${cur_expanded}" ]] && [[ ! "${cur_expanded}" =~ (\.\.?|/)$ ]];then
+  if [[ "${cur_expanded}" != *"/" ]];then
     startdir="${cur_expanded}*"
+    mindepth="0"
+    maxdepth="0"
   else
-    startdir="${cur_expanded} -mindepth 1"
+    startdir="${cur_expanded}"
+    mindepth="1"
+    maxdepth="1"
   fi
 
-  local exclude_string
-  __fzf_obc_globs_exclude exclude_string
+  if [[ "${cur}" == *"**" ]];then
+    maxdepth="${FZF_OBC_GLOBS_MAXDEPTH}"
+    local exclude_string
+    __fzf_obc_globs_exclude exclude_string
+  fi
 
-  cmd="command find -L $startdir -maxdepth '${FZF_OBC_GLOBS_MAXDEPTH}' ${exclude_string}"
+  local cmd
+  cmd="command find ${startdir}"
+  cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth} "
+  cmd+=" ${exclude_string} "
 
   case ${type} in
     paths)
-      cmd+=" \( -type d -printf '%p/\n' -or -print \)"
+      cmd+=" \( -type d -printf '%p/\0' -or -printf '%p\0' \)"
       ;;
     files)
-      cmd+=" \( -type f -or -type l \)"
+      cmd+=" \( -type f -printf '%p\0' -or -type l -printf '%p\0' \)"
       ;;
     dirs)
-      cmd+=" -type d -print"
+      cmd+=" -type d -printf '%p/\0' "
       ;;
   esac
 
-  if [[ "${type}" == "files" ]] && [[ -n ${xspec} ]];then
-    cmd+=" -exec bash -c 'shopt -s extglob; for file;do [[ \"\$file\" == ${xspec} ]]"
-    if [[ "${cur_expanded}" != "${cur}" ]];then
-      cmd+=" && echo \"\${file/${cur_expanded//\//\\/}/${cur//\//\\/}}\""
-    else
-      cmd+=" && echo \"\${file}\""
-    fi
-    cmd+=";done' internalsh {} + 2> /dev/null"
-  else
-    cmd+=" 2> /dev/null"
-    if [[ "${cur_expanded}" != "${cur}" ]];then
-      cmd+=" | sed 's/${cur_expanded//\//\\/}/${cur//\//\\/}/'"
-    fi
+  cmd+=" 2> /dev/null"
+
+  if [[ "${cur_expanded}" != "${cur_clean}" ]];then
+    cmd=" sed -z s'#${cur_expanded//\//\\/}#${cur_clean//\//\\/}#' < <(${cmd})"
   fi
+
+  if [[ -n ${xspec} ]];then
+    cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
+  fi
+
   eval "${cmd}"
+  return 0
 }
+
+__fzf_obc_search_filter_bash() (
+  # Input: a list of strings separated by $'\0'
+  # Params:
+  #   $1: an optional glob patern for filtering
+  # Return: a list of strings filtered and separate by $'\0'
+  shopt -s extglob
+  local xspec="$1"
+  [[ -z "${xspec}" ]] && cat
+  while IFS= read -t 0.1 -d $'\0' -r file;do
+    [[ "${file}" == ${xspec} ]] && printf "%s\0" "${file}"
+  done
+)
 
 __fzf_obc_expand_tilde_by_ref ()
 {
@@ -102,7 +143,7 @@ __fzf_obc_tilde ()
 }
 
 __fzf_obc_cmd() {
-    fzf
+    fzf --read0 --print0
 }
 
 __fzf_obc_read_compreply() {
@@ -111,20 +152,21 @@ __fzf_obc_read_compreply() {
     if [[ "${cur}" == *"**" ]];then
       local item
       compopt +o filenames
-      read -r -a COMPREPLY < <(
-        printf "%s\n" "${COMPREPLY[@]}" \
+      __fzf_compreply < <(
+        printf "%s\0" "${COMPREPLY[@]}" \
         | __fzf_obc_sort_cmd \
         | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
           __fzf_obc_cmd \
-        | while read -r item;do printf "%q " "${item}" | sed 's/^\\~/~/';done \
+        | while IFS= read -d $'\0' -r item;do printf "%q " "${item}" | sed 's/^\\~/~/';done \
         | sed 's/ $//'
       )
     else
-      read -r -a COMPREPLY < <(
-        printf "%s\n" "${COMPREPLY[@]}" \
+      __fzf_compreply < <(
+        printf "%s\0" "${COMPREPLY[@]}" \
         | __fzf_obc_sort_cmd \
         | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
-          __fzf_obc_cmd
+          __fzf_obc_cmd \
+        | sed 's#/\x0#\x0#'
       )
     fi
     printf '\e[5n'
