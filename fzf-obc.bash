@@ -6,7 +6,7 @@
 # /_/   /___/_/-completion.bash
 #
 # - $FZF_OBC_PATH               (default: )
-#
+# - $FZF_OBC_COLORS             (default: 1)
 # - $FZF_OBC_HEIGHT             (default: 40%)
 # - $FZF_OBC_EXCLUDE_PATH       (default: .git:.svn)
 # - $FZF_OBC_OPTS               (default: --select-1 --exit-0)
@@ -19,6 +19,7 @@
 
 __fzf_obc_init_vars() {
   : "${FZF_OBC_PATH:=}"
+  : "${FZF_OBC_COLORS:=1}"
   : "${FZF_OBC_HEIGHT:=40%}"
   : "${FZF_OBC_EXCLUDE_PATH:=.git:.svn}"
   : "${FZF_OBC_OPTS:=--select-1 --exit-0}"

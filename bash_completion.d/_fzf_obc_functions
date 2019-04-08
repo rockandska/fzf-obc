@@ -14,9 +14,37 @@ __fzf_compreply() {
     IFS=$'\0' read -r -d '' -a COMPREPLY
   fi
 }
+
 __fzf_obc_sort_cmd() {
   # sort cmd used to show results
   (LC_ALL=C sort -ufrz -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -ufrz)
+}
+
+__fzf_obc_colorized() {
+  local IFS=' '
+  local ls_colors_arr
+  ls_colors_arr=(${LS_COLORS//:/ })
+  declare -A fzf_obc_colors
+  local arg
+  for arg in "${ls_colors_arr[@]}";do
+    r=(${arg//=/ })
+    if [[ "${r[0]}" == "*"* ]];then
+      fzf_obc_colors["ext_${r[0]/\*\.}"]="${r[1]}"
+    else
+      fzf_obc_colors["type_${r[0]}"]="${r[1]}"
+    fi
+  done
+
+  while IFS=$'\0' read -r -d '' -t 0.1 line;do
+    type="${line:0:2}"
+    file="${line:3}"
+    if [[ "${type}" == "fi"  ]];then
+      ext="${file##*.}"
+      printf "\e[${fzf_obc_colors[ext_${ext}]:-0}m%s\e[0m\0" "$file"
+    else
+      printf "\e[${fzf_obc_colors[type_${type}]:-0}m%s\e[0m\0" "$file"
+    fi
+  done
 }
 
 # get find exclude pattern
@@ -77,21 +105,37 @@ __fzf_obc_search() {
   fi
 
   local cmd
+  cmd=""
   cmd="command find ${startdir}"
-  cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth} "
-  cmd+=" ${exclude_string} "
-
-  case ${type} in
-    paths)
-      cmd+=" \( -type d -printf '%p/\0' -or -printf '%p\0' \)"
-      ;;
-    files)
-      cmd+=" \( -type f -printf '%p\0' -or -type l -printf '%p\0' \)"
-      ;;
-    dirs)
-      cmd+=" -type d -printf '%p/\0' "
-      ;;
-  esac
+  cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth}"
+  cmd+=" ${exclude_string}"
+  if [[ "${type}" == "paths" ]] || [[ "${type}" == "dirs" ]];then
+    cmd+=" -type d \( -perm -o=+t -a -perm -o=+w \) -printf 'tw %p/\0'"
+    cmd+=" -or"
+    cmd+=" -type d \( -perm -o=+w \) -printf 'ow %p/\0'"
+    cmd+=" -or"
+    cmd+=" -type d \( -perm -o=+t -a -perm -o=-w \) -printf 'st %p/\0'"
+    cmd+=" -or"
+    cmd+=" -type d -printf 'di %p/\0'"
+  fi
+  if [[ "${type}" == "paths" ]];then
+    cmd+=" -or"
+  fi
+  if [[ "${type}" == "paths" ]] || [[ "${type}" == "files" ]];then
+    cmd+=" -type b -printf 'bd %p\0'"
+    cmd+=" -or"
+    cmd+=" -type c -printf 'cd %p\0'"
+    cmd+=" -or"
+    cmd+=" -type p -printf 'pi %p\0'"
+    cmd+=" -or"
+    cmd+=" -type l -printf 'ln %p\0'"
+    cmd+=" -or"
+    cmd+=" -type s -printf 'so %p\0'"
+    cmd+=" -or"
+    cmd+=" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -printf 'ex %p\0'"
+    cmd+=" -or"
+    cmd+=" -type f -printf 'fi %p\0'"
+  fi
 
   cmd+=" 2> /dev/null"
 
@@ -102,6 +146,10 @@ __fzf_obc_search() {
   if [[ -n ${xspec} ]];then
     cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
   fi
+
+  cmd="__fzf_obc_colorized < <(${cmd})"
+
+  #cmd="awk 'BEGIN{ RS=\"\0\";IFS=\" \" }{\$1=\"\"; printf(\"%s\0\",substr(\$2,2)) }' < <(${cmd})"
 
   eval "${cmd}"
   return 0
@@ -143,7 +191,7 @@ __fzf_obc_tilde ()
 }
 
 __fzf_obc_cmd() {
-    fzf --read0 --print0
+    fzf --read0 --print0 --ansi
 }
 
 __fzf_obc_read_compreply() {
