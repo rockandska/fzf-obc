@@ -26,8 +26,7 @@ __fzf_obc_trap__filedir_xspec()
   # Add to COMPREPLY our own results
   # Add recursivity to native _filedir
   if [[ "${cur}" == *"**" ]];then
-    cur=${cur/\*\*/}
-    __fzf_obc_tilde "$cur" || return
+    __fzf_obc_tilde "${cur%%\**}" || return
     local xspec
     # shellcheck disable=SC2154
     xspec="${_xspecs[${1##*/}]}"
@@ -38,7 +37,6 @@ __fzf_obc_trap__filedir_xspec()
     fi;
     xspec="$matchop($xspec|${xspec^^})";
     __fzf_add2compreply < <(__fzf_obc_search "${cur}" "files" "${xspec}")
-    cur="${cur}**"
   fi
   return "${last_status}"
 }

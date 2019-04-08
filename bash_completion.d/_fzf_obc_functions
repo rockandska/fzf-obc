@@ -51,21 +51,35 @@ __fzf_obc_search() {
   type="${2}"
   xspec="${3}"
 
-  local cur_expanded=${cur:-./}
-  __fzf_obc_expand_tilde_by_ref cur_expanded
+  local cur_clean
+  cur_clean="${cur%%\**}"
 
-  local exclude_string
-  __fzf_obc_globs_exclude exclude_string
+  local cur_expanded
+  cur_expanded=${cur_clean:-./}
+
+  __fzf_obc_expand_tilde_by_ref cur_expanded
 
   local startdir
   if [[ "${cur_expanded}" != *"/" ]];then
     startdir="${cur_expanded}*"
+    mindepth="0"
+    maxdepth="0"
   else
     startdir="${cur_expanded}"
+    mindepth="1"
+    maxdepth="1"
+  fi
+
+  if [[ "${cur}" == *"**" ]];then
+    maxdepth="${FZF_OBC_GLOBS_MAXDEPTH}"
+    local exclude_string
+    __fzf_obc_globs_exclude exclude_string
   fi
 
   local cmd
-  cmd="command find ${startdir} -mindepth 1 -maxdepth '${FZF_OBC_GLOBS_MAXDEPTH}' ${exclude_string}"
+  cmd="command find ${startdir}"
+  cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth} "
+  cmd+=" ${exclude_string} "
 
   case ${type} in
     paths)
@@ -81,8 +95,8 @@ __fzf_obc_search() {
 
   cmd+=" 2> /dev/null"
 
-  if [[ "${cur_expanded}" != "${cur}" ]];then
-    cmd+=" | sed -z s'#${cur_expanded//\//\\/}#${cur//\//\\/}#' "
+  if [[ "${cur_expanded}" != "${cur_clean}" ]];then
+    cmd=" sed -z s'#${cur_expanded//\//\\/}#${cur_clean//\//\\/}#' < <(${cmd})"
   fi
 
   if [[ "${type}" == "files" ]] && [[ -n ${xspec} ]];then
@@ -90,6 +104,7 @@ __fzf_obc_search() {
   fi
 
   eval "${cmd}"
+  return 0
 }
 
 __fzf_obc_search_filter_bash() (

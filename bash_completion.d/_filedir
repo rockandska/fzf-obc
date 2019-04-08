@@ -26,8 +26,7 @@ __fzf_obc_trap__filedir()
   # Add to COMPREPLY our own results
   # Add recursivity to native _filedir
   if [[ "${cur}" == *"**" ]];then
-    cur=${cur/\*\*/}
-    __fzf_obc_tilde "$cur" || return
+    __fzf_obc_tilde "${cur%%\**}" || return
     # Files/Path asked
     if [[ "$1" != -d ]]; then
       # With an extension filter
@@ -42,7 +41,6 @@ __fzf_obc_trap__filedir()
       # Only populate directories
       __fzf_add2compreply < <(__fzf_obc_search "${cur}" "dirs")
     fi
-    cur="${cur}**"
   fi
   return "${last_status}"
 }
