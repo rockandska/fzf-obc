@@ -99,7 +99,7 @@ __fzf_obc_search() {
     cmd=" sed -z s'#${cur_expanded//\//\\/}#${cur_clean//\//\\/}#' < <(${cmd})"
   fi
 
-  if [[ "${type}" == "files" ]] && [[ -n ${xspec} ]];then
+  if [[ -n ${xspec} ]];then
     cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
   fi
 

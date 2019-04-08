@@ -432,11 +432,12 @@ class FzfObcTest < Minitest::Test
     @@tty.assert_matches(<<~EOF)
       $ vi ~/#{HOME_TEST_DIR}/**
       >
-        4/4
+        5/5
       > ~/#{HOME_TEST_DIR}/test.conf
         ~/#{HOME_TEST_DIR}/test 1.conf
         ~/#{HOME_TEST_DIR}/d1/test.conf
         ~/#{HOME_TEST_DIR}/d1/test 1.conf
+        ~/#{HOME_TEST_DIR}/d1/
     EOF
 
   end
