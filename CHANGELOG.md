@@ -4,6 +4,7 @@
 
 **Merged pull requests:**
 
+- Use $'\0' in search function [\#3](https://github.com/rockandska/fzf-obc/pull/3) ([rockandska](https://github.com/rockandska))
 - Add \_filedir\_xspec trap [\#2](https://github.com/rockandska/fzf-obc/pull/2) ([rockandska](https://github.com/rockandska))
 
 ## [0.0.1](https://github.com/rockandska/fzf-obc/tree/0.0.1) (2019-03-11)
