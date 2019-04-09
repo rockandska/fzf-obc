@@ -17,7 +17,7 @@ __fzf_compreply() {
 
 __fzf_obc_sort_cmd() {
   # sort cmd used to show results
-  (LC_ALL=C sort -ufrz -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -ufrz)
+  (LC_ALL=C sort -frz -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -frz)
 }
 
 __fzf_obc_colorized() {
@@ -41,9 +41,9 @@ __fzf_obc_colorized() {
     file="${line:3}"
     if [[ "${type}" == "fi"  ]];then
       ext="${file##*.}"
-      printf "\e[${fzf_obc_colors[ext_${ext}]:-0}m%s\e[0m\0" "$file"
+      printf "%s \e[${fzf_obc_colors[ext_${ext}]:-0}m%s\e[0m\0" "${type}" "$file"
     else
-      printf "\e[${fzf_obc_colors[type_${type}]:-0}m%s\e[0m\0" "$file"
+      printf "%s \e[${fzf_obc_colors[type_${type}]:-0}m%s\e[0m\0" "${type}" "$file"
     fi
   done
 }
@@ -150,9 +150,9 @@ __fzf_obc_search() {
 
   if [[ "${FZF_OBC_COLORS}" == "1" ]] && [[ "${#LS_COLORS[@]}" -gt 0 ]];then
     cmd="__fzf_obc_colorized < <(${cmd})"
-  else
-    cmd="awk 'BEGIN{ RS=\"\0\";IFS=\" \" }{\$1=\"\"; printf(\"%s\0\",substr(\$0,2)) }' < <(${cmd})"
   fi
+
+  cmd="awk 'BEGIN{ RS=\"\0\";IFS=\" \" }{\$1=\"\"; printf(\"%s\0\",substr(\$0,2)) }' < <(${cmd})"
 
   eval "${cmd}"
   return 0
