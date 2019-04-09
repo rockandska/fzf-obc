@@ -23,15 +23,16 @@ __fzf_obc_sort_cmd() {
 __fzf_obc_colorized() {
   local IFS=' '
   local ls_colors_arr
-  ls_colors_arr=(${LS_COLORS//:/ })
+  IFS=':' read -r -a ls_colors_arr <<< "${LS_COLORS}"
   declare -A fzf_obc_colors
   local arg
+  local r
   for arg in "${ls_colors_arr[@]}";do
-    r=(${arg//=/ })
+    IFS='=' read -r -a r <<< "${arg}"
     if [[ "${r[0]}" == "*"* ]];then
-      fzf_obc_colors["ext_${r[0]/\*\.}"]="${r[1]}"
+      fzf_obc_colors[ext_${r[0]/\*\.}]="${r[1]}"
     else
-      fzf_obc_colors["type_${r[0]}"]="${r[1]}"
+      fzf_obc_colors[type_${r[0]}]="${r[1]}"
     fi
   done
 
@@ -147,9 +148,11 @@ __fzf_obc_search() {
     cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
   fi
 
-  cmd="__fzf_obc_colorized < <(${cmd})"
-
-  #cmd="awk 'BEGIN{ RS=\"\0\";IFS=\" \" }{\$1=\"\"; printf(\"%s\0\",substr(\$2,2)) }' < <(${cmd})"
+  if [[ "${FZF_OBC_COLORS}" == "1" ]] && [[ "${#LS_COLORS[@]}" -gt 0 ]];then
+    cmd="__fzf_obc_colorized < <(${cmd})"
+  else
+    cmd="awk 'BEGIN{ RS=\"\0\";IFS=\" \" }{\$1=\"\"; printf(\"%s\0\",substr(\$0,2)) }' < <(${cmd})"
+  fi
 
   eval "${cmd}"
   return 0

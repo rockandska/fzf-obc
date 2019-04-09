@@ -119,6 +119,10 @@ Default fzf-obc configuration could be customize by settings some environment va
   - default: 
   - additional paths containing specific complete traps / functions to load
   - if using multiples paths, paths need to be separate by `:` and will be load in the order they appear
+- `$FZF_OBC_COLORS`
+  - default: 1
+  - add colors similar to `ls`
+  - **doesn't handle broken symlink for now**
 - `$FZF_OBC_HEIGHT`
   - default: `40%`
   - height of the fzf filtering windows
@@ -133,7 +137,6 @@ Default fzf-obc configuration could be customize by settings some environment va
 - `$FZF_OBC_BINDINGS`
   - default: `--bind tab:accept`
   - bindings options used for basic completion
-
 - `$FZF_OBC_GLOBS_MAXDEPTH`
   - default: `999999`
   - maximum depth to look when using globs completion
