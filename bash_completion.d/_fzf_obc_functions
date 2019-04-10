@@ -17,7 +17,7 @@ __fzf_compreply() {
 
 __fzf_obc_sort_cmd() {
   # sort cmd used to show results
-  (LC_ALL=C sort -frz -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -frz)
+  (LC_ALL=C sort -z -t ' ' -k2fr -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -z -t ' ' -k2fr)
 }
 
 __fzf_obc_colorized() {
@@ -36,7 +36,7 @@ __fzf_obc_colorized() {
     fi
   done
 
-  while IFS=$'\0' read -r -d '' -t 0.1 line;do
+  while IFS=$'\0' read -r -d '' line;do
     type="${line:0:2}"
     file="${line:3}"
     if [[ "${type}" == "fi"  ]];then
@@ -148,11 +148,13 @@ __fzf_obc_search() {
     cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
   fi
 
-  if [[ "${FZF_OBC_COLORS}" == "1" ]] && [[ "${#LS_COLORS[@]}" -gt 0 ]];then
+  cmd=" __fzf_obc_sort_cmd < <($cmd)"
+
+  if [[ "${FZF_OBC_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
     cmd="__fzf_obc_colorized < <(${cmd})"
   fi
 
-  cmd="awk 'BEGIN{ RS=\"\0\";IFS=\" \" }{\$1=\"\"; printf(\"%s\0\",substr(\$0,2)) }' < <(${cmd})"
+  cmd="cut -z -d ' ' -f2- < <(${cmd})"
 
   eval "${cmd}"
   return 0
@@ -164,10 +166,18 @@ __fzf_obc_search_filter_bash() (
   #   $1: an optional glob patern for filtering
   # Return: a list of strings filtered and separate by $'\0'
   shopt -s extglob
-  local xspec="$1"
+  local xspec line type file filename
+  xspec="$1"
   [[ -z "${xspec}" ]] && cat
-  while IFS= read -t 0.1 -d $'\0' -r file;do
-    [[ "${file}" == ${xspec} ]] && printf "%s\0" "${file}"
+  while IFS= read -t 0.1 -d $'\0' -r line;do
+    type="${line:0:2}"
+    file="${line:3}"
+    filename="${file##*/}"
+    if [[ "${type}" =~ ^(st|ow|tw|di)$ ]];then
+      printf "%s\0" "${line}"
+    else
+      [[ "${filename}" == ${xspec} ]] && printf "%s\0" "${line}"
+    fi
   done
 )
 
@@ -205,7 +215,6 @@ __fzf_obc_read_compreply() {
       compopt +o filenames
       __fzf_compreply < <(
         printf "%s\0" "${COMPREPLY[@]}" \
-        | __fzf_obc_sort_cmd \
         | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
           __fzf_obc_cmd \
         | while IFS= read -d $'\0' -r item;do printf "%q " "${item}" | sed 's/^\\~/~/';done \
@@ -214,7 +223,6 @@ __fzf_obc_read_compreply() {
     else
       __fzf_compreply < <(
         printf "%s\0" "${COMPREPLY[@]}" \
-        | __fzf_obc_sort_cmd \
         | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
           __fzf_obc_cmd \
         | sed 's#/\x0#\x0#'
