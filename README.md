@@ -7,9 +7,7 @@ It is a replacement to the completion script natively provided by [fzf](https://
 
 ## Demo
 
-[![asciicast](https://asciinema.org/a/g41AU7DB2iJtp5plhswJnczeS.svg)](https://asciinema.org/a/g41AU7DB2iJtp5plhswJnczeS?speed=3)
-
-
+![demo](docs/img/demo.gif)
 
 ## Prerequisites
 
@@ -119,10 +117,6 @@ Default fzf-obc configuration could be customize by settings some environment va
   - default: 
   - additional paths containing specific complete traps / functions to load
   - if using multiples paths, paths need to be separate by `:` and will be load in the order they appear
-- `$FZF_OBC_COLORS`
-  - default: 1
-  - add colors similar to `ls`
-  - **doesn't handle broken symlink for now**
 - `$FZF_OBC_HEIGHT`
   - default: `40%`
   - height of the fzf filtering windows
@@ -131,6 +125,10 @@ Default fzf-obc configuration could be customize by settings some environment va
   - paths to exclude from the completion results
   - if using multiples paths, paths need to be separate by `:`
   - **works only with globs completion**
+- `$FZF_OBC_COLORS`
+  - default: 1
+  - add colors similar to `ls`
+  - **doesn't handle broken symlink for now**
 - `$FZF_OBC_OPTS`
   - default: `--select-1 --exit-0`
   - options used for basic completion
@@ -140,6 +138,10 @@ Default fzf-obc configuration could be customize by settings some environment va
 - `$FZF_OBC_GLOBS_MAXDEPTH`
   - default: `999999`
   - maximum depth to look when using globs completion
+- `$FZF_OBC_GLOBS_COLORS`
+  - default: 1
+  - add colors similar to `ls` to globs completion
+  - **doesn't handle broken symlink for now**
 - `$FZF_OBC_GLOBS_OPTS`
   - default: `-m --select-1 --exit-0`
   - options used for globs completion

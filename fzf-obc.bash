@@ -19,11 +19,12 @@
 
 __fzf_obc_init_vars() {
   : "${FZF_OBC_PATH:=}"
-  : "${FZF_OBC_COLORS:=1}"
   : "${FZF_OBC_HEIGHT:=40%}"
   : "${FZF_OBC_EXCLUDE_PATH:=.git:.svn}"
+  : "${FZF_OBC_COLORS:=1}"
   : "${FZF_OBC_OPTS:=--select-1 --exit-0}"
   : "${FZF_OBC_BINDINGS:=--bind tab:accept}"
+  : "${FZF_OBC_GLOBS_COLORS:=1}"
   : "${FZF_OBC_GLOBS_OPTS:=-m --select-1 --exit-0}"
   : "${FZF_OBC_GLOBS_BINDINGS:=}"
 

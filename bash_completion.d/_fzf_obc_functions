@@ -150,8 +150,14 @@ __fzf_obc_search() {
 
   cmd=" __fzf_obc_sort_cmd < <($cmd)"
 
-  if [[ "${FZF_OBC_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
-    cmd="__fzf_obc_colorized < <(${cmd})"
+  if [[ "${cur}" == *"**" ]];then
+    if [[ "${FZF_OBC_GLOBS_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
+      cmd="__fzf_obc_colorized < <(${cmd})"
+    fi
+  else
+    if [[ "${FZF_OBC_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
+      cmd="__fzf_obc_colorized < <(${cmd})"
+    fi
   fi
 
   cmd="cut -z -d ' ' -f2- < <(${cmd})"
