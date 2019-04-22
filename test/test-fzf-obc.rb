@@ -1,8 +1,25 @@
+require 'minitest'
+require 'minitest/autorun'
+require 'ttytest'
+require 'mkmf'
+require 'git'
+require_relative 'lib/ttytest_addons'
+
+# Env variables available
+# TESTS_DEBUG: set to true to access debug session
+# TESTS_PAUSE: set to true to ask confirmation on each keypress
+# TESTS_RECORDING: set to true to record the session
+# TESTS_KEYS_DELAY: set delay between keypress
+#
 FILE = File.expand_path(__FILE__)
 BASE = File.expand_path('../../', __FILE__)
-TEST_DIR = "test/structure"
-HOME_TEST_DIR = ".local/tmp/fzf-obc/test/structure"
-Dir.chdir BASE
+
+TEST_DIR = "test/tmp"
+TEST_HOME_DIR = "~/.local/tmp/fzf-obc"
+TEST_REC_FILE = "/tmp/fzf-obc.cast"
+
+TERMINAL_COLUMNS=80
+TERMINAL_LINES=24
 
 DOWN='Down'
 UP='Up'
@@ -12,71 +29,82 @@ TAB='Tab'
 ENTER='Enter'
 ESCAPE='Escape'
 CTRLC='C-c'
+CTRLG='C-g'
+CTRLU='C-u'
+CTRLL='C-l'
 
-require 'minitest'
-require 'minitest/autorun'
-require 'ttytest'
-require_relative 'lib/ttytest_addons'
-require 'mkmf'
+TTYtest.debug = true if ENV['TESTS_DEBUG']
+TTYtest.pause = true if ENV['TESTS_PAUSE']
+TTYtest.send_keys_delay = ENV['TESTS_KEYS_DELAY'].to_f if ENV['TESTS_KEYS_DELAY']
 
 puts "\nChecking for binaries required for those tests\n\n"
 
 check_cmds(%w{
   fzf
   git
+  docker
   insmod
   vi
+  asciinema
 })
-
 
 class FzfObcTest < Minitest::Test
 
+  FileUtils.rm_rf File.expand_path("#{TEST_DIR}")
+  FileUtils.rm_rf File.expand_path("#{TEST_HOME_DIR}")
+  FileUtils.rm_rf File.expand_path("#{TEST_REC_FILE}")
+  Dir.chdir BASE
+  files = Dir.glob("test/spec/**/*.rb")
+  files.each{|file| require_relative file.gsub(/^test\/|\.rb$/,'')}
+
   @@prepare_tmux_done = false
 
+  def temp_test_dir
+    "#{TEST_DIR}/#{self.name}"
+  end
+
+  def temp_test_home_dir
+    "#{TEST_HOME_DIR}/#{self.name}"
+  end
+
   def setup
+    Dir.chdir BASE
     prepare_tmux
-    cleanup
+    if TTYtest.debug
+      puts "\nDebug: #{self.name}\n"
+    end
+    sleep TTYtest.send_keys_delay
     @@tty.clear_screen()
+    @@tty.assert_row(0,'$')
   end
 
   def prepare_tmux
     return if @@prepare_tmux_done
     @@prepare_tmux_done = true
-
-    puts 'Preparing the environment for testing.......'
-
-    @@tty = TTYtest.new_terminal(<<~HEREDOC,width: 230)
+    @@tty = TTYtest.new_terminal(<<~HEREDOC,width: "#{TERMINAL_COLUMNS}", height: "#{TERMINAL_LINES}")
       env -i \
+        LC_ALL="en_US.UTF-8" \
+        LS_COLORS="#{ENV['LS_COLORS']}" \
+        HOME="#{ENV['HOME']}" \
+        TERM="#{ENV['TERM']}" \
         PS1='$ ' \
         PATH="#{ENV['PATH']}" \
         PROMPT_COMMAND='' \
-        TESTS_DEBUG="#{ENV['TESTS_DEBUG']}" \
-        TESTS_PAUSE="#{ENV['TESTS_PAUSE']}" \
-        TESTS_KEYS_DELAY="#{ENV['TESTS_KEYS_DELAY']}" \
         HISTFILE='' \
-        FZF_OBC_HEIGHT='90%' \
+        FZF_OBC_HEIGHT='40%' \
         FZF_OBC_OPTS="--select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'" \
         FZF_OBC_GLOBS_OPTS="-m --select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'" \
         /bin/bash --norc --noprofile
     HEREDOC
-    sleep(1)
-
-    if ENV['TESTS_DEBUG']
-      TTYtest.debug = true
-    elsif ENV['TESTS_PAUSE']
-      TTYtest.debug = true
-      TTYtest.pause = true
-    end
-
-    if ENV['TESTS_KEYS_DELAY']
-      TTYtest.send_keys_delay = ENV['TESTS_KEYS_DELAY'].to_f
-    end
 
     if TTYtest.debug
       puts(<<~EOF)
         ***************************
-        Debug session start
-        Please, open a new terminal and join the debug session with:
+        Debug session started
+        - Open a new terminal
+        - Resize to the corresponding size:
+        resize -s #{TERMINAL_LINES} #{TERMINAL_COLUMNS}
+        - Join the debug session with:
         tmux -L ttytest attach
         Then, come back here and press 'Enter' to start
         To stop the debug session, press Ctrl+c
@@ -87,63 +115,36 @@ class FzfObcTest < Minitest::Test
       end
     end
 
-    @@tty.send_keys(<<~EOF)
-      source /etc/bash_completion; echo $?
-      #{ENTER}
-    EOF
-    @@tty.assert_matches(<<~EOF)
-      $ source /etc/bash_completion; echo $?
-      0
-      $
-    EOF
-    @@tty.clear_screen()
+
+    if ENV['TESTS_RECORDING']
+      puts(<<~EOF)
+        *********************************
+        Session recording asked
+        - The record will be placed into #{TEST_REC_FILE}"
+        *********************************
+      EOF
+      @@tty.send_keys("asciinema rec -t 'fzf-obc demo' -c 'bash --norc --noprofile' #{TEST_REC_FILE}","#{ENTER}", delay: 0.01, sleep: 0.01)
+      @@tty.assert_last_row('$')
+      @@tty.clear_screen()
+    end
 
     @@tty.max_wait_time = 3
-    @@tty.send_keys(<<~EOF)
-      source fzf-obc.bash; echo $?
-      #{ENTER}
-    EOF
+    @@tty.send_keys("source /etc/bash_completion; source fzf-obc.bash","#{ENTER}", sleep: 0.01)
     @@tty.assert_matches(<<~EOF)
-      $ source fzf-obc.bash; echo $?
-      0
+      $ source /etc/bash_completion; source fzf-obc.bash
       $
     EOF
-    @@tty.clear_screen()
-
     @@tty.max_wait_time = 2
-    @@tty.send_keys(<<~EOF)
-      complete | grep __fzf
-      #{ENTER}
-    EOF
-    @@tty.assert_rows_count(:>,2)
-    @@tty.assert_row(-1, '$')
 
-    puts 'Preparation finished !'
-    puts 'Starting tests..........'
-  end
-
-  def files_creation
-    (1..10).each do |idx|
-      FileUtils.mkdir_p "#{TEST_DIR}/d#{idx}"
-    end
-    FileUtils.mkdir_p "#{TEST_DIR}/d1 0"
-    FileUtils.touch "#{TEST_DIR}/xxx"
-    FileUtils.touch "#{TEST_DIR}/xxx xxx"
-    FileUtils.touch "#{TEST_DIR}/d10/xxx"
-    FileUtils.touch "#{TEST_DIR}/yyy"
-    FileUtils.touch "#{TEST_DIR}/d10/yyy yyy"
-  end
-
-  def files_glob_creation
-    files_creation
   end
 
   def create_files_dirs(
-    dest: TEST_DIR,
+    dest: "#{temp_test_dir}",
     subdirs: %w{},
     files: %w{}
   )
     dest = File.expand_path(dest)
+    FileUtils.rm_rf "#{dest}"
     FileUtils.mkdir_p "#{dest}"
     for file in files
       FileUtils.touch "#{dest}/#{file}"
@@ -156,303 +157,13 @@ class FzfObcTest < Minitest::Test
     end
   end
 
-  def files_home_completion
-    FileUtils.mkdir_p "#{ENV['HOME']}/#{HOME_TEST_DIR}"
-    FileUtils.touch "#{ENV['HOME']}/#{HOME_TEST_DIR}/fzf-obc.test"
-    FileUtils.touch "#{ENV['HOME']}/#{HOME_TEST_DIR}/test-fzf-obc.test"
-    FileUtils.touch "#{ENV['HOME']}/#{HOME_TEST_DIR}/test fzf-obc.test"
-  end
-
-  def files_home_glob_completion
-    files_home_completion
-  end
-
-  def test_files_completion
-    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
-    files_creation
-    @@tty.send_keys(<<~EOF)
-      cat #{TEST_DIR}/
-      #{TAB}
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat #{TEST_DIR}/
-      >
-        14/14
-      > #{TEST_DIR}/yyy
-        #{TEST_DIR}/xxx xxx
-        #{TEST_DIR}/xxx
-        #{TEST_DIR}/d9/
-        #{TEST_DIR}/d8/
-        #{TEST_DIR}/d7/
-        #{TEST_DIR}/d6/
-        #{TEST_DIR}/d5/
-        #{TEST_DIR}/d4/
-        #{TEST_DIR}/d3/
-        #{TEST_DIR}/d2/
-        #{TEST_DIR}/d10/
-        #{TEST_DIR}/d1/
-        #{TEST_DIR}/d1 0/
-    TTY
-    @@tty.send_keys(<<~EOF)
-      x
-      #{TAB}
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat #{TEST_DIR}/xxx\\ xxx
-    TTY
-  end
-
-  def test_files_glob_completion
-    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
-    files_glob_creation
-    @@tty.send_keys(<<~EOF)
-      cat #{TEST_DIR}/**
-      #{TAB}
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat #{TEST_DIR}/**
-      >
-        16/16
-      > #{TEST_DIR}/yyy
-        #{TEST_DIR}/xxx xxx
-        #{TEST_DIR}/xxx
-        #{TEST_DIR}/d9/
-        #{TEST_DIR}/d8/
-        #{TEST_DIR}/d7/
-        #{TEST_DIR}/d6/
-        #{TEST_DIR}/d5/
-        #{TEST_DIR}/d4/
-        #{TEST_DIR}/d3/
-        #{TEST_DIR}/d2/
-        #{TEST_DIR}/d10/yyy yyy
-        #{TEST_DIR}/d10/xxx
-        #{TEST_DIR}/d10/
-        #{TEST_DIR}/d1/
-        #{TEST_DIR}/d1 0/
-    TTY
-    @@tty.send_keys(<<~EOF)
-      x
-      #{TAB}
-      #{DOWN}
-      #{DOWN}
-      #{TAB}
-      #{ENTER}
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat #{TEST_DIR}/xxx\\ xxx #{TEST_DIR}/d10/xxx
-    TTY
-  end
-
-  def test_files_home_completion
-    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
-    files_home_completion
-    @@tty.send_keys(<<~EOF)
-      cat ~/#{HOME_TEST_DIR}/
-      #{TAB}
-      'fzf-obc.test
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat ~/#{HOME_TEST_DIR}/
-      > 'fzf-obc.test
-        3/3
-      > ~/#{HOME_TEST_DIR}/test-fzf-obc.test
-        ~/#{HOME_TEST_DIR}/test fzf-obc.test
-        ~/#{HOME_TEST_DIR}/fzf-obc.test
-    TTY
-    @@tty.send_keys(<<~EOF)
-      #{CTRLC}
-      'test-fzf-obc.test
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat ~/#{HOME_TEST_DIR}/
-      > 'test-fzf-obc.test
-        1/3
-      > ~/#{HOME_TEST_DIR}/test-fzf-obc.test
-    TTY
-    @@tty.send_keys(<<~EOF)
-      #{CTRLC}
-      #{DOWN}
-      #{TAB}
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat ~/#{HOME_TEST_DIR}/test\\ fzf-obc.test
-    TTY
-  end
-
-  def test_files_home_glob_completion
-    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
-    files_home_glob_completion
-    @@tty.send_keys(<<~EOF)
-      cat ~/#{HOME_TEST_DIR}/**
-      #{TAB}
-      'fzf-obc.test
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat ~/#{HOME_TEST_DIR}/**
-      > 'fzf-obc.test
-        3/3
-      > ~/#{HOME_TEST_DIR}/test-fzf-obc.test
-        ~/#{HOME_TEST_DIR}/test fzf-obc.test
-        ~/#{HOME_TEST_DIR}/fzf-obc.test
-    TTY
-    @@tty.send_keys(<<~EOF)
-      #{CTRLC}
-      'test-fzf-obc.test
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat ~/#{HOME_TEST_DIR}/**
-      > 'test-fzf-obc.test
-        1/3
-      > ~/#{HOME_TEST_DIR}/test-fzf-obc.test
-    TTY
-    @@tty.send_keys(<<~EOF)
-      #{CTRLC}
-      'fzf-obc.test
-      #{DOWN}
-      #{TAB}
-      #{TAB}
-      #{ENTER}
-    EOF
-    @@tty.assert_matches <<~TTY
-      $ cat ~/#{HOME_TEST_DIR}/test\\ fzf-obc.test ~/#{HOME_TEST_DIR}/fzf-obc.test
-    TTY
-  end
-
-  def test__filedir_with_insmod
-    # insmod use _filedir with extension filter
-    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
-    create_files_dirs(
-      subdirs: %w{d1},
-      files: %w{
-        test.ko.gz
-        test\ 1.ko.gz
-        test.log
-        test.mp3
-      }
-    )
-    @@tty.send_keys(<<~EOF)
-      insmod #{TEST_DIR}/
-      #{TAB}
-    EOF
-    @@tty.assert_matches(<<~EOF)
-      $ insmod #{TEST_DIR}/
-      >
-        3/3
-      > #{TEST_DIR}/test.ko.gz
-        #{TEST_DIR}/test 1.ko.gz
-        #{TEST_DIR}/d1/
-    EOF
-  end
-
-  def test__filedir_with_insmod_in_home
-    # insmod use _filedir with extension filter
-    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
-    create_files_dirs(
-      dest: "~/#{HOME_TEST_DIR}",
-      subdirs: %w{d1},
-      files: %w{
-        test.ko.gz
-        test\ 1.ko.gz
-        test.log
-        test.mp3
-      }
-    )
-    @@tty.send_keys(<<~EOF)
-      insmod ~/#{HOME_TEST_DIR}/
-      #{TAB}
-    EOF
-    @@tty.assert_matches(<<~EOF)
-      $ insmod ~/#{HOME_TEST_DIR}/
-      >
-        3/3
-      > ~/#{HOME_TEST_DIR}/test.ko.gz
-        ~/#{HOME_TEST_DIR}/test 1.ko.gz
-        ~/#{HOME_TEST_DIR}/d1/
-    EOF
-  end
-
-  def test__filedir_xspec_with_vi
-    # vi use _filedir_xspec with extension filter
-    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
-    create_files_dirs(
-      subdirs: %w{d1},
-      files: %w{
-        test.conf
-        test\ 1.conf
-        test.class
-        test.mp3
-      }
-    )
-    @@tty.send_keys(<<~EOF)
-      vi #{TEST_DIR}/
-      #{TAB}
-    EOF
-    @@tty.assert_matches(<<~EOF)
-      $ vi #{TEST_DIR}/
-      >
-        3/3
-      > #{TEST_DIR}/test.conf
-        #{TEST_DIR}/test 1.conf
-        #{TEST_DIR}/d1/
-    EOF
-  end
-
-  def test__filedir_xspec_with_vi_in_home
-    # vi use _filedir_xspec with extension filter
-    puts "\nDebug: inside " + __method__.to_s + "\n" if TTYtest.debug
-    create_files_dirs(
-      dest: "~/#{HOME_TEST_DIR}",
-      subdirs: %w{d1},
-      files: %w{
-        test.conf
-        test\ 1.conf
-        test.class
-        test.mp3
-      }
-    )
-    @@tty.send_keys(<<~EOF)
-      vi ~/#{HOME_TEST_DIR}/
-      #{TAB}
-    EOF
-    @@tty.assert_matches(<<~EOF)
-      $ vi ~/#{HOME_TEST_DIR}/
-      >
-        3/3
-      > ~/#{HOME_TEST_DIR}/test.conf
-        ~/#{HOME_TEST_DIR}/test 1.conf
-        ~/#{HOME_TEST_DIR}/d1/
-    EOF
-
-    # With globs
-    @@tty.clear_screen()
-    @@tty.send_keys(<<~EOF)
-      vi ~/#{HOME_TEST_DIR}/**
-      #{TAB}
-    EOF
-    @@tty.assert_matches(<<~EOF)
-      $ vi ~/#{HOME_TEST_DIR}/**
-      >
-        5/5
-      > ~/#{HOME_TEST_DIR}/test.conf
-        ~/#{HOME_TEST_DIR}/test 1.conf
-        ~/#{HOME_TEST_DIR}/d1/test.conf
-        ~/#{HOME_TEST_DIR}/d1/test 1.conf
-        ~/#{HOME_TEST_DIR}/d1/
-    EOF
-
-  end
-
-end
-
-def cleanup
-  Dir.chdir BASE
-  FileUtils.rm_rf "#{TEST_DIR}"
-  FileUtils.rm_rf "#{ENV['HOME']}/#{HOME_TEST_DIR}"
 end
 
 MiniTest.after_run do
   if !TTYtest.debug
     # Don't cleanup in debug mode to keep the last test structure
-    cleanup
+    Dir.chdir BASE
+    FileUtils.rm_rf File.expand_path("#{TEST_DIR}")
+    FileUtils.rm_rf File.expand_path("#{TEST_HOME_DIR}")
   end
 end
