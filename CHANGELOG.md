@@ -4,6 +4,7 @@
 
 **Merged pull requests:**
 
+- Add colors to \_filedir / \_filedir\_xspec [\#7](https://github.com/rockandska/fzf-obc/pull/7) ([rockandska](https://github.com/rockandska))
 - Use $'\0' in search function [\#3](https://github.com/rockandska/fzf-obc/pull/3) ([rockandska](https://github.com/rockandska))
 - Add \_filedir\_xspec trap [\#2](https://github.com/rockandska/fzf-obc/pull/2) ([rockandska](https://github.com/rockandska))
 
