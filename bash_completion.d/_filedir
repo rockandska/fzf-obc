@@ -5,12 +5,12 @@ _filedir()
 
   __fzf_obc_tilde "${cur%%\**}" || return
 
-  __fzf_add2compreply < <(__fzf_obc_search "${cur}" "dirs")
-
   if [[ "$1" != -d ]]; then
-      local xspec=${1:+"*.@($1|${1^^})"};
-      __fzf_add2compreply < <(__fzf_obc_search "${cur}" "files" "${xspec}")
-      [[ -n ${COMP_FILEDIR_FALLBACK:-} && -n "$1" && ${#COMPREPLY[@]} -lt 1 ]] && __fzf_add2compreply < <(__fzf_obc_search "${cur}" "files")
+    local xspec=${1:+"*.@($1|${1^^})"};
+    __fzf_add2compreply < <(__fzf_obc_search "${cur}" "paths" "${xspec}")
+    [[ -n ${COMP_FILEDIR_FALLBACK:-} && -n "$1" && ${#COMPREPLY[@]} -lt 1 ]] && __fzf_add2compreply < <(__fzf_obc_search "${cur}" "paths")
+  else
+    __fzf_add2compreply < <(__fzf_obc_search "${cur}" "dirs")
   fi
 
   if [[ "${#COMPREPLY[@]}" -gt 0 ]];then

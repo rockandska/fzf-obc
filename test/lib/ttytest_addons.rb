@@ -12,7 +12,7 @@ module TTYtest
     def assert_rows_include(expected)
       expected = expected.rstrip
       if !to_s.match(/^#{Regexp.quote(expected)}$/)
-        raise <<~HEREDOC
+        raise MatchError, <<~HEREDOC
           #{MatchError}
           Was expecting to find:
           #{expected}
@@ -25,18 +25,32 @@ module TTYtest
     def assert_rows_count(operator,int)
       nb_rows = rows.count { |s| s != "" }
       if !nb_rows.send(operator,int)
-        raise <<~HEREDOC
+        raise MatchError, <<~HEREDOC
           #{MatchError}
           Was expecting to see #{operator} #{int} none empty rows
           But only #{nb_rows} none empty rows were found
         HEREDOC
       end
     end
-    METHODS_TO_ADD = ['assert_rows_include','assert_rows_count']
+
+    def assert_last_row(expected)
+      expected = expected.rstrip
+      rows_clean = rows.reject { |c| c.empty? }
+      if rows_clean[-1] != expected
+        raise MatchError, <<~HEREDOC
+          #{MatchError}
+          Expecting to see on last non empty row:
+          '#{expected}'
+          But the last row is:
+          '#{rows_clean[-1]}'
+        HEREDOC
+      end
+    end
+    METHODS_TO_ADD = public_instance_methods
   end
 
   class Terminal
-    def_delegators :@driver_terminal, :clear_screen
+    def_delegators :@driver_terminal, :clear_screen, :session_name
     TTYtest::Matchers::METHODS_TO_ADD.each do |matcher_name|
       define_method matcher_name do |*args|
         synchronize do
@@ -48,40 +62,43 @@ module TTYtest
 
   module Tmux
     class Session
-      def send_keys(*keys)
-        keys.each do |key|
+
+      def session_name
+        "#{name}"
+      end
+
+      def send_keys(*keys, delay: TTYtest.send_keys_delay, sleep: TTYtest.send_keys_delay)
+        sleep delay
+        keys.each_with_index do |key, keys_index|
           cmds = key.split("\n")
-          cmds.each do |item|
-            if TTYtest.debug and TTYtest.pause
+          cmds.each_with_index do |item, item_index|
+            if TTYtest.pause
               printf "Press enter to send: " + item.dump
               while ! gets
                 sleep 0.05
               end
             end
-            driver.tmux(*%W[send-keys -t #{name}], *item)
-            sleep TTYtest.send_keys_delay
+            sleep sleep if item_index > 0 or keys_index > 0
+            driver.tmux(*%W[send-keys -t #{name} -- #{item}])
           end
         end
       end
 
-      def clear_screen
-        if TTYtest.debug and TTYtest.pause
+      def clear_screen(delay: TTYtest.send_keys_delay, sleep: 0.01)
+        sleep delay
+        if TTYtest.pause
           printf 'Press enter will clear the screen'
           while ! gets
             sleep 0.05
           end
         end
-        driver.tmux(*%W[send-keys -Rt #{name}], 'C-c')
-        sleep TTYtest.send_keys_delay
-        driver.tmux(*%W[send-keys -Rt #{name}], 'C-c')
-        sleep TTYtest.send_keys_delay
-        driver.tmux(*%W[send-keys -Rt #{name}], 'printf "\\033c"')
-        sleep TTYtest.send_keys_delay
-        driver.tmux(*%W[send-keys -Rt #{name}], 'Enter')
-        sleep TTYtest.send_keys_delay
+        driver.tmux(*%W[send-keys -Rt #{name}], "#{CTRLG}")
+        driver.tmux(*%W[send-keys -Rt #{name}], "#{CTRLU}")
+        driver.tmux(*%W[send-keys -Rt #{name}], "#{CTRLL}")
       end
     end
   end
+
 end
 
 def check_cmds(cmds)

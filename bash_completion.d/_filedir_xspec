@@ -2,7 +2,6 @@
 _filedir_xspec()
 {
   __fzf_obc_tilde "${cur%%\**}" || return
-  __fzf_add2compreply < <(__fzf_obc_search "${cur}" "dirs")
   local xspec
   # shellcheck disable=SC2154
   xspec="${_xspecs[${1##*/}]}"
@@ -12,7 +11,7 @@ _filedir_xspec()
       matchop=@;
   fi;
   xspec="$matchop($xspec|${xspec^^})";
-  __fzf_add2compreply < <(__fzf_obc_search "${cur}" "files" "${xspec}")
+  __fzf_add2compreply < <(__fzf_obc_search "${cur}" "paths" "${xspec}")
 
   if [[ "${#COMPREPLY[@]}" -gt 0 ]];then
     compopt -o filenames

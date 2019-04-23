@@ -14,9 +14,38 @@ __fzf_compreply() {
     IFS=$'\0' read -r -d '' -a COMPREPLY
   fi
 }
+
 __fzf_obc_sort_cmd() {
   # sort cmd used to show results
-  (LC_ALL=C sort -ufrz -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -ufrz)
+  (LC_ALL=C sort -z -t ' ' -k2fr -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -z -t ' ' -k2fr)
+}
+
+__fzf_obc_colorized() {
+  local IFS=' '
+  local ls_colors_arr
+  IFS=':' read -r -a ls_colors_arr <<< "${LS_COLORS}"
+  declare -A fzf_obc_colors
+  local arg
+  local r
+  for arg in "${ls_colors_arr[@]}";do
+    IFS='=' read -r -a r <<< "${arg}"
+    if [[ "${r[0]}" == "*"* ]];then
+      fzf_obc_colors[ext_${r[0]/\*\.}]="${r[1]}"
+    else
+      fzf_obc_colors[type_${r[0]}]="${r[1]}"
+    fi
+  done
+
+  while IFS=$'\0' read -r -d '' line;do
+    type="${line:0:2}"
+    file="${line:3}"
+    if [[ "${type}" == "fi"  ]];then
+      ext="${file##*.}"
+      printf "%s \e[${fzf_obc_colors[ext_${ext}]:-0}m%s\e[0m\0" "${type}" "$file"
+    else
+      printf "%s \e[${fzf_obc_colors[type_${type}]:-0}m%s\e[0m\0" "${type}" "$file"
+    fi
+  done
 }
 
 # get find exclude pattern
@@ -77,21 +106,37 @@ __fzf_obc_search() {
   fi
 
   local cmd
+  cmd=""
   cmd="command find ${startdir}"
-  cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth} "
-  cmd+=" ${exclude_string} "
-
-  case ${type} in
-    paths)
-      cmd+=" \( -type d -printf '%p/\0' -or -printf '%p\0' \)"
-      ;;
-    files)
-      cmd+=" \( -type f -printf '%p\0' -or -type l -printf '%p\0' \)"
-      ;;
-    dirs)
-      cmd+=" -type d -printf '%p/\0' "
-      ;;
-  esac
+  cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth}"
+  cmd+=" ${exclude_string}"
+  if [[ "${type}" == "paths" ]] || [[ "${type}" == "dirs" ]];then
+    cmd+=" -type d \( -perm -o=+t -a -perm -o=+w \) -printf 'tw %p/\0'"
+    cmd+=" -or"
+    cmd+=" -type d \( -perm -o=+w \) -printf 'ow %p/\0'"
+    cmd+=" -or"
+    cmd+=" -type d \( -perm -o=+t -a -perm -o=-w \) -printf 'st %p/\0'"
+    cmd+=" -or"
+    cmd+=" -type d -printf 'di %p/\0'"
+  fi
+  if [[ "${type}" == "paths" ]];then
+    cmd+=" -or"
+  fi
+  if [[ "${type}" == "paths" ]] || [[ "${type}" == "files" ]];then
+    cmd+=" -type b -printf 'bd %p\0'"
+    cmd+=" -or"
+    cmd+=" -type c -printf 'cd %p\0'"
+    cmd+=" -or"
+    cmd+=" -type p -printf 'pi %p\0'"
+    cmd+=" -or"
+    cmd+=" -type l -printf 'ln %p\0'"
+    cmd+=" -or"
+    cmd+=" -type s -printf 'so %p\0'"
+    cmd+=" -or"
+    cmd+=" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -printf 'ex %p\0'"
+    cmd+=" -or"
+    cmd+=" -type f -printf 'fi %p\0'"
+  fi
 
   cmd+=" 2> /dev/null"
 
@@ -103,6 +148,20 @@ __fzf_obc_search() {
     cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
   fi
 
+  cmd=" __fzf_obc_sort_cmd < <($cmd)"
+
+  if [[ "${cur}" == *"**" ]];then
+    if [[ "${FZF_OBC_GLOBS_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
+      cmd="__fzf_obc_colorized < <(${cmd})"
+    fi
+  else
+    if [[ "${FZF_OBC_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
+      cmd="__fzf_obc_colorized < <(${cmd})"
+    fi
+  fi
+
+  cmd="cut -z -d ' ' -f2- < <(${cmd})"
+
   eval "${cmd}"
   return 0
 }
@@ -113,10 +172,18 @@ __fzf_obc_search_filter_bash() (
   #   $1: an optional glob patern for filtering
   # Return: a list of strings filtered and separate by $'\0'
   shopt -s extglob
-  local xspec="$1"
+  local xspec line type file filename
+  xspec="$1"
   [[ -z "${xspec}" ]] && cat
-  while IFS= read -t 0.1 -d $'\0' -r file;do
-    [[ "${file}" == ${xspec} ]] && printf "%s\0" "${file}"
+  while IFS= read -t 0.1 -d $'\0' -r line;do
+    type="${line:0:2}"
+    file="${line:3}"
+    filename="${file##*/}"
+    if [[ "${type}" =~ ^(st|ow|tw|di)$ ]];then
+      printf "%s\0" "${line}"
+    else
+      [[ "${filename}" == ${xspec} ]] && printf "%s\0" "${line}"
+    fi
   done
 )
 
@@ -143,7 +210,7 @@ __fzf_obc_tilde ()
 }
 
 __fzf_obc_cmd() {
-    fzf --read0 --print0
+    fzf --read0 --print0 --ansi
 }
 
 __fzf_obc_read_compreply() {
@@ -154,7 +221,6 @@ __fzf_obc_read_compreply() {
       compopt +o filenames
       __fzf_compreply < <(
         printf "%s\0" "${COMPREPLY[@]}" \
-        | __fzf_obc_sort_cmd \
         | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
           __fzf_obc_cmd \
         | while IFS= read -d $'\0' -r item;do printf "%q " "${item}" | sed 's/^\\~/~/';done \
@@ -163,7 +229,6 @@ __fzf_obc_read_compreply() {
     else
       __fzf_compreply < <(
         printf "%s\0" "${COMPREPLY[@]}" \
-        | __fzf_obc_sort_cmd \
         | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
           __fzf_obc_cmd \
         | sed 's#/\x0#\x0#'
