@@ -16,6 +16,7 @@ BASE = File.expand_path('../../', __FILE__)
 TEST_DIR = "test/tmp"
 TEST_HOME_DIR = "~/.local/tmp/fzf-obc"
 TEST_REC_FILE = "/tmp/fzf-obc.cast"
+TEST_BASHRC = "#{BASE}/#{TEST_DIR}/test_bashrc"
 
 TERMINAL_COLUMNS=80
 TERMINAL_LINES=24
@@ -54,6 +55,18 @@ check_cmds(%w{
   asciinema
 })
 
+rcfile = File.open("#{TEST_BASHRC}", "w")
+rcfile.puts <<~EOF
+  LS_COLORS="#{ENV['LS_COLORS']}"
+  PS1='$ '
+  FZF_OBC_HEIGHT='40%'
+  FZF_OBC_OPTS="--select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'"
+  FZF_OBC_GLOBS_OPTS="-m --select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'"
+  source /etc/bash_completion
+  source #{BASE}/fzf-obc.bash
+EOF
+rcfile.close
+
 class FzfObcTest < Minitest::Test
 
   @@prepare_tmux_done = false
@@ -83,17 +96,13 @@ class FzfObcTest < Minitest::Test
     @@tty = TTYtest.new_terminal(<<~HEREDOC,width: "#{TERMINAL_COLUMNS}", height: "#{TERMINAL_LINES}")
       env -i \
         LC_ALL="en_US.UTF-8" \
-        LS_COLORS="#{ENV['LS_COLORS']}" \
+        PATH="#{ENV['PATH']}" \
         HOME="#{ENV['HOME']}" \
         TERM="#{ENV['TERM']}" \
-        PS1='$ ' \
-        PATH="#{ENV['PATH']}" \
         PROMPT_COMMAND='' \
         HISTFILE='' \
-        FZF_OBC_HEIGHT='40%' \
-        FZF_OBC_OPTS="--select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'" \
-        FZF_OBC_GLOBS_OPTS="-m --select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'" \
-        /bin/bash --norc --noprofile
+        PS1='' \
+        asciinema rec --quiet -t 'fzf-obc' -i '#{TTYtest.send_keys_delay}' -c 'bash --rcfile #{TEST_BASHRC} --noprofile' #{TEST_REC_FILE}
     HEREDOC
 
     if TTYtest.debug
@@ -113,14 +122,6 @@ class FzfObcTest < Minitest::Test
         sleep 0.1
       end
     end
-
-    @@tty.max_wait_time = 3
-    @@tty.send_keys("source /etc/bash_completion; source fzf-obc.bash","#{ENTER}", sleep: 0.01)
-    @@tty.assert_matches(<<~EOF)
-      $ source /etc/bash_completion; source fzf-obc.bash
-      $
-    EOF
-    @@tty.max_wait_time = 2
 
   end
 
