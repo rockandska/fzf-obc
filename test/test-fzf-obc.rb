@@ -116,10 +116,8 @@ class FzfObcTest < Minitest::Test
         ***************************
         Debug session started for #{self.name}
         - Open a new terminal
-        - Resize to the corresponding size:
-        resize -s #{TERMINAL_LINES} #{TERMINAL_COLUMNS}
         - Join the debug session with:
-        tmux -L ttytest attach -t #{@tty.session_name}
+        tmux -L ttytest attach -t #{@tty.session_name} \\; setw force-width #{TERMINAL_COLUMNS} \\; setw force-height #{TERMINAL_LINES}
         Then, come back here and press 'Enter' to start
         To stop the debug session, press Ctrl+c
         ***************************
