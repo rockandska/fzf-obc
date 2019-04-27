@@ -8,7 +8,6 @@ require_relative 'lib/ttytest_addons'
 # Env variables available
 # TESTS_DEBUG: set to true to access debug session
 # TESTS_PAUSE: set to true to ask confirmation on each keypress
-# TESTS_RECORDING: set to true to record the session
 # TESTS_KEYS_DELAY: set delay between keypress
 #
 FILE = File.expand_path(__FILE__)
@@ -113,19 +112,6 @@ class FzfObcTest < Minitest::Test
       while ! gets
         sleep 0.1
       end
-    end
-
-
-    if ENV['TESTS_RECORDING']
-      puts(<<~EOF)
-        *********************************
-        Session recording asked
-        - The record will be placed into #{TEST_REC_FILE}"
-        *********************************
-      EOF
-      @@tty.send_keys("asciinema rec -t 'fzf-obc demo' -c 'bash --norc --noprofile' #{TEST_REC_FILE}","#{ENTER}", delay: 0.01, sleep: 0.01)
-      @@tty.assert_last_row('$')
-      @@tty.clear_screen()
     end
 
     @@tty.max_wait_time = 3
