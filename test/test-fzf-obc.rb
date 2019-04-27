@@ -15,7 +15,7 @@ BASE = File.expand_path('../../', __FILE__)
 
 TEST_DIR = "test/tmp"
 TEST_HOME_DIR = "~/.local/tmp/fzf-obc"
-TEST_REC_FILE = "/tmp/fzf-obc.cast"
+TEST_REC_DIR = "#{TEST_DIR}/casts"
 TEST_BASHRC = "#{BASE}/#{TEST_DIR}/test_bashrc"
 
 TERMINAL_COLUMNS=80
@@ -37,12 +37,17 @@ TTYtest.debug = true if ENV['TESTS_DEBUG']
 TTYtest.pause = true if ENV['TESTS_PAUSE']
 TTYtest.send_keys_delay = ENV['TESTS_KEYS_DELAY'].to_f if ENV['TESTS_KEYS_DELAY']
 
+unless TTYtest.debug
+  Minitest::Test.parallelize_me!
+end
+
 Dir.chdir BASE
 FileUtils.rm_rf File.expand_path("#{TEST_DIR}")
 FileUtils.rm_rf File.expand_path("#{TEST_HOME_DIR}")
+FileUtils.rm_rf File.expand_path("#{TEST_REC_DIR}")
 FileUtils.mkdir_p File.expand_path("#{TEST_DIR}")
 FileUtils.mkdir_p File.expand_path("#{TEST_HOME_DIR}")
-FileUtils.rm_rf File.expand_path("#{TEST_REC_FILE}")
+FileUtils.mkdir_p File.expand_path("#{TEST_REC_DIR}")
 
 puts "\nChecking for binaries required for those tests\n\n"
 
@@ -69,8 +74,6 @@ rcfile.close
 
 class FzfObcTest < Minitest::Test
 
-  @@prepare_tmux_done = false
-
   def temp_test_dir
     "#{TEST_DIR}/#{self.name}"
   end
@@ -80,20 +83,21 @@ class FzfObcTest < Minitest::Test
   end
 
   def setup
+    method_file = File.basename(self.method("#{self.name}").source_location[0],'.rb')
+    assert_equal \
+      method_file, \
+      self.name, \
+      "Method '#{self.name}' need to be in its own file but is in #{method_file}"
     Dir.chdir BASE
     prepare_tmux
     if TTYtest.debug
       puts "\nDebug: #{self.name}\n"
     end
-    sleep TTYtest.send_keys_delay
-    @@tty.clear_screen()
-    @@tty.assert_row(0,'$')
+    @tty.assert_row(0,'$')
   end
 
   def prepare_tmux
-    return if @@prepare_tmux_done
-    @@prepare_tmux_done = true
-    @@tty = TTYtest.new_terminal(<<~HEREDOC,width: "#{TERMINAL_COLUMNS}", height: "#{TERMINAL_LINES}")
+    @tty = TTYtest.new_terminal(<<~HEREDOC,width: "#{TERMINAL_COLUMNS}", height: "#{TERMINAL_LINES}")
       env -i \
         LC_ALL="en_US.UTF-8" \
         PATH="#{ENV['PATH']}" \
@@ -102,18 +106,20 @@ class FzfObcTest < Minitest::Test
         PROMPT_COMMAND='' \
         HISTFILE='' \
         PS1='' \
-        asciinema rec --quiet -t 'fzf-obc' -i '#{TTYtest.send_keys_delay}' -c 'bash --rcfile #{TEST_BASHRC} --noprofile' #{TEST_REC_FILE}
+        GIT_WORK_TREE=#{temp_test_dir} \
+        GIT_DIR=#{temp_test_dir}/.git \
+        asciinema rec --quiet -t 'fzf-obc #{self.name}' -i '#{TTYtest.send_keys_delay}' -c 'bash --rcfile #{TEST_BASHRC} --noprofile' #{TEST_REC_DIR}/#{self.name}.cast
     HEREDOC
 
     if TTYtest.debug
       puts(<<~EOF)
         ***************************
-        Debug session started
+        Debug session started for #{self.name}
         - Open a new terminal
         - Resize to the corresponding size:
         resize -s #{TERMINAL_LINES} #{TERMINAL_COLUMNS}
         - Join the debug session with:
-        tmux -L ttytest attach
+        tmux -L ttytest attach -t #{@tty.session_name}
         Then, come back here and press 'Enter' to start
         To stop the debug session, press Ctrl+c
         ***************************
