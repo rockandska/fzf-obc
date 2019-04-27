@@ -36,6 +36,13 @@ TTYtest.debug = true if ENV['TESTS_DEBUG']
 TTYtest.pause = true if ENV['TESTS_PAUSE']
 TTYtest.send_keys_delay = ENV['TESTS_KEYS_DELAY'].to_f if ENV['TESTS_KEYS_DELAY']
 
+Dir.chdir BASE
+FileUtils.rm_rf File.expand_path("#{TEST_DIR}")
+FileUtils.rm_rf File.expand_path("#{TEST_HOME_DIR}")
+FileUtils.mkdir_p File.expand_path("#{TEST_DIR}")
+FileUtils.mkdir_p File.expand_path("#{TEST_HOME_DIR}")
+FileUtils.rm_rf File.expand_path("#{TEST_REC_FILE}")
+
 puts "\nChecking for binaries required for those tests\n\n"
 
 check_cmds(%w{
@@ -48,13 +55,6 @@ check_cmds(%w{
 })
 
 class FzfObcTest < Minitest::Test
-
-  FileUtils.rm_rf File.expand_path("#{TEST_DIR}")
-  FileUtils.rm_rf File.expand_path("#{TEST_HOME_DIR}")
-  FileUtils.rm_rf File.expand_path("#{TEST_REC_FILE}")
-  Dir.chdir BASE
-  files = Dir.glob("test/spec/**/*.rb")
-  files.each{|file| require_relative file.gsub(/^test\/|\.rb$/,'')}
 
   @@prepare_tmux_done = false
 
@@ -145,11 +145,6 @@ class FzfObcTest < Minitest::Test
 
 end
 
-MiniTest.after_run do
-  if !TTYtest.debug
-    # Don't cleanup in debug mode to keep the last test structure
-    Dir.chdir BASE
-    FileUtils.rm_rf File.expand_path("#{TEST_DIR}")
-    FileUtils.rm_rf File.expand_path("#{TEST_HOME_DIR}")
-  end
-end
+Dir.chdir BASE
+files = Dir.glob("test/spec/**/*.rb")
+files.each{|file| require_relative file.gsub(/^test\/|\.rb$/,'')}
