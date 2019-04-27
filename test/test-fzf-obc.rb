@@ -96,6 +96,10 @@ class FzfObcTest < Minitest::Test
     @tty.assert_row(0,'$')
   end
 
+  def teardown
+    @tty.kill_session
+  end
+
   def prepare_tmux
     @tty = TTYtest.new_terminal(<<~HEREDOC,width: "#{TERMINAL_COLUMNS}", height: "#{TERMINAL_LINES}")
       env -i \
