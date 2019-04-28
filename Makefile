@@ -60,6 +60,8 @@ $(TEST_PATH)/Gemfile.lock: $(TEST_PATH)/Gemfile
 
 .PHONY: test
 test: $(TEST_PATH)/Gemfile.lock
+	@printf "\n##### Start tests with shellcheck #####\n"
+	@shellcheck fzf-obc.bash bash_completion.d/*
 	@printf "\n##### Start tests with minitest and tmux #####\n"
 	@BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb
 
