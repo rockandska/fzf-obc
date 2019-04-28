@@ -91,7 +91,7 @@ gifs: $(GIF_FILES)
 		printf "\n##### Generation of casts files used to generate gifs #####\n"; \
 		BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb -n "/$(SPECS_CHANGED:|=)/"; \
 	)
-	@printf "\n##### Generation of gifs from casts files #####\n"; \
+	@printf "\n##### Generation of gifs from casts files #####\n";
 	@$(foreach ___gif___, $(subst |,$(space),$(SPECS_CHANGED)), \
 		docker run --rm --user $$(id -u) -v $(CURDIR)/$(TEST_CASTS_PATH):/data -v $(CURDIR)/$(GIF_PATH):/data/out asciinema/asciicast2gif -s 0.1 -w 80 -h 12 -S 1 "$(___gif___).cast" "out/$(___gif___).gif"; \
 	)
