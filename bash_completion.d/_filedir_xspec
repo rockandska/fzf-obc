@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 _filedir_xspec()
 {
+  local cur="${cur}"
   __fzf_obc_tilde "${cur%%\**}" || return
   local xspec
   # shellcheck disable=SC2154

@@ -3,6 +3,7 @@ _filedir()
 {
   local IFS=$'\n'
 
+  local cur="${cur}"
   __fzf_obc_tilde "${cur%%\**}" || return
 
   if [[ "$1" != -d ]]; then
