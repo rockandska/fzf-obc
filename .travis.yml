@@ -9,6 +9,7 @@ addons:
       - tmux
       - python3
       - python3-pip
+      - python3-wheel
       - python3-setuptools
 stages:
   - name: tests
@@ -24,12 +25,10 @@ jobs:
         - git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         - ~/.fzf/install --no-key-bindings --no-completion --update-rc
         - source ~/.bashrc
-        - cd test
-        - gem install bundler -v $(cat Gemfile.lock | grep -A 1 "BUNDLED WITH" | tail -n1 | sed "s/ //g")
-        - bundle
-        - pip3 install -r requirements.txt
+        - gem install bundler -v $(cat test/Gemfile.lock | grep -A 1 "BUNDLED WITH" | tail -n1 | sed "s/ //g")
       script:
-        - bundle exec ruby test-fzf-obc.rb
+        - make deps
+        - make test
 
     - stage: mkrelease
       install:

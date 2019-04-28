@@ -9,6 +9,8 @@ It is a replacement to the completion script natively provided by [fzf](https://
 
 ![demo](docs/img/demo.gif)
 
+All functional tests recording as GIF are available [here](docs/src/tests_gallery.md) for review.
+
 ## Prerequisites
 
 fzf-obc require to **not use** the default fzf bash complete script provided with fzf since it change the default complete functions too and fzf-obc need to be over default complete functions.  

@@ -50,7 +50,7 @@ module TTYtest
   end
 
   class Terminal
-    def_delegators :@driver_terminal, :clear_screen, :session_name
+    def_delegators :@driver_terminal, :clear_screen, :session_name, :kill_session
     TTYtest::Matchers::METHODS_TO_ADD.each do |matcher_name|
       define_method matcher_name do |*args|
         synchronize do
@@ -65,6 +65,10 @@ module TTYtest
 
       def session_name
         "#{name}"
+      end
+
+      def kill_session
+        driver.tmux(*%W[kill-session -t #{name}])
       end
 
       def send_keys(*keys, delay: TTYtest.send_keys_delay, sleep: TTYtest.send_keys_delay)

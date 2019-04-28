@@ -8,7 +8,6 @@ require_relative 'lib/ttytest_addons'
 # Env variables available
 # TESTS_DEBUG: set to true to access debug session
 # TESTS_PAUSE: set to true to ask confirmation on each keypress
-# TESTS_RECORDING: set to true to record the session
 # TESTS_KEYS_DELAY: set delay between keypress
 #
 FILE = File.expand_path(__FILE__)
@@ -16,7 +15,8 @@ BASE = File.expand_path('../../', __FILE__)
 
 TEST_DIR = "test/tmp"
 TEST_HOME_DIR = "~/.local/tmp/fzf-obc"
-TEST_REC_FILE = "/tmp/fzf-obc.cast"
+TEST_REC_DIR = "#{TEST_DIR}/casts"
+TEST_BASHRC = "#{BASE}/#{TEST_DIR}/test_bashrc"
 
 TERMINAL_COLUMNS=80
 TERMINAL_LINES=24
@@ -37,6 +37,18 @@ TTYtest.debug = true if ENV['TESTS_DEBUG']
 TTYtest.pause = true if ENV['TESTS_PAUSE']
 TTYtest.send_keys_delay = ENV['TESTS_KEYS_DELAY'].to_f if ENV['TESTS_KEYS_DELAY']
 
+unless TTYtest.debug
+  Minitest::Test.parallelize_me!
+end
+
+Dir.chdir BASE
+FileUtils.rm_rf File.expand_path("#{TEST_DIR}")
+FileUtils.rm_rf File.expand_path("#{TEST_HOME_DIR}")
+FileUtils.rm_rf File.expand_path("#{TEST_REC_DIR}")
+FileUtils.mkdir_p File.expand_path("#{TEST_DIR}")
+FileUtils.mkdir_p File.expand_path("#{TEST_HOME_DIR}")
+FileUtils.mkdir_p File.expand_path("#{TEST_REC_DIR}")
+
 puts "\nChecking for binaries required for those tests\n\n"
 
 check_cmds(%w{
@@ -48,16 +60,19 @@ check_cmds(%w{
   asciinema
 })
 
+rcfile = File.open("#{TEST_BASHRC}", "w")
+rcfile.puts <<~EOF
+  LS_COLORS="#{ENV['LS_COLORS']}"
+  PS1='$ '
+  FZF_OBC_HEIGHT='40%'
+  FZF_OBC_OPTS="--select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'"
+  FZF_OBC_GLOBS_OPTS="-m --select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'"
+  source /etc/bash_completion
+  source #{BASE}/fzf-obc.bash
+EOF
+rcfile.close
+
 class FzfObcTest < Minitest::Test
-
-  FileUtils.rm_rf File.expand_path("#{TEST_DIR}")
-  FileUtils.rm_rf File.expand_path("#{TEST_HOME_DIR}")
-  FileUtils.rm_rf File.expand_path("#{TEST_REC_FILE}")
-  Dir.chdir BASE
-  files = Dir.glob("test/spec/**/*.rb")
-  files.each{|file| require_relative file.gsub(/^test\/|\.rb$/,'')}
-
-  @@prepare_tmux_done = false
 
   def temp_test_dir
     "#{TEST_DIR}/#{self.name}"
@@ -68,44 +83,45 @@ class FzfObcTest < Minitest::Test
   end
 
   def setup
+    method_file = File.basename(self.method("#{self.name}").source_location[0],'.rb')
+    assert_equal \
+      method_file, \
+      self.name, \
+      "Method '#{self.name}' need to be in its own file but is in #{method_file}"
     Dir.chdir BASE
     prepare_tmux
     if TTYtest.debug
       puts "\nDebug: #{self.name}\n"
     end
-    sleep TTYtest.send_keys_delay
-    @@tty.clear_screen()
-    @@tty.assert_row(0,'$')
+    @tty.assert_row(0,'$')
+  end
+
+  def teardown
+    @tty.kill_session
   end
 
   def prepare_tmux
-    return if @@prepare_tmux_done
-    @@prepare_tmux_done = true
-    @@tty = TTYtest.new_terminal(<<~HEREDOC,width: "#{TERMINAL_COLUMNS}", height: "#{TERMINAL_LINES}")
+    @tty = TTYtest.new_terminal(<<~HEREDOC,width: "#{TERMINAL_COLUMNS}", height: "#{TERMINAL_LINES}")
       env -i \
         LC_ALL="en_US.UTF-8" \
-        LS_COLORS="#{ENV['LS_COLORS']}" \
+        PATH="#{ENV['PATH']}" \
         HOME="#{ENV['HOME']}" \
         TERM="#{ENV['TERM']}" \
-        PS1='$ ' \
-        PATH="#{ENV['PATH']}" \
         PROMPT_COMMAND='' \
         HISTFILE='' \
-        FZF_OBC_HEIGHT='40%' \
-        FZF_OBC_OPTS="--select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'" \
-        FZF_OBC_GLOBS_OPTS="-m --select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'" \
-        /bin/bash --norc --noprofile
+        PS1='' \
+        GIT_WORK_TREE=#{temp_test_dir} \
+        GIT_DIR=#{temp_test_dir}/.git \
+        asciinema rec --quiet -t 'fzf-obc #{self.name}' -i '#{TTYtest.send_keys_delay}' -c 'bash --rcfile #{TEST_BASHRC} --noprofile' #{TEST_REC_DIR}/#{self.name}.cast
     HEREDOC
 
     if TTYtest.debug
       puts(<<~EOF)
         ***************************
-        Debug session started
+        Debug session started for #{self.name}
         - Open a new terminal
-        - Resize to the corresponding size:
-        resize -s #{TERMINAL_LINES} #{TERMINAL_COLUMNS}
         - Join the debug session with:
-        tmux -L ttytest attach
+        tmux -L ttytest attach -t #{@tty.session_name} \\; setw force-width #{TERMINAL_COLUMNS} \\; setw force-height #{TERMINAL_LINES}
         Then, come back here and press 'Enter' to start
         To stop the debug session, press Ctrl+c
         ***************************
@@ -114,27 +130,6 @@ class FzfObcTest < Minitest::Test
         sleep 0.1
       end
     end
-
-
-    if ENV['TESTS_RECORDING']
-      puts(<<~EOF)
-        *********************************
-        Session recording asked
-        - The record will be placed into #{TEST_REC_FILE}"
-        *********************************
-      EOF
-      @@tty.send_keys("asciinema rec -t 'fzf-obc demo' -c 'bash --norc --noprofile' #{TEST_REC_FILE}","#{ENTER}", delay: 0.01, sleep: 0.01)
-      @@tty.assert_last_row('$')
-      @@tty.clear_screen()
-    end
-
-    @@tty.max_wait_time = 3
-    @@tty.send_keys("source /etc/bash_completion; source fzf-obc.bash","#{ENTER}", sleep: 0.01)
-    @@tty.assert_matches(<<~EOF)
-      $ source /etc/bash_completion; source fzf-obc.bash
-      $
-    EOF
-    @@tty.max_wait_time = 2
 
   end
 
@@ -159,11 +154,6 @@ class FzfObcTest < Minitest::Test
 
 end
 
-MiniTest.after_run do
-  if !TTYtest.debug
-    # Don't cleanup in debug mode to keep the last test structure
-    Dir.chdir BASE
-    FileUtils.rm_rf File.expand_path("#{TEST_DIR}")
-    FileUtils.rm_rf File.expand_path("#{TEST_HOME_DIR}")
-  end
-end
+Dir.chdir BASE
+files = Dir.glob("test/spec/**/*.rb")
+files.each{|file| require_relative file.gsub(/^test\/|\.rb$/,'')}
