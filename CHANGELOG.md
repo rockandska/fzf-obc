@@ -2,8 +2,13 @@
 
 ## [**Next release**](https://github.com/rockandska/fzf-obc/tree/HEAD)
 
+**Closed issues:**
+
+- add shellcheck CI [\#5](https://github.com/rockandska/fzf-obc/issues/5)
+
 **Merged pull requests:**
 
+- Add shellcheck [\#9](https://github.com/rockandska/fzf-obc/pull/9) ([rockandska](https://github.com/rockandska))
 - Parallel tests and Makefile [\#8](https://github.com/rockandska/fzf-obc/pull/8) ([rockandska](https://github.com/rockandska))
 - Add colors to \_filedir / \_filedir\_xspec [\#7](https://github.com/rockandska/fzf-obc/pull/7) ([rockandska](https://github.com/rockandska))
 - Use $'\0' in search function [\#3](https://github.com/rockandska/fzf-obc/pull/3) ([rockandska](https://github.com/rockandska))
