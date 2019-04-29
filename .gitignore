@@ -2,4 +2,5 @@ test/vendor
 test/.bundle
 test/tmp
 test/bin
+test/opt
 mkmf.log
