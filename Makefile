@@ -1,5 +1,7 @@
 .DEFAULT_GOAL:=test
 
+SHELL_CHECK_VERSION := v0.6.0
+
 TEST_PATH := test
 TEST_TMP_PATH := $(TEST_PATH)/tmp
 
@@ -48,8 +50,11 @@ RESTORE_TIMESTAMP := @$(shell \
 
 .PHONY: deps
 deps: $(TEST_PATH)/Gemfile.lock $(TEST_PATH)/requirements.txt
-	@bundle install --gemfile=$(TEST_PATH)/Gemfile --path=test/vendor
+	@mkdir -p $(TEST_PATH)/bin
+	@bundle install --gemfile=$(TEST_PATH)/Gemfile --path=vendor
 	@pip3 install --user -r $(TEST_PATH)/requirements.txt
+	@scversion="stable"
+	@wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-"$(SHELL_CHECK_VERSION)".linux.x86_64.tar.xz" | tar -xJv -C $(TEST_PATH)/bin
 
 ############
 # test
@@ -61,7 +66,7 @@ $(TEST_PATH)/Gemfile.lock: $(TEST_PATH)/Gemfile
 .PHONY: test
 test: $(TEST_PATH)/Gemfile.lock
 	@printf "\n##### Start tests with shellcheck #####\n"
-	@shellcheck fzf-obc.bash bash_completion.d/*
+	@$(TEST_PATH)/bin/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck fzf-obc.bash bash_completion.d/*
 	@printf "\n##### Start tests with minitest and tmux #####\n"
 	@BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb
 
