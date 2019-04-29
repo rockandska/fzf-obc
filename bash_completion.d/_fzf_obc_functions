@@ -24,15 +24,15 @@ __fzf_obc_colorized() {
   local IFS=' '
   local ls_colors_arr
   IFS=':' read -r -a ls_colors_arr <<< "${LS_COLORS}"
-  declare -A fzf_obc_colors
+  declare -A fzf_obc_colors_arr
   local arg
   local r
   for arg in "${ls_colors_arr[@]}";do
     IFS='=' read -r -a r <<< "${arg}"
     if [[ "${r[0]}" == "*"* ]];then
-      fzf_obc_colors[ext_${r[0]/\*\.}]="${r[1]}"
+      fzf_obc_colors_arr[ext_${r[0]/\*\.}]="${r[1]}"
     else
-      fzf_obc_colors[type_${r[0]}]="${r[1]}"
+      fzf_obc_colors_arr[type_${r[0]}]="${r[1]}"
     fi
   done
 
@@ -41,9 +41,9 @@ __fzf_obc_colorized() {
     file="${line:3}"
     if [[ "${type}" == "fi"  ]];then
       ext="${file##*.}"
-      printf "%s \e[${fzf_obc_colors[ext_${ext}]:-0}m%s\e[0m\0" "${type}" "$file"
+      printf "%s \e[${fzf_obc_colors_arr[ext_${ext}]:-0}m%s\e[0m\0" "${type}" "$file"
     else
-      printf "%s \e[${fzf_obc_colors[type_${type}]:-0}m%s\e[0m\0" "${type}" "$file"
+      printf "%s \e[${fzf_obc_colors_arr[type_${type}]:-0}m%s\e[0m\0" "${type}" "$file"
     fi
   done
 }
@@ -144,7 +144,7 @@ __fzf_obc_search() {
     cmd=" sed -z s'#${cur_expanded//\//\\/}#${cur_clean//\//\\/}#' < <(${cmd})"
   fi
 
-  if [[ -n ${xspec} ]];then
+  if [[ -n "${xspec}" ]];then
     cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
   fi
 
@@ -182,6 +182,7 @@ __fzf_obc_search_filter_bash() (
     if [[ "${type}" =~ ^(st|ow|tw|di)$ ]];then
       printf "%s\0" "${line}"
     else
+      # shellcheck disable=SC2053
       [[ "${filename}" == ${xspec} ]] && printf "%s\0" "${line}"
     fi
   done
@@ -202,7 +203,7 @@ __fzf_obc_tilde ()
   # Copy from original bash complete
   local result=0;
   if [[ $1 == \~* && $1 != */* ]]; then
-      COMPREPLY=($( compgen -P '~' -u -- "${1#\~}" ));
+      mapfile -t COMPREPLY < <( compgen -P '~' -u -- "${1#\~}" )
       result=${#COMPREPLY[@]};
       [[ $result -gt 0 ]] && compopt -o filenames 2> /dev/null;
   fi;

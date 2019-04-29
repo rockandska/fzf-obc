@@ -121,7 +121,7 @@ __fzf_obc_load() {
   local fzf_obc_path_array path file
   IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH}"
   for path in "${fzf_obc_path}" "${fzf_obc_path_array[@]}";do
-    for file in ${path}/* ; do
+    for file in "${path}"/* ; do
       [[ -e "${file}" && ! -d "${file}" ]] || continue
       # shellcheck disable=SC1090
       source "${file}"

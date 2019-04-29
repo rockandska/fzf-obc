@@ -1,4 +1,5 @@
-test/vendor/**
+test/vendor
 test/.bundle
 test/tmp
+test/bin
 mkmf.log
