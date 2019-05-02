@@ -23,28 +23,6 @@ empty :=
 
 space := $(empty) $(empty)
 
-# Fix timestamp for *.gif and *.rb
-# to avoid reconstruction when checkout
-# or just touch a file
-RESTORE_TIMESTAMP := @$(shell \
-		for ___gif___ in $(GIF_FILES);do \
-			if test -f $$___gif___; then \
-				if git ls-files --full-name | grep "^$${___gif___}$$" 1> /dev/null; then \
-					touch -d @$$(git log -1 --format="%at" -- $$___gif___) $$___gif___; \
-				fi; \
-			fi; \
-		done; \
-		for ___spec___ in $(TEST_SPEC_FILES);do \
-			if test -f $$___spec___; then \
-				if git ls-files --full-name | grep "^$${___spec___}$$" 1> /dev/null; then \
-					if ! git diff --name-only HEAD | grep "^$${___spec___}$$" 1> /dev/null; then \
-						touch -d @$$(git log -1 --format="%at" -- $${___spec___}) $${___spec___}; \
-					fi; \
-				fi; \
-			fi; \
-		done; \
-	)
-
 ############
 # Deps
 ############
@@ -114,15 +92,37 @@ $(DOC_SRC_PATH)/tests_gallery.md: $(sort $(GIF_FILES))
 	@$(foreach ___img___, $+, printf "\n## $(notdir $(___img___:.gif=))\n![]($(subst $(DOC_PATH)/,../,$(___img___)))\n" >> $@;)
 
 .PHONY: gifs
-gifs: $(GIF_FILES)
-	@printf "\n##### Start demo gifs generations #####\n\n"
+gifs: update_timestamp
+	@$(MAKE) $(GIF_FILES)
 	@$(if $(SPECS_CHANGED), \
 		printf "\n##### Generation of casts files used to generate gifs #####\n"; \
 		BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb -n "/$(SPECS_CHANGED:|=)/"; \
-	)
-	@printf "\n##### Generation of gifs from casts files #####\n";
-	@$(foreach ___gif___, $(subst |,$(space),$(SPECS_CHANGED)), \
-		docker run --rm --user $$(id -u) -v $(CURDIR)/$(TEST_CASTS_PATH):/data -v $(CURDIR)/$(GIF_PATH):/data/out asciinema/asciicast2gif -s 0.1 -w 80 -h 12 -S 1 "$(___gif___).cast" "out/$(___gif___).gif"; \
+		printf "\n##### Generation of gifs from casts files #####\n"; \
+		$(foreach ___gif___, $(subst |,$(space),$(SPECS_CHANGED)), \
+			docker run --rm --user $$(id -u) -v $(CURDIR)/$(TEST_CASTS_PATH):/data -v $(CURDIR)/$(GIF_PATH):/data/out asciinema/asciicast2gif -s 0.1 -w 80 -h 12 -S 1 "$(___gif___).cast" "out/$(___gif___).gif"; \
+		) \
 	)
 	@$(MAKE) --no-print-directory $(IMG_PATH)/demo.gif
 	@$(MAKE) --no-print-directory $(DOC_SRC_PATH)/tests_gallery.md
+
+# Fix timestamp for *.gif and *.rb
+# to avoid reconstruction when checkout
+# or just touch a file
+.PHONY: update_timestamp
+update_timestamp: $(GIF_FILES)
+	@for ___gif___ in $(GIF_FILES);do \
+		if test -f $$___gif___; then \
+			if git ls-files --full-name | grep "^$${___gif___}$$" 1> /dev/null; then \
+				touch -m -t $$(git log -1 --format=%cd --date=format-local:%Y%m%d%H%M.%S -- $$___gif___) $$___gif___ ; \
+			fi; \
+		fi; \
+	done;
+	@for ___spec___ in $(TEST_SPEC_FILES);do \
+		if test -f $$___spec___; then \
+			if git ls-files --full-name | grep "^$${___spec___}$$" 1> /dev/null; then \
+				if ! git diff --name-only HEAD | grep "^$${___spec___}$$" 1> /dev/null; then \
+					touch -m -t $$(git log -1 --format=%cd --date=format-local:%Y%m%d%H%M.%S -- $${___spec___}) $${___spec___} ; \
+				fi; \
+			fi; \
+		fi; \
+	done;
