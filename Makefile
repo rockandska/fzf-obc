@@ -47,8 +47,8 @@ $(TEST_PATH)/bin:
 $(TEST_PATH)/opt/shellcheck-$(SHELL_CHECK_VERSION):
 	@$(MAKE) --no-print-directory $(TEST_PATH)/opt
 	@$(MAKE) --no-print-directory $(TEST_PATH)/bin
-	@wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-"$(SHELL_CHECK_VERSION)".linux.x86_64.tar.xz" | tar -xJv -C $(TEST_PATH)/opt
-	@cp $(CURDIR)/test/opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck $(TEST_PATH)/bin/
+	@wget -q -O "$(TEST_PATH)/bin/shellcheck" "https://shellcheck.storage.googleapis.com/shellcheck-$(SHELL_CHECK_VERSION).linux-x86_64"
+	@chmod +x $(TEST_PATH)/bin/shellcheck
 
 $(TEST_PATH)/opt/asciinema-$(ASCIINEMA_VERSION):
 	@$(MAKE) --no-print-directory $(TEST_PATH)/opt
