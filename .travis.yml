@@ -1,13 +1,5 @@
 ---
 language: ruby
-dist: xenial
-addons:
-  apt:
-    sources:
-      - sourceline: "ppa:kimura-o/ppa-tmux"
-    packages:
-      - tmux
-      - python3
 stages:
   - name: tests
   - name: mkrelease
@@ -16,8 +8,18 @@ stages:
       AND type != pull_request
 jobs:
   include:
-    - stage: tests
+    - &linux_tests
+      stage: tests
       rvm: "2.5"
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - sourceline: "ppa:kimura-o/ppa-tmux"
+          packages:
+            - tmux
+            - python3
       install:
         - git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         - ~/.fzf/install --no-key-bindings --no-completion --update-rc
@@ -26,6 +28,15 @@ jobs:
       script:
         - make deps
         - make test
+
+    - <<: *linux_tests
+      os: osx
+      addons:
+        homebrew:
+          packages:
+            - tmux
+            - python3
+            - docker
 
     - stage: mkrelease
       install:
