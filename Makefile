@@ -1,6 +1,7 @@
 .DEFAULT_GOAL:=test
 
 SHELL_CHECK_VERSION := v0.6.0
+ASCIINEMA_VERSION := v2.0.2
 
 TEST_PATH := test
 TEST_TMP_PATH := $(TEST_PATH)/tmp
@@ -49,24 +50,45 @@ RESTORE_TIMESTAMP := @$(shell \
 ############
 
 .PHONY: deps
-deps: $(TEST_PATH)/Gemfile.lock $(TEST_PATH)/requirements.txt
-	@mkdir -p $(TEST_PATH)/bin
+deps: $(TEST_PATH)/vendor $(TEST_PATH)/opt/shellcheck-$(SHELL_CHECK_VERSION) $(TEST_PATH)/opt/asciinema-$(ASCIINEMA_VERSION)
+
+$(TEST_PATH)/vendor: $(TEST_PATH)/Gemfile.lock
 	@bundle install --gemfile=$(TEST_PATH)/Gemfile --path=vendor
-	@pip3 install --user -r $(TEST_PATH)/requirements.txt
-	@scversion="stable"
-	@wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-"$(SHELL_CHECK_VERSION)".linux.x86_64.tar.xz" | tar -xJv -C $(TEST_PATH)/bin
+	@touch $@
+
+$(TEST_PATH)/Gemfile.lock: $(TEST_PATH)/Gemfile
+	@cd $(TEST_PATH) && bundle lock && cd -
+	@touch $@
+
+$(TEST_PATH)/opt:
+	@test -d $@ || mkdir -p $@
+
+$(TEST_PATH)/bin:
+	@test -d $@ || mkdir -p $@
+
+$(TEST_PATH)/opt/shellcheck-$(SHELL_CHECK_VERSION):
+	@$(MAKE) --no-print-directory $(TEST_PATH)/opt
+	@$(MAKE) --no-print-directory $(TEST_PATH)/bin
+	@wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-"$(SHELL_CHECK_VERSION)".linux.x86_64.tar.xz" | tar -xJv -C $(TEST_PATH)/opt
+	@cp $(CURDIR)/test/opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck $(TEST_PATH)/bin/
+
+$(TEST_PATH)/opt/asciinema-$(ASCIINEMA_VERSION):
+	@$(MAKE) --no-print-directory $(TEST_PATH)/opt
+	@$(MAKE) --no-print-directory $(TEST_PATH)/bin
+	@mkdir -p $${HOME}/.config/asciinema
+	@git clone -b $(ASCIINEMA_VERSION) https://github.com/asciinema/asciinema.git $@
+	@echo "#!/usr/bin/env bash\nPYTHONPATH='$(CURDIR)/test/opt/asciinema-$(ASCIINEMA_VERSION):$${PYTHONPATH}' python3 -m asciinema \"\$$@\"" > $(CURDIR)/test/bin/asciinema
+	@chmod +x $(CURDIR)/test/bin/asciinema
+
 
 ############
 # test
 ############
 
-$(TEST_PATH)/Gemfile.lock: $(TEST_PATH)/Gemfile
-	@bundle install --gemfile=$< --path=test/vendor
-
 .PHONY: test
-test: $(TEST_PATH)/Gemfile.lock
+test: deps
 	@printf "\n##### Start tests with shellcheck #####\n"
-	@$(TEST_PATH)/bin/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck fzf-obc.bash bash_completion.d/*
+	@$(TEST_PATH)/bin/shellcheck fzf-obc.bash bash_completion.d/*
 	@printf "\n##### Start tests with minitest and tmux #####\n"
 	@BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb
 

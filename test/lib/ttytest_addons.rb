@@ -105,13 +105,18 @@ module TTYtest
 
 end
 
+module MakeMakefile::Logging
+  @logfile = File::NULL
+  @quiet = true
+end
+
 def check_cmds(cmds)
   if cmds.is_a? String
     cmds = cmds.split(',')
   end
   for bin in cmds do
-    if ! find_executable "#{bin}"
-      raise "=====> Missing executable '#{bin}' <=====\n#{to_s}"
+    if ! find_executable("#{bin}",path="#{BASE}/test/bin:#{ENV['PATH']}")
+      raise "=====> Missing executable '#{bin}' needed for tests <=====\n#{to_s}"
       exit 1
     end
   end
