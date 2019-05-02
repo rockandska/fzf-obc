@@ -222,6 +222,7 @@ __fzf_obc_read_compreply() {
       compopt +o filenames
       __fzf_compreply < <(
         printf "%s\0" "${COMPREPLY[@]}" \
+        | awk -v RS='\0' -v ORS='\0' '!a[$0]++' \
         | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
           __fzf_obc_cmd \
         | while IFS= read -d $'\0' -r item;do printf "%q " "${item}" | sed 's/^\\~/~/';done \
@@ -230,6 +231,7 @@ __fzf_obc_read_compreply() {
     else
       __fzf_compreply < <(
         printf "%s\0" "${COMPREPLY[@]}" \
+        | awk -v RS='\0' -v ORS='\0' '!a[$0]++' \
         | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
           __fzf_obc_cmd \
         | sed 's#/\x0#\x0#'
