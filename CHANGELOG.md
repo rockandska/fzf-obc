@@ -8,6 +8,7 @@
 
 **Merged pull requests:**
 
+- \[tests\] fix asciinema version used [\#11](https://github.com/rockandska/fzf-obc/pull/11) ([rockandska](https://github.com/rockandska))
 - \[core\] deduplicate COMPREPLY before fzf [\#10](https://github.com/rockandska/fzf-obc/pull/10) ([rockandska](https://github.com/rockandska))
 - Add shellcheck [\#9](https://github.com/rockandska/fzf-obc/pull/9) ([rockandska](https://github.com/rockandska))
 - Parallel tests and Makefile [\#8](https://github.com/rockandska/fzf-obc/pull/8) ([rockandska](https://github.com/rockandska))
