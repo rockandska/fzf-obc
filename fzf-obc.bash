@@ -49,7 +49,7 @@ __fzf_obc_add_trap() {
     [[ "${origin}" =~ ${trap} ]] && return 0
     # Add trap
     local add_trap='trap '"'"''${trap}' "$?" $@; trap - RETURN'"'"' RETURN'
-    origin=$(echo "${origin}" | sed -r "/${trap}/d")
+    origin=$(echo "${origin}" | sed "/${trap}/d")
     eval "
       ${f}() {
         ${add_trap}
@@ -71,7 +71,7 @@ __fzf_obc_cleanup() {
     # Remove the wrapper to complete definition
     local new_complete_arr
     read -r -d '' -a new_complete_arr < <(
-      complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${wrapper_prefix}/-F /;s/ +$//"
+      complete | grep -E -- "-F ${f}( |$)" | sed "s/-F ${wrapper_prefix}/-F /;s/ +$//"
     )
     local w
     for w in "${new_complete_arr[@]}";do
@@ -102,7 +102,7 @@ __fzf_obc_cleanup() {
     if type -t "${f}" > /dev/null 2>&1 ;then
       local origin
       read -r -d '' origin < <(
-        declare -f "${f}" | tail -n +3 | head -n -1 | sed -r "/(${trap_prefix})/d"
+        declare -f "${f}" | tail -n +3 | head -n -1 | sed "/(${trap_prefix})/d"
       )
       eval "
         ${f}() {
@@ -163,7 +163,7 @@ __fzf_obc_update_complete() {
     # Apply the wrapper to complete definition
     local new_complete
     read -r -d '' -a new_complete < <(
-      complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${f}( |$)/-F ${wrapper_name}\1/;s/ +$//"
+      complete | grep -E -- "-F ${f}( |$)" | sed -E "s/-F ${f}( |$)/-F ${wrapper_name}\1/;s/ +$//"
     )
     local w
     for w in "${new_complete[@]}";do
