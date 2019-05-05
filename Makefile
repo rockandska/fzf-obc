@@ -21,6 +21,12 @@ GIF_FILES := $(addprefix $(GIF_PATH)/,$(notdir $(TEST_SPEC_FILES:.rb=.gif)))
 
 SPECS_CHANGED :=
 
+ifeq ("$(UNAME_S)","Darwin")
+  TEST_CMD := BUNDLE_GEMFILE=$(TEST_PATH)/Gemfile bundle exec ruby $(TEST_PATH)/test-fzf-obc.rb --exclude '/test_insmod(_home)?/'
+else
+  TEST_CMD := BUNDLE_GEMFILE=$(TEST_PATH)/Gemfile bundle exec ruby $(TEST_PATH)/test-fzf-obc.rb
+endif
+
 empty :=
 
 space := $(empty) $(empty)
@@ -75,7 +81,7 @@ ifneq ("$(UNAME_S)","Darwin")
 		@$(TEST_PATH)/bin/shellcheck fzf-obc.bash bash_completion.d/*
 endif
 	@printf "\n##### Start tests with minitest and tmux #####\n"
-	@BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb
+	@$(TEST_CMD)
 
 ############
 # docs
@@ -103,7 +109,7 @@ gifs: update_timestamp
 	@$(MAKE) $(GIF_FILES)
 	@$(if $(SPECS_CHANGED), \
 		printf "\n##### Generation of casts files used to generate gifs #####\n"; \
-		BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb -n "/$(SPECS_CHANGED:|=)/"; \
+		$(TEST_CMD) -n "/$(SPECS_CHANGED:|=)/"; \
 		printf "\n##### Generation of gifs from casts files #####\n"; \
 		$(foreach ___gif___, $(subst |,$(space),$(SPECS_CHANGED)), \
 			docker run --rm --user $$(id -u) -v $(CURDIR)/$(TEST_CASTS_PATH):/data -v $(CURDIR)/$(GIF_PATH):/data/out asciinema/asciicast2gif -s 0.1 -w 80 -h 12 -S 1 "$(___gif___).cast" "out/$(___gif___).gif"; \

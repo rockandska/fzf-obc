@@ -53,7 +53,7 @@ check_cmds(%w{
   fzf
   git
   docker
-  insmod
+  sysctl
   vi
   asciinema
 })
