@@ -37,6 +37,9 @@ jobs:
             - tmux
             - python3
             - docker
+            - bash-completion@2
+      before_install:
+        - sudo bash -c 'echo -ne ". $(brew --prefix)/etc/profile.d/bash_completion.sh" > /etc/bash_completion'
 
     - stage: mkrelease
       install:

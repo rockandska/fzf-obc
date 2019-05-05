@@ -160,7 +160,7 @@ __fzf_obc_search() {
     fi
   fi
 
-  cmd="cut -z -d ' ' -f2- < <(${cmd})"
+  cmd="awk -v RS='\0' -v ORS='\0' '{\$1=\"\"; print substr(\$0,2)}'  < <(${cmd})"
 
   eval "${cmd}"
   return 0
