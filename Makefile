@@ -1,5 +1,7 @@
 .DEFAULT_GOAL:=test
 
+UNAME_S := $(shell uname -s)
+
 SHELL_CHECK_VERSION := v0.6.0
 ASCIINEMA_VERSION := v2.0.2
 
@@ -47,16 +49,19 @@ $(TEST_PATH)/bin:
 $(TEST_PATH)/opt/shellcheck-$(SHELL_CHECK_VERSION):
 	@$(MAKE) --no-print-directory $(TEST_PATH)/opt
 	@$(MAKE) --no-print-directory $(TEST_PATH)/bin
+ifneq ("$(UNAME_S)","Darwin")
 	@wget -q -O "$(TEST_PATH)/bin/shellcheck" "https://shellcheck.storage.googleapis.com/shellcheck-$(SHELL_CHECK_VERSION).linux-x86_64"
 	@chmod +x $(TEST_PATH)/bin/shellcheck
+endif
+	touch $@
 
 $(TEST_PATH)/opt/asciinema-$(ASCIINEMA_VERSION):
 	@$(MAKE) --no-print-directory $(TEST_PATH)/opt
 	@$(MAKE) --no-print-directory $(TEST_PATH)/bin
 	@mkdir -p $${HOME}/.config/asciinema
 	@git clone -b $(ASCIINEMA_VERSION) https://github.com/asciinema/asciinema.git $@
-	@echo "#!/usr/bin/env bash\nPYTHONPATH='$(CURDIR)/test/opt/asciinema-$(ASCIINEMA_VERSION):$${PYTHONPATH}' python3 -m asciinema \"\$$@\"" > $(CURDIR)/test/bin/asciinema
-	@chmod +x $(CURDIR)/test/bin/asciinema
+	@echo "#!/usr/bin/env bash\nPYTHONPATH='$(CURDIR)/test/opt/asciinema-$(ASCIINEMA_VERSION):$${PYTHONPATH}' python3 -m asciinema \"\$$@\"" > $(TEST_PATH)/bin/asciinema
+	@chmod +x $(TEST_PATH)/bin/asciinema
 
 
 ############
@@ -65,8 +70,10 @@ $(TEST_PATH)/opt/asciinema-$(ASCIINEMA_VERSION):
 
 .PHONY: test
 test: deps
-	@printf "\n##### Start tests with shellcheck #####\n"
-	@$(TEST_PATH)/bin/shellcheck fzf-obc.bash bash_completion.d/*
+ifneq ("$(UNAME_S)","Darwin")
+		@printf "\n##### Start tests with shellcheck #####\n"
+		@$(TEST_PATH)/bin/shellcheck fzf-obc.bash bash_completion.d/*
+endif
 	@printf "\n##### Start tests with minitest and tmux #####\n"
 	@BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb
 
