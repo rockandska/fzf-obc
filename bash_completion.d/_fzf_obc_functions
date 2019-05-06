@@ -17,7 +17,7 @@ __fzf_compreply() {
 
 __fzf_obc_sort_cmd() {
   # sort cmd used to show results
-  (LC_ALL=C sort -z -t ' ' -k2fr -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -z -t ' ' -k2fr)
+  (LC_ALL=C sort -z -t ' ' -k2fr -S 50% --parallel="$( awk '/^processor/{print $3}' /proc/cpuinfo  2> /dev/null | wc -l)" 2> /dev/null || LC_ALL=C sort -z -t ' ' -k2fr)
 }
 
 __fzf_obc_colorized() {
@@ -141,7 +141,7 @@ __fzf_obc_search() {
   cmd+=" 2> /dev/null"
 
   if [[ "${cur_expanded}" != "${cur_clean}" ]];then
-    cmd=" sed -z s'#${cur_expanded//\//\\/}#${cur_clean//\//\\/}#' < <(${cmd})"
+    cmd=" sed -E s'#((^|\o0)..) ${cur_expanded//\//\\/}#\1 ${cur_clean//\//\\/}#g' < <(${cmd})"
   fi
 
   if [[ -n "${xspec}" ]];then
