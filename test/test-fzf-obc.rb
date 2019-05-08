@@ -110,7 +110,7 @@ class FzfObcTest < Minitest::Test
         PS1='' \
         GIT_WORK_TREE=#{temp_test_dir} \
         GIT_DIR=#{temp_test_dir}/.git \
-        #{BASE}/test/bin/asciinema rec --quiet -t 'fzf-obc #{self.name}' -i '#{TTYtest.send_keys_delay}' -c 'bash --rcfile #{TEST_BASHRC} --noprofile' #{TEST_REC_DIR}/#{self.name}.cast
+        #{BASE}/test/bin/asciinema rec --quiet -t 'fzf-obc #{self.name}' -i '#{TTYtest.send_keys_delay}' -c '/usr/bin/env bash --rcfile #{TEST_BASHRC} --noprofile' #{TEST_REC_DIR}/#{self.name}.cast
     HEREDOC
 
     if TTYtest.debug

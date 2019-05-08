@@ -34,12 +34,16 @@ jobs:
       addons:
         homebrew:
           packages:
-            - tmux
-            - python3
-            - docker
+            - bash
             - bash-completion@2
+            - python3
+            - tmux
+            - docker
       before_install:
-        - sudo bash -c 'echo -ne ". $(brew --prefix)/etc/profile.d/bash_completion.sh" > /etc/bash_completion'
+        - sudo bash -c 'echo "$(brew --prefix)/bin/bash" >> /etc/shells'
+        - sudo bash -c 'echo -ne ". $(brew --prefix)/share/bash-completion/bash_completion" > /etc/bash_completion'
+        - sudo chsh -s $(brew --prefix)/bin/bash "$USER"
+        - cat /etc/shells
 
     - stage: mkrelease
       install:
