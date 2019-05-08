@@ -3,14 +3,20 @@
 
 __fzf_add2compreply() {
   # Input: string separated by $'\0'
-  if ! readarray -d $'\0' -O "${#COMPREPLY[@]}" COMPREPLY 2> /dev/null;then
+  if [[ "${BASH_VERSINFO[0]}" -gt 4 ]] \
+  || [[ "${BASH_VERSINFO[0]}" -eq 4 ]] && [[ "${BASH_VERSINFO[1]}" -ge 4 ]]; then
+    readarray -d $'\0' -O "${#COMPREPLY[@]}" COMPREPLY 2> /dev/null
+  else
     while IFS=$'\0' read -r -d '' line;do COMPREPLY+=( "${line}" );done
   fi
 }
 
 __fzf_compreply() {
   # Input: string separated by $'\0'
-  if ! readarray -d $'\0' COMPREPLY 2> /dev/null;then
+  if [[ "${BASH_VERSINFO[0]}" -gt 4 ]] \
+  || [[ "${BASH_VERSINFO[0]}" -eq 4 ]] && [[ "${BASH_VERSINFO[1]}" -ge 4 ]]; then
+    readarray -d $'\0' COMPREPLY 2> /dev/null
+  else
     IFS=$'\0' read -r -d '' -a COMPREPLY
   fi
 }
@@ -81,9 +87,10 @@ __fzf_obc_search() {
 
   local cur_clean
   cur_clean="${cur%%\**}"
+  cur_clean="${cur_clean:-./}"
 
   local cur_expanded
-  cur_expanded=${cur_clean:-./}
+  cur_expanded="${cur_clean}"
 
   __fzf_obc_expand_tilde_by_ref cur_expanded
 
@@ -104,28 +111,64 @@ __fzf_obc_search() {
     __fzf_obc_globs_exclude exclude
   fi
 
+  local base_cmd="command find ${startdir}"
+  base_cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth}"
+  base_cmd+=" ${exclude}"
+
+  local cmd=""
   # printf is only available in GNU find
   # shellcheck disable=SC2185
   if find --version > /dev/null 2>&1 && ! ((FZF_OBC_NO_GNU));then
-    if [[ "${type}" == "paths" ]];then
-      cmd="{ __fzf_obc_search_gnu '${startdir}' 'dirs' '${mindepth}' '${maxdepth}' '${exclude}'; __fzf_obc_search_filter_bash '${xspec}' < <(__fzf_obc_search_gnu '${startdir}' 'files' '${mindepth}' '${maxdepth}' '${exclude}'); }"
-    elif [[ "${type}" == "dirs" ]];then
-      cmd="__fzf_obc_search_gnu '${startdir}' 'dirs' '${mindepth}' '${maxdepth}' '${exclude}'"
-    elif [[ "${type}" == "files" ]];then
-      cmd="__fzf_obc_search_filter_bash '${xspec}' <(__fzf_obc_search_gnu '${startdir}' 'files' '${mindepth}' '${maxdepth}' '${exclude}')"
+    if [[ "${type}" == "paths" ]] || [[ "${type}" == "files" ]];then
+      cmd+="${base_cmd}"
+      cmd+=" -type b -printf 'bd %p\0'"
+      cmd+=" -or"
+      cmd+=" -type c -printf 'cd %p\0'"
+      cmd+=" -or"
+      cmd+=" -type p -printf 'pi %p\0'"
+      cmd+=" -or"
+      cmd+=" -type l -printf 'ln %p\0'"
+      cmd+=" -or"
+      cmd+=" -type s -printf 'so %p\0'"
+      cmd+=" -or"
+      cmd+=" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -printf 'ex %p\0'"
+      cmd+=" -or"
+      cmd+=" -type f -printf 'fi %p\0'"
+      cmd+=" 2> /dev/null; "
+      cmd="__fzf_obc_search_filter_bash '${xspec}' < <($cmd); "
     fi
+    if [[ "${type}" == "paths" ]] || [[ "${type}" == "dirs" ]];then
+      cmd+="${base_cmd}"
+      cmd+=" -type d \( -perm -o=+t -a -perm -o=+w \) -printf 'tw %p\0'"
+      cmd+=" -or"
+      cmd+=" -type d \( -perm -o=+w \) -printf 'ow %p\0'"
+      cmd+=" -or"
+      cmd+=" -type d \( -perm -o=+t -a -perm -o=-w \) -printf 'st %p\0'"
+      cmd+=" -or"
+      cmd+=" -type d -printf 'di %p\0'"
+      cmd+=" 2> /dev/null; "
+    fi
+    cmd="{ ${cmd} }"
   else
-    if [[ "${type}" == "paths" ]];then
-      cmd="{ __fzf_obc_search_posix '${startdir}' 'dirs' '${mindepth}' '${maxdepth}' '${exclude}'; __fzf_obc_search_filter_bash '${xspec}' < <(__fzf_obc_search_posix '${startdir}' 'files' '${mindepth}' '${maxdepth}' '${exclude}'); }"
-    elif [[ "${type}" == "dirs" ]];then
-      cmd="__fzf_obc_search_posix '${startdir}' 'dirs' '${mindepth}' '${maxdepth}' '${exclude}'"
-    elif [[ "${type}" == "files" ]];then
-      cmd="__fzf_obc_search_filter_bash '${xspec}' <(__fzf_obc_search_posix '${startdir}' 'files' '${mindepth}' '${maxdepth}' '${exclude}')"
+    if [[ "${type}" == "files" ]] || [[ "${type}" == "paths" ]];then
+      cmd+="${base_cmd}"
+      cmd+=" -type f"
+      cmd+=" -print0 "
+      cmd+=" 2> /dev/null; "
+      cmd="__fzf_obc_search_filter_bash '${xspec}' < <($cmd); "
     fi
+    if [[ "${type}" == "dirs" ]] || [[ "${type}" == "paths" ]];then
+      cmd+="${base_cmd}"
+      cmd+=" -type d"
+      cmd+=" -print0 "
+      cmd+=" 2> /dev/null; "
+    fi
+    cmd="{ ${cmd} }"
+    cmd="sed -E 's#(^|\o0)([^$])#\1.. \2#g' < <(${cmd})"
   fi
 
   if [[ "${cur_expanded}" != "${cur_clean}" ]];then
-    cmd=" sed -E 's#((^|\o0)..) ${cur_expanded//\//\\/}#\1 ${cur_clean//\//\\/}#g' < <(${cmd})"
+    cmd=" sed -E 's#((^|\o0)..) ${cur_expanded}#\1 ${cur_clean}#g' < <(${cmd})"
   fi
 
   cmd=" __fzf_obc_sort_cmd < <($cmd)"
@@ -148,76 +191,6 @@ __fzf_obc_search() {
 
   eval "${cmd}"
   return 0
-}
-
-__fzf_obc_search_gnu() {
-  local startdir="${1}"
-  local type="${2}"
-  local mindepth="${3}"
-  local maxdepth="${4}"
-  local exclude="${5}"
-
-  local cmd
-  cmd=""
-  cmd="command find ${startdir}"
-  cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth}"
-  cmd+=" ${exclude}"
-
-  if [[ "${type}" == "paths" ]] || [[ "${type}" == "dirs" ]];then
-    cmd+=" -type d \( -perm -o=+t -a -perm -o=+w \) -printf 'tw %p\0'"
-    cmd+=" -or"
-    cmd+=" -type d \( -perm -o=+w \) -printf 'ow %p/\0'"
-    cmd+=" -or"
-    cmd+=" -type d \( -perm -o=+t -a -perm -o=-w \) -printf 'st %p\0'"
-    cmd+=" -or"
-    cmd+=" -type d -printf 'di %p\0'"
-  fi
-  if [[ "${type}" == "paths" ]];then
-    cmd+=" -or"
-  fi
-  if [[ "${type}" == "paths" ]] || [[ "${type}" == "files" ]];then
-    cmd+=" -type b -printf 'bd %p\0'"
-    cmd+=" -or"
-    cmd+=" -type c -printf 'cd %p\0'"
-    cmd+=" -or"
-    cmd+=" -type p -printf 'pi %p\0'"
-    cmd+=" -or"
-    cmd+=" -type l -printf 'ln %p\0'"
-    cmd+=" -or"
-    cmd+=" -type s -printf 'so %p\0'"
-    cmd+=" -or"
-    cmd+=" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -printf 'ex %p\0'"
-    cmd+=" -or"
-    cmd+=" -type f -printf 'fi %p\0'"
-  fi
-
-  cmd+=" 2> /dev/null"
-
-  eval "$cmd"
-}
-
-__fzf_obc_search_posix() {
-  local startdir="${1}"
-  local type="${2}"
-  local mindepth="${3}"
-  local maxdepth="${4}"
-  local exclude="${5}"
-
-  local cmd
-  cmd=""
-  cmd="command find ${startdir}"
-  cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth}"
-  cmd+=" ${exclude}"
-
-  if [[ "${type}" == "dirs" ]];then
-    cmd+=" -type d"
-  elif [[ "${type}" == "files" ]];then
-    cmd+=" -type f"
-  fi
-  cmd+=" -print0 "
-  cmd+=" 2> /dev/null"
-  cmd="sed -E 's#(^|\o0)([^$])#\1.. \2#g' <(${cmd})"
-  eval "$cmd"
 }
 
 __fzf_obc_search_filter_bash() (
