@@ -18,7 +18,7 @@ class FzfObcTest
         3/3
       > #{temp_test_home_dir}/test.conf
         #{temp_test_home_dir}/test 1.conf
-        #{temp_test_home_dir}/d1/
+        #{temp_test_home_dir}/d1
     EOF
     @tty.send_keys("#{DOWN}")
     @tty.send_keys("#{TAB}")
@@ -38,7 +38,7 @@ class FzfObcTest
         #{temp_test_home_dir}/test 1.conf
         #{temp_test_home_dir}/d1/test.conf
         #{temp_test_home_dir}/d1/test 1.conf
-        #{temp_test_home_dir}/d1/
+        #{temp_test_home_dir}/d1
     EOF
     @tty.send_keys("#{DOWN}")
     @tty.send_keys("#{DOWN}")

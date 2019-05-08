@@ -17,8 +17,8 @@ class FzfObcTest
       > #{temp_test_dir}/yyy
         #{temp_test_dir}/xxx xxx
         #{temp_test_dir}/xxx
-        #{temp_test_dir}/d1/
-        #{temp_test_dir}/d1 0/
+        #{temp_test_dir}/d1 0
+        #{temp_test_dir}/d1
     TTY
     @tty.send_keys('x',"#{TAB}")
     @tty.assert_matches <<~TTY
@@ -41,8 +41,8 @@ class FzfObcTest
         #{temp_test_dir}/d1/yyy
         #{temp_test_dir}/d1/xxx xxx
         #{temp_test_dir}/d1/xxx
-        #{temp_test_dir}/d1/
         #{temp_test_dir}/d1 0/yyy
+        #{temp_test_dir}/d1 0/xxx xxx
     TTY
     @tty.send_keys(<<~EOF)
       x

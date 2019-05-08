@@ -16,6 +16,9 @@
 # - $FZF_OBC_GLOBS_OPTS         (default: -m --select-1 --exit-0)
 # - $FZF_OBC_GLOBS_BINDINGS     (default: )
 # - $FZF_OBC_GLOBS_MAXDEPTH     (default: 999999)
+#
+# **** Testing purpose ****
+# - $FZF_OBC_NO_GNU             (default: 0)
 
 __fzf_obc_init_vars() {
   : "${FZF_OBC_PATH:=}"
@@ -29,6 +32,8 @@ __fzf_obc_init_vars() {
   : "${FZF_OBC_GLOBS_BINDINGS:=}"
 
   : "${FZF_OBC_GLOBS_MAXDEPTH:=999999}"
+
+  : "${FZF_OBC_NO_GNU:=0}"
 }
 
 ###########################################################

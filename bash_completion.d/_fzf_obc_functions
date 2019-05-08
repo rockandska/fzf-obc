@@ -71,7 +71,6 @@ __fzf_obc_globs_exclude() {
 }
 
 
-# To use custom commands instead of find, override __fzf_obc_search later
 # Return: list of files/directories separated by $'\0'
 __fzf_obc_search() {
   local IFS=$'\n'
@@ -101,23 +100,77 @@ __fzf_obc_search() {
 
   if [[ "${cur}" == *"**" ]];then
     maxdepth="${FZF_OBC_GLOBS_MAXDEPTH}"
-    local exclude_string
-    __fzf_obc_globs_exclude exclude_string
+    local exclude
+    __fzf_obc_globs_exclude exclude
   fi
+
+  # printf is only available in GNU find
+  # shellcheck disable=SC2185
+  if find --version > /dev/null 2>&1 && ! ((FZF_OBC_NO_GNU));then
+    if [[ "${type}" == "paths" ]];then
+      cmd="{ __fzf_obc_search_gnu '${startdir}' 'dirs' '${mindepth}' '${maxdepth}' '${exclude}'; __fzf_obc_search_filter_bash '${xspec}' < <(__fzf_obc_search_gnu '${startdir}' 'files' '${mindepth}' '${maxdepth}' '${exclude}'); }"
+    elif [[ "${type}" == "dirs" ]];then
+      cmd="__fzf_obc_search_gnu '${startdir}' 'dirs' '${mindepth}' '${maxdepth}' '${exclude}'"
+    elif [[ "${type}" == "files" ]];then
+      cmd="__fzf_obc_search_filter_bash '${xspec}' <(__fzf_obc_search_gnu '${startdir}' 'files' '${mindepth}' '${maxdepth}' '${exclude}')"
+    fi
+  else
+    if [[ "${type}" == "paths" ]];then
+      cmd="{ __fzf_obc_search_posix '${startdir}' 'dirs' '${mindepth}' '${maxdepth}' '${exclude}'; __fzf_obc_search_filter_bash '${xspec}' < <(__fzf_obc_search_posix '${startdir}' 'files' '${mindepth}' '${maxdepth}' '${exclude}'); }"
+    elif [[ "${type}" == "dirs" ]];then
+      cmd="__fzf_obc_search_posix '${startdir}' 'dirs' '${mindepth}' '${maxdepth}' '${exclude}'"
+    elif [[ "${type}" == "files" ]];then
+      cmd="__fzf_obc_search_filter_bash '${xspec}' <(__fzf_obc_search_posix '${startdir}' 'files' '${mindepth}' '${maxdepth}' '${exclude}')"
+    fi
+  fi
+
+  if [[ "${cur_expanded}" != "${cur_clean}" ]];then
+    cmd=" sed -E 's#((^|\o0)..) ${cur_expanded//\//\\/}#\1 ${cur_clean//\//\\/}#g' < <(${cmd})"
+  fi
+
+  cmd=" __fzf_obc_sort_cmd < <($cmd)"
+
+  # colors are only available with gnu find
+  # shellcheck disable=SC2185
+  if find --version > /dev/null 2>&1 && ! ((FZF_OBC_NO_GNU));then
+    if [[ "${cur}" == *"**" ]];then
+      if [[ "${FZF_OBC_GLOBS_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
+        cmd="__fzf_obc_colorized < <(${cmd})"
+      fi
+    else
+      if [[ "${FZF_OBC_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
+        cmd="__fzf_obc_colorized < <(${cmd})"
+      fi
+    fi
+  fi
+
+  cmd="awk -v RS='\0' -v ORS='\0' '{\$1=\"\"; print substr(\$0,2)}'  < <(${cmd})"
+
+  eval "${cmd}"
+  return 0
+}
+
+__fzf_obc_search_gnu() {
+  local startdir="${1}"
+  local type="${2}"
+  local mindepth="${3}"
+  local maxdepth="${4}"
+  local exclude="${5}"
 
   local cmd
   cmd=""
   cmd="command find ${startdir}"
   cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth}"
-  cmd+=" ${exclude_string}"
+  cmd+=" ${exclude}"
+
   if [[ "${type}" == "paths" ]] || [[ "${type}" == "dirs" ]];then
-    cmd+=" -type d \( -perm -o=+t -a -perm -o=+w \) -printf 'tw %p/\0'"
+    cmd+=" -type d \( -perm -o=+t -a -perm -o=+w \) -printf 'tw %p\0'"
     cmd+=" -or"
     cmd+=" -type d \( -perm -o=+w \) -printf 'ow %p/\0'"
     cmd+=" -or"
-    cmd+=" -type d \( -perm -o=+t -a -perm -o=-w \) -printf 'st %p/\0'"
+    cmd+=" -type d \( -perm -o=+t -a -perm -o=-w \) -printf 'st %p\0'"
     cmd+=" -or"
-    cmd+=" -type d -printf 'di %p/\0'"
+    cmd+=" -type d -printf 'di %p\0'"
   fi
   if [[ "${type}" == "paths" ]];then
     cmd+=" -or"
@@ -140,30 +193,31 @@ __fzf_obc_search() {
 
   cmd+=" 2> /dev/null"
 
-  if [[ "${cur_expanded}" != "${cur_clean}" ]];then
-    cmd=" sed -E s'#((^|\o0)..) ${cur_expanded//\//\\/}#\1 ${cur_clean//\//\\/}#g' < <(${cmd})"
+  eval "$cmd"
+}
+
+__fzf_obc_search_posix() {
+  local startdir="${1}"
+  local type="${2}"
+  local mindepth="${3}"
+  local maxdepth="${4}"
+  local exclude="${5}"
+
+  local cmd
+  cmd=""
+  cmd="command find ${startdir}"
+  cmd+=" -mindepth ${mindepth} -maxdepth ${maxdepth}"
+  cmd+=" ${exclude}"
+
+  if [[ "${type}" == "dirs" ]];then
+    cmd+=" -type d"
+  elif [[ "${type}" == "files" ]];then
+    cmd+=" -type f"
   fi
-
-  if [[ -n "${xspec}" ]];then
-    cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
-  fi
-
-  cmd=" __fzf_obc_sort_cmd < <($cmd)"
-
-  if [[ "${cur}" == *"**" ]];then
-    if [[ "${FZF_OBC_GLOBS_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
-      cmd="__fzf_obc_colorized < <(${cmd})"
-    fi
-  else
-    if [[ "${FZF_OBC_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
-      cmd="__fzf_obc_colorized < <(${cmd})"
-    fi
-  fi
-
-  cmd="awk -v RS='\0' -v ORS='\0' '{\$1=\"\"; print substr(\$0,2)}'  < <(${cmd})"
-
-  eval "${cmd}"
-  return 0
+  cmd+=" -print0 "
+  cmd+=" 2> /dev/null"
+  cmd="sed -E 's#(^|\o0)([^$])#\1.. \2#g' <(${cmd})"
+  eval "$cmd"
 }
 
 __fzf_obc_search_filter_bash() (

@@ -80,8 +80,10 @@ ifneq ("$(UNAME_S)","Darwin")
 		@printf "\n##### Start tests with shellcheck #####\n"
 		@$(TEST_PATH)/bin/shellcheck fzf-obc.bash bash_completion.d/*
 endif
-	@printf "\n##### Start tests with minitest and tmux #####\n"
+	@printf "\n##### Start tests with minitest and tmux (FZF_OBC_NO_GNU=0) #####\n"
 	@$(TEST_CMD)
+	@printf "\n##### Start tests with minitest and tmux (FZF_OBC_NO_GNU=1) #####\n"
+	@FZF_OBC_NO_GNU=1 $(TEST_CMD)
 
 ############
 # docs
