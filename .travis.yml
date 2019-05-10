@@ -31,11 +31,11 @@ jobs:
 
     - <<: *linux_tests
       os: osx
+      name: osx_default_bash
       addons:
         homebrew:
           packages:
-            - bash
-            - bash-completion@2
+            - bash-completion
             - python3
             - tmux
             - docker
@@ -44,13 +44,11 @@ jobs:
             - gawk
             - gnu-sed
       before_install:
-        - sudo bash < <(echo '$(brew --prefix)/bin/bash' >> /etc/shells)
         - sudo bash < <(echo 'export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"' >> ~/.bashrc)
         - sudo bash < <(echo 'export PATH="$(brew --prefix findutils)/libexec/gnubin:$PATH"' >> ~/.bashrc)
         - sudo bash < <(echo 'export PATH="$(brew --prefix gnu-sed)/libexec/gnubin:$PATH"' >> ~/.bashrc)
-        - sudo bash -c 'echo -ne ". $(brew --prefix)/share/bash-completion/bash_completion" > /etc/bash_completion'
-        - sudo chsh -s $(brew --prefix)/bin/bash "$USER"
-        - cat ~/.bashrc
+        - sudo bash -c $'echo \'export BASH_COMPLETION_COMPAT_DIR="$(brew --prefix)/etc/bash_completion.d"\' >> /etc/bash_completion'
+        - sudo bash -c $'echo \'[[ -f "$(brew --prefix)/etc/bash_completion" ]] && . "$(brew --prefix)/etc/bash_completion"\' >> /etc/bash_completion'
 
     - stage: mkrelease
       install:

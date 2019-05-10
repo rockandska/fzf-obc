@@ -11,11 +11,11 @@ _filedir_xspec()
       xspec=${xspec#!};
       matchop=@;
   fi;
-  xspec="$matchop($xspec|${xspec^^})";
+  [[ ${BASH_VERSINFO[0]} -ge 4 ]] && xspec="$matchop($xspec|${xspec^^})" || xspec="$matchop($xspec|$(printf %s "$xspec" | tr '[:lower:]' '[:upper:]'))";
   __fzf_add2compreply < <(__fzf_obc_search "${cur}" "paths" "${xspec}")
 
   if [[ "${#COMPREPLY[@]}" -gt 0 ]];then
-    compopt -o filenames
+    type compopt >&/dev/null && compopt -o filenames 2> /dev/null || compgen -f /non-existing-dir/ > /dev/null
   fi
 
   return 0

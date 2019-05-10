@@ -151,8 +151,8 @@ __fzf_obc_update_complete() {
     if ! type -t "${wrapper_name}" > /dev/null 2>&1 ; then
       eval "
         ${wrapper_name}() {
-          local cur prev words cword split cpl_status;
-          _init_completion -s || return;
+          local cur prev words cword cpl_status;
+          _get_comp_words_by_ref -n \"<>&\" cur prev words cword;
           ${f} \$@ || cpl_status=\$?
           if type -t __fzf_obc_post_${f} > /dev/null 2>&1;then
             local wrapper_prefix='${wrapper_prefix}'

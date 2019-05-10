@@ -202,7 +202,7 @@ __fzf_obc_search_filter_bash() (
   local xspec line type file filename
   xspec="$1"
   [[ -z "${xspec}" ]] && cat
-  while IFS= read -t 0.1 -d $'\0' -r line;do
+  while IFS= read -t 1 -d $'\0' -r line;do
     type="${line:0:2}"
     file="${line:3}"
     filename="${file##*/}"
@@ -232,7 +232,9 @@ __fzf_obc_tilde ()
   if [[ $1 == \~* && $1 != */* ]]; then
       mapfile -t COMPREPLY < <( compgen -P '~' -u -- "${1#\~}" )
       result=${#COMPREPLY[@]};
-      [[ $result -gt 0 ]] && compopt -o filenames 2> /dev/null;
+      if [[ $result -gt 0 ]];then
+        type compopt >&/dev/null && compopt -o filenames 2> /dev/null || compgen -f /non-existing-dir/ > /dev/null
+      fi
   fi;
   return "${result}"
 }
@@ -246,7 +248,7 @@ __fzf_obc_read_compreply() {
   if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
     if [[ "${cur}" == *"**" ]];then
       local item
-      compopt +o filenames
+      type compopt &> /dev/null && compopt +o filenames
       __fzf_compreply < <(
         printf "%s\0" "${COMPREPLY[@]}" \
         | awk -v RS='\0' -v ORS='\0' '!a[$0]++' \
@@ -267,7 +269,7 @@ __fzf_obc_read_compreply() {
     printf '\e[5n'
   else
     if [[ "${cur}" == *"**" ]];then
-      compopt -o nospace
+      type compopt &> /dev/null && compopt -o nospace
       COMPREPLY=( "${cur%\*\*}" )
     fi
   fi
