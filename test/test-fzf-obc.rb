@@ -91,7 +91,9 @@ class FzfObcTest < Minitest::Test
     if TTYtest.debug
       puts "\nDebug: #{self.name}\n"
     end
+    @tty.max_wait_time = 5
     @tty.assert_row(0,'$')
+    @tty.max_wait_time = 2
   end
 
   def teardown

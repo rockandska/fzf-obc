@@ -39,11 +39,18 @@ jobs:
             - python3
             - tmux
             - docker
+            - coreutils
+            - findutils
+            - gawk
+            - gnu-sed
       before_install:
-        - sudo bash -c 'echo "$(brew --prefix)/bin/bash" >> /etc/shells'
+        - sudo bash < <(echo '$(brew --prefix)/bin/bash' >> /etc/shells)
+        - sudo bash < <(echo 'export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"' >> ~/.bashrc)
+        - sudo bash < <(echo 'export PATH="$(brew --prefix findutils)/libexec/gnubin:$PATH"' >> ~/.bashrc)
+        - sudo bash < <(echo 'export PATH="$(brew --prefix gnu-sed)/libexec/gnubin:$PATH"' >> ~/.bashrc)
         - sudo bash -c 'echo -ne ". $(brew --prefix)/share/bash-completion/bash_completion" > /etc/bash_completion'
         - sudo chsh -s $(brew --prefix)/bin/bash "$USER"
-        - cat /etc/shells
+        - cat ~/.bashrc
 
     - stage: mkrelease
       install:
