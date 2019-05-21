@@ -233,7 +233,11 @@ __fzf_obc_tilde ()
       mapfile -t COMPREPLY < <( compgen -P '~' -u -- "${1#\~}" )
       result=${#COMPREPLY[@]};
       if [[ $result -gt 0 ]];then
-        type compopt >&/dev/null && compopt -o filenames 2> /dev/null || compgen -f /non-existing-dir/ > /dev/null
+        if type compopt >&/dev/null;then
+          compopt -o filenames 2> /dev/null
+        else
+          compgen -f /non-existing-dir/ > /dev/null
+        fi
       fi
   fi;
   return "${result}"
