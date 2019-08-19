@@ -117,7 +117,7 @@ __fzf_obc_load() {
   local IFS=$'\n'
   # Load functions / traps
   local fzf_obc_path
-  fzf_obc_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/bash_completion.d"
+  fzf_obc_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../" >/dev/null 2>&1 && pwd )/bash_completion.d"
   local fzf_obc_path_array path file
   IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH}"
   for path in "${fzf_obc_path}" "${fzf_obc_path_array[@]}";do

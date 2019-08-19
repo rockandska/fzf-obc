@@ -38,7 +38,7 @@ fzf-obc should be the last completion function loaded into your profile.
 $ INSTALL_PATH=~/.local/opt/fzf-obc
 $ mkdir -p ${INSTALL_PATH}
 $ git clone https://github.com/rockandska/fzf-obc ${INSTALL_PATH}
-$ source ${INSTALL_PATH}/fzf-obc.bash && echo "source ${INSTALL_PATH}/fzf-obc.bash" >> ~/.bashrc
+$ source ${INSTALL_PATH}/bin/fzf-obc.bash && echo "source ${INSTALL_PATH}/bin/fzf-obc.bash" >> ~/.bashrc
 ```
 
 ## Details

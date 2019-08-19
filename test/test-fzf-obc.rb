@@ -66,7 +66,7 @@ rcfile.puts <<~EOF
   FZF_OBC_OPTS="--select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'"
   FZF_OBC_GLOBS_OPTS="-m --select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'"
   source /etc/bash_completion
-  source #{BASE}/fzf-obc.bash
+  source #{BASE}/bin/fzf-obc.bash
 EOF
 rcfile.close
 

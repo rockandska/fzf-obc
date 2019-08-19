@@ -88,7 +88,7 @@ $(TEST_PATH)/opt/asciinema-$(ASCIINEMA_VERSION):
 .PHONY: test
 test: deps
 	@printf "\n##### Start tests with shellcheck #####\n"
-	@$(TEST_PATH)/bin/shellcheck fzf-obc.bash bash_completion.d/*
+	@$(TEST_PATH)/bin/shellcheck bin/fzf-obc.bash bash_completion.d/*
 	@printf "\n##### Start tests with minitest and tmux #####\n"
 	@BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb
 
