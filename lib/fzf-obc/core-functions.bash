@@ -349,6 +349,7 @@ __fzf_obc_load() {
 }
 
 __fzf_obc_update_complete() {
+  eval "$(__fzf_obc_get_env)"
   : "${wrapper_prefix:?Not defined in ${FUNCNAME[0]}}"
   : "${post_prefix:?Not defined in ${FUNCNAME[0]}}"
   : "${trap_prefix:?Not defined in ${FUNCNAME[0]}}"
@@ -362,21 +363,20 @@ __fzf_obc_update_complete() {
     func_name="${complete_def_arr[${#complete_def_arr[@]}-2]}"
     wrapper_name="${wrapper_prefix}${func_name}"
     if ! type -t "${wrapper_name}" > /dev/null 2>&1 ; then
-      eval "
+      local cmd
+      read -r -d '' cmd <<-EOF
         ${wrapper_name}() {
-          local cur prev words cword split cpl_status;
-          _init_completion -s || return;
-          ${func_name} \$@ || cpl_status=\$?
+          local cur prev words cword split complete_status;
+          _init_completion
+          ${func_name} \$@ || complete_status=\$?
           if type -t __fzf_obc_post_${func_name} > /dev/null 2>&1;then
-            local wrapper_prefix='${wrapper_prefix}'
-            local post_prefix='${post_prefix}'
-            local trap_prefix='${trap_prefix}'
             __fzf_obc_post_${func_name} || return \$?
           fi
           __fzf_obc_read_compreply
-          return \$cpl_status
+          return \$complete_status
         }
-      "
+			EOF
+			eval "$cmd"
     fi
     complete_def_arr[${#complete_def_arr[@]}-2]="${wrapper_name}"
     eval "${complete_def_arr[@]}"
