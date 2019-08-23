@@ -363,6 +363,9 @@ __fzf_obc_update_complete() {
             __fzf_obc_post_${func_name} || return \$?
           fi
           __fzf_obc_read_compreply
+          # always check complete wrapper
+          # example: tar complete function is update on 1st exec
+          __fzf_obc_update_complete
           return \$complete_status
         }
 			EOF
