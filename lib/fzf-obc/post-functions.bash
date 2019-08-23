@@ -20,8 +20,10 @@ __fzf_obc_post__kill() {
     read -r -d '' -a COMPREPLY < <(
       command ps -ef \
       | sed 1d \
+      | tr '\n' '\0' \
       | FZF_DEFAULT_OPTS="--height ${FZF_OBC_HEIGHT} --min-height 15 --reverse $FZF_DEFAULT_OPTS --preview 'echo {}' --preview-window down:3:wrap $FZF_COMPLETION_OPTS -m" \
         __fzf_obc_cmd \
+      | tr '\0' '\n' \
       | awk '{print $2}' \
       | tr '\n' ' ' \
       | sed 's/ $//'

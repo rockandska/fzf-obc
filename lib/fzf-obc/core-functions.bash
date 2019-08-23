@@ -40,30 +40,22 @@ EOF
 }
 
 __fzf_obc_cleanup() {
+  eval "$(__fzf_obc_get_env)"
   : "${wrapper_prefix:?Not defined in ${FUNCNAME[0]}}"
   : "${post_prefix:?Not defined in ${FUNCNAME[0]}}"
   : "${trap_prefix:?Not defined in ${FUNCNAME[0]}}"
   # Revert back to the original complete definitions
-  local existing_complete_arr
-  read -r -d '' -a existing_complete_arr < <(
-    complete | grep -o -- "-F ${wrapper_prefix}.*" | awk '{print $2}' | sort -u
-  )
-  local f
-  for f in "${existing_complete_arr[@]}";do
-    # Remove the wrapper to complete definition
-    local new_complete_arr
-    read -r -d '' -a new_complete_arr < <(
-      complete | grep -E -- "-F ${f}( |$)" | sed -r "s/-F ${wrapper_prefix}/-F /;s/ +$//"
-    )
-    local w
-    for w in "${new_complete_arr[@]}";do
-      if echo "${w}" | awk '{ if(NF==3){exit 0}else{exit 1} }';then
-        eval "${w} ''"
-      else
-        eval "${w}"
-      fi
-    done
-  done
+  local wrapper_name
+  local func_name
+  local complete_def
+  local complete_def_arr
+  while IFS= read -r complete_def;do
+    IFS=' ' read -r -a complete_def_arr <<< "${complete_def}"
+    func_name="${complete_def_arr[${#complete_def_arr[@]}-2]}"
+    wrapper_name="${func_name/${wrapper_prefix}/}"
+    complete_def_arr[${#complete_def_arr[@]}-2]="${wrapper_name}"
+    eval "${complete_def_arr[@]}"
+  done < <(complete | grep -E -- '-F ([^ ]+)( |$)' | grep " -F ${wrapper_prefix}" | sed -r "s/(-F [^ ]+) ?$/\1 ''/")
 }
 
 __fzf_obc_add_trap() {
@@ -388,6 +380,6 @@ __fzf_obc_update_complete() {
   while IFS= read -r loaded_trap;do
     f="${loaded_trap/${trap_prefix}}"
     __fzf_obc_add_trap "$f"
-  done < <(declare -F | grep -E -o -- "-f ${trap_prefix}.*" | awk '{print $2}' | sort -u)
+  done < <(declare -F | grep -E -o -- "-f ${trap_prefix}.*" | awk '{print $2}')
 }
 
