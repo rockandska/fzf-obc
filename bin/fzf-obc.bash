@@ -1,21 +1,4 @@
 #!/usr/bin/env bash
-#     ____      ____
-#    / __/___  / __/
-#   / /_/_  / / /_
-#  / __/ / /_/ __/
-# /_/   /___/_/-completion.bash
-#
-# - $FZF_OBC_PATH               (default: )
-# - $FZF_OBC_COLORS             (default: 1)
-# - $FZF_OBC_HEIGHT             (default: 40%)
-# - $FZF_OBC_EXCLUDE_PATH       (default: .git:.svn)
-# - $FZF_OBC_OPTS               (default: --select-1 --exit-0)
-# - $FZF_OBC_BINDINGS           (default: --bind tab:accept)
-#
-# **** Only when using globs pattern ****
-# - $FZF_OBC_GLOBS_OPTS         (default: -m --select-1 --exit-0)
-# - $FZF_OBC_GLOBS_BINDINGS     (default: )
-# - $FZF_OBC_GLOBS_MAXDEPTH     (default: 999999)
 
 # To redraw line after fzf closes (printf '\e[5n')
 bind '"\e[0n": redraw-current-line'
