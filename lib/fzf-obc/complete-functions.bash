@@ -5,7 +5,7 @@ _filedir()
   local IFS=$'\n'
 
   local cur="${cur}"
-  __fzf_obc_tilde "${cur%%\**}" || return
+  __fzf_obc_tilde "${cur}" || return
 
   if [[ "$1" != -d ]]; then
     local xspec=${1:+"*.@($1|${1^^})"};

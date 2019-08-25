@@ -162,11 +162,8 @@ __fzf_obc_search() {
   type="${2}"
   xspec="${3}"
 
-  local cur_clean
-  cur_clean="${cur%%\**}"
-
   local cur_expanded
-  cur_expanded=${cur_clean:-./}
+  cur_expanded=${cur:-./}
 
   __fzf_obc_expand_tilde_by_ref cur_expanded
 
@@ -181,7 +178,7 @@ __fzf_obc_search() {
     maxdepth="1"
   fi
 
-  if [[ "${cur}" == *"**" ]];then
+  if ((${fzf_obc_is_glob:-0}));then
     maxdepth="${FZF_OBC_GLOBS_MAXDEPTH}"
     local exclude_string
     __fzf_obc_globs_exclude exclude_string
@@ -222,8 +219,8 @@ __fzf_obc_search() {
 
   cmd+=" 2> /dev/null"
 
-  if [[ "${cur_expanded}" != "${cur_clean}" ]];then
-    cmd=" sed -z s'#${cur_expanded//\//\\/}#${cur_clean//\//\\/}#' < <(${cmd})"
+  if [[ "${cur_expanded}" != "${cur}" ]];then
+    cmd=" sed -z s'#${cur_expanded//\//\\/}#${cur//\//\\/}#' < <(${cmd})"
   fi
 
   if [[ -n "${xspec}" ]];then
@@ -232,7 +229,7 @@ __fzf_obc_search() {
 
   cmd=" __fzf_obc_sort_cmd < <($cmd)"
 
-  if [[ "${cur}" == *"**" ]];then
+  if ((${fzf_obc_is_glob:-0}));then
     if [[ "${FZF_OBC_GLOBS_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
       cmd="__fzf_obc_colorized < <(${cmd})"
     fi
@@ -299,7 +296,7 @@ __fzf_obc_cmd() {
 __fzf_obc_read_compreply() {
   local IFS=$'\n'
   if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
-    if [[ "${cur}" == *"**" ]];then
+    if ((fzf_obc_is_glob));then
       local item
       compopt +o filenames
       __fzf_compreply < <(
@@ -320,10 +317,12 @@ __fzf_obc_read_compreply() {
       )
     fi
     printf '\e[5n'
-  else
-    if [[ "${cur}" == *"**" ]];then
+  fi
+  if [[ "$fzf_obc_is_glob" -ne 0 ]];then
+    compopt +o filenames
+    if [[ "${#COMPREPLY[@]}" -eq 0 ]];then
       compopt -o nospace
-      COMPREPLY=( "${cur%\*\*}" )
+      COMPREPLY=( "${cur}" )
     fi
   fi
 }
@@ -358,7 +357,7 @@ __fzf_obc_update_complete() {
       local cmd
       read -r -d '' cmd <<-EOF
         ${wrapper_name}() {
-          local cur prev words cword split complete_status;
+          local cur prev words cword split complete_status fzf_obc_is_glob=0;
           _init_completion
           ${func_name} \$@ || complete_status=\$?
           if type -t __fzf_obc_post_${func_name} > /dev/null 2>&1;then
