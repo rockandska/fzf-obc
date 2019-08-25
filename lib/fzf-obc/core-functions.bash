@@ -322,7 +322,7 @@ __fzf_obc_read_compreply() {
     compopt +o filenames
     if [[ "${#COMPREPLY[@]}" -eq 0 ]];then
       compopt -o nospace
-      COMPREPLY=( "${cur}" )
+      COMPREPLY=( "${COMP_WORDS[${COMP_CWORD}]%\*\*}" )
     fi
   fi
 }
@@ -357,8 +357,7 @@ __fzf_obc_update_complete() {
       local cmd
       read -r -d '' cmd <<-EOF
         ${wrapper_name}() {
-          local cur prev words cword split complete_status fzf_obc_is_glob=0;
-          _init_completion
+          local complete_status fzf_obc_is_glob=0;
           ${func_name} \$@ || complete_status=\$?
           if type -t __fzf_obc_post_${func_name} > /dev/null 2>&1;then
             __fzf_obc_post_${func_name} || return \$?

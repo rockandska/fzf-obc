@@ -3,7 +3,6 @@
 _filedir()
 {
   local IFS=$'\n'
-
   local cur="${cur}"
   __fzf_obc_tilde "${cur}" || return
 
@@ -24,8 +23,11 @@ _filedir()
 
 _filedir_xspec()
 {
-  local cur="${cur}"
-  __fzf_obc_tilde "${cur%%\**}" || return
+  # shellcheck disable=SC2034
+  local cur prev words cword;
+  _init_completion || return;
+
+  __fzf_obc_tilde "${cur}" || return
   local xspec
   # shellcheck disable=SC2154
   xspec="${_xspecs[${1##*/}]}"
