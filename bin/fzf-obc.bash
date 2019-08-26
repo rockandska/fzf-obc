@@ -21,6 +21,7 @@ _fzf_obc() {
 
   [[ -z "${1}" || "${1}" == "load" ]] && __fzf_obc_load
   [[ -z "${1}" || "${1}" == "update" ]] && __fzf_obc_update_complete
+  __fzf_obc_add_all_traps
 
   return 0
 }

@@ -380,7 +380,10 @@ __fzf_obc_update_complete() {
     complete_def_arr[${#complete_def_arr[@]}-2]="${wrapper_name}"
     eval "${complete_def_arr[@]}"
   done < <(complete | grep -E -- '-F ([^ ]+)( |$)' | grep -v " -F ${wrapper_prefix}" | sed -r "s/(-F [^ ]+) ?$/\1 ''/")
+}
 
+__fzf_obc_add_all_traps() {
+  eval "$(__fzf_obc_get_env)"
   # Loop over existing trap and add them
   local f
   local loaded_trap
@@ -389,4 +392,3 @@ __fzf_obc_update_complete() {
     __fzf_obc_add_trap "$f"
   done < <(declare -F | grep -E -o -- "-f ${trap_prefix}.*" | awk '{print $2}')
 }
-
