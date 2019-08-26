@@ -4,7 +4,7 @@ __fzf_obc_post__completion_loader() {
   __fzf_obc_update_complete || return $?
 }
 
-__fzf_obc_post__kill() {
+__fzf_obc_post_kill() {
   local IFS=$'\n'
   # shellcheck disable=SC2154
   case $prev in

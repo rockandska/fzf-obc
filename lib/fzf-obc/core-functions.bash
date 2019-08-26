@@ -349,6 +349,11 @@ __fzf_obc_update_complete() {
           if type -t __fzf_obc_post_${func_name} > /dev/null 2>&1;then
             __fzf_obc_post_${func_name} || return \$?
           fi
+          if [[ \"${func_name}\" != \"_completion_loader\" ]];then
+            if type -t __fzf_obc_post_\${1} > /dev/null 2>&1;then
+              __fzf_obc_post_\${1} || return \$?
+            fi
+          fi
           __fzf_obc_read_compreply
           # always check complete wrapper
           # example: tar complete function is update on 1st exec
