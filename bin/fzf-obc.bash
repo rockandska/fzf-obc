@@ -14,13 +14,10 @@ _fzf_obc() {
     source "${lib}"
   done
 
-  [[ -z "${1}" || "${1}" == "init" ]] && eval "$(__fzf_obc_get_env)"
-  [[ -z "${1}" || "${1}" == "cleanup" ]] && __fzf_obc_cleanup
-
   complete -p fzf &> /dev/null || complete -F _longopt fzf
 
-  [[ -z "${1}" || "${1}" == "load" ]] && __fzf_obc_load
-  [[ -z "${1}" || "${1}" == "update" ]] && __fzf_obc_update_complete
+  __fzf_obc_load
+  __fzf_obc_update_complete
   __fzf_obc_add_all_traps
 
   return 0

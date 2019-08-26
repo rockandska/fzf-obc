@@ -39,25 +39,6 @@ EOF
   echo "${env}"
 }
 
-__fzf_obc_cleanup() {
-  eval "$(__fzf_obc_get_env)"
-  : "${wrapper_prefix:?Not defined in ${FUNCNAME[0]}}"
-  : "${post_prefix:?Not defined in ${FUNCNAME[0]}}"
-  : "${trap_prefix:?Not defined in ${FUNCNAME[0]}}"
-  # Revert back to the original complete definitions
-  local wrapper_name
-  local func_name
-  local complete_def
-  local complete_def_arr
-  while IFS= read -r complete_def;do
-    IFS=' ' read -r -a complete_def_arr <<< "${complete_def}"
-    func_name="${complete_def_arr[${#complete_def_arr[@]}-2]}"
-    wrapper_name="${func_name/${wrapper_prefix}/}"
-    complete_def_arr[${#complete_def_arr[@]}-2]="${wrapper_name}"
-    eval "${complete_def_arr[@]}"
-  done < <(complete | grep -E -- '-F ([^ ]+)( |$)' | grep " -F ${wrapper_prefix}" | sed -r "s/(-F [^ ]+) ?$/\1 ''/")
-}
-
 __fzf_obc_add_trap() {
   : "${wrapper_prefix:?Not defined in ${FUNCNAME[0]}}"
   : "${post_prefix:?Not defined in ${FUNCNAME[0]}}"
