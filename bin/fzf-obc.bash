@@ -16,7 +16,7 @@ _fzf_obc() {
 
   complete -p fzf &> /dev/null || complete -F _longopt fzf
 
-  __fzf_obc_load
+  __fzf_obc_load_user_functions
   __fzf_obc_update_complete
   __fzf_obc_add_all_traps
 
