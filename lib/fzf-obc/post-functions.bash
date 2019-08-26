@@ -6,13 +6,14 @@ __fzf_obc_post__completion_loader() {
 
 __fzf_obc_post_kill() {
   local IFS=$'\n'
-  # shellcheck disable=SC2154
+  # shellcheck disable=SC2034
+  local cur prev words cword _
+  _get_comp_words_by_ref -n "<>&" cur prev words cword;
   case $prev in
     -s|-l)
       return 0
       ;;
   esac;
-  # shellcheck disable=SC2154
   if [[ $cword -eq 1 && "$cur" == -* ]]; then
     return 0
   else
