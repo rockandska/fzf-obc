@@ -274,18 +274,25 @@ __fzf_obc_cmd() {
     fzf --read0 --print0 --ansi
 }
 
-__fzf_obc_read_compreply() {
-  local IFS=$'\n'
-  if [[ "$fzf_obc_is_glob" -ne 0 ]];then
+__fzf_obc_check_empty_compreply() {
+  if [[ "${fzf_obc_is_glob:-0}" -ne 0 ]];then
     compopt +o filenames
     if [[ "${#COMPREPLY[@]}" -eq 0 ]];then
       compopt -o nospace
+      COMP_WORDS[${COMP_CWORD}]="${COMP_WORDS[${COMP_CWORD}]%\*\*}"
+      __fzf_add2compreply < <(printf '%s\0' "${COMP_WORDS[${COMP_CWORD}]}" )
+      [[ -z "${COMPREPLY[*]}" ]] && COMPREPLY=(' ')
     fi
   fi
+}
+
+__fzf_obc_read_compreply() {
+  local IFS=$'\n'
+  local fzf_obc_is_glob="${fzf_obc_is_glob:?}"
+  local cmd
   if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
     if ((fzf_obc_is_glob));then
       local item
-      compopt +o filenames
       __fzf_compreply < <(
         printf "%s\0" "${COMPREPLY[@]}" \
         | awk -v RS='\0' -v ORS='\0' '!a[$0]++' \
@@ -304,10 +311,6 @@ __fzf_obc_read_compreply() {
       )
     fi
     printf '\e[5n'
-  else
-    if ((fzf_obc_is_glob));then
-      COMPREPLY=( "${COMP_WORDS[${COMP_CWORD}]%\*\*}" )
-    fi
   fi
 }
 
@@ -355,6 +358,7 @@ __fzf_obc_update_complete() {
             fi
           fi
           __fzf_obc_read_compreply
+          __fzf_obc_check_empty_compreply
           # always check complete wrapper
           # example: tar complete function is update on 1st exec
           __fzf_obc_update_complete
