@@ -292,23 +292,20 @@ __fzf_obc_read_compreply() {
   local cmd
   if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
     if ((fzf_obc_is_glob));then
-      local item
-      __fzf_compreply < <(
-        printf "%s\0" "${COMPREPLY[@]}" \
-        | awk -v RS='\0' -v ORS='\0' '!a[$0]++' \
-        | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" \
-          __fzf_obc_cmd \
-        | while IFS= read -d $'\0' -r item;do printf "%q " "${item}" | sed 's/^\\~/~/';done \
-        | sed 's/ $//'
-      )
+      cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
+      cmd="awk -v RS='\0' -v ORS='\0' '!a[\$0]++' < <($cmd)"
+      cmd=$'FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" __fzf_obc_cmd'" < <($cmd)"
+      cmd="local item;while IFS= read -d $'\0' -r item;do sed 's/^\\\~/~/g' < <(printf '%q ' \"\${item}\");done < <($cmd)"
+      cmd="sed 's/ $//' < <($cmd)"
+      cmd="__fzf_compreply < <($cmd)"
+      eval "$cmd"
     else
-      __fzf_compreply < <(
-        printf "%s\0" "${COMPREPLY[@]}" \
-        | awk -v RS='\0' -v ORS='\0' '!a[$0]++' \
-        | FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" \
-          __fzf_obc_cmd \
-        | sed 's#/\x0#\x0#'
-      )
+      cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
+      cmd="awk -v RS='\0' -v ORS='\0' '!a[\$0]++' < <($cmd)"
+      cmd=$'FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" __fzf_obc_cmd'" < <($cmd)"
+      cmd="sed 's#/\x0#\x0#' < <($cmd)"
+      cmd="__fzf_compreply < <($cmd)"
+      eval "$cmd"
     fi
     printf '\e[5n'
   fi
@@ -344,7 +341,7 @@ __fzf_obc_update_complete() {
       local cmd
       read -r -d '' cmd <<-EOF
         ${wrapper_name}() {
-          trap \"eval \\\"\$previous_globstar_setting\\\"\" RETURN
+          trap 'eval "\$previous_globstar_setting"' RETURN
           local previous_globstar_setting=\$(shopt -p globstar);
           shopt -u globstar
           local complete_status fzf_obc_is_glob=0;
