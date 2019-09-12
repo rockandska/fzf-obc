@@ -304,6 +304,7 @@ __fzf_obc_read_compreply() {
     fi
     printf '\e[5n'
   fi
+  __fzf_obc_check_empty_compreply
 }
 
 __fzf_obc_load_user_functions() {
@@ -344,16 +345,8 @@ __fzf_obc_update_complete() {
           local fzf_obc_is_glob=0
           local complete_status=0
           ${func_name} \$@ || complete_status=\$?
-          if type -t __fzf_obc_post_${func_name} > /dev/null 2>&1;then
-            __fzf_obc_post_${func_name} || return \$?
-          fi
-          if [[ \"${func_name}\" != \"_completion_loader\" ]];then
-            if type -t __fzf_obc_post_\${1} > /dev/null 2>&1;then
-              __fzf_obc_post_\${1} || return \$?
-            fi
-          fi
+          __fzf_obc_run_post_cmd
           __fzf_obc_read_compreply
-          __fzf_obc_check_empty_compreply
           # always check complete wrapper
           # example: tar complete function is update on 1st exec
           __fzf_obc_update_complete
