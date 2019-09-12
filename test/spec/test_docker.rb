@@ -5,14 +5,14 @@ class FzfObcTest
       $ docker
       >
         54/54
-      > config
-        container
-        image
-        network
-        node
-        plugin
-        secret
-        service
+      > wait
+        volume
+        version
+        update
+        unpause
+        trust
+        top
+        tag
     EOF
 
     @tty.send_keys("pl")
@@ -20,25 +20,25 @@ class FzfObcTest
       $ docker
       > pl
         2/54
-      > plugin
-        pull
+      > pull
+        plugin
     EOF
 
-    @tty.send_keys("#{TAB}","#{TAB}")
+    @tty.send_keys("#{DOWN}","#{TAB}","#{TAB}")
     @tty.assert_matches(<<~EOF)
       $ docker plugin
       >
         10/10
-      > create
-        disable
-        enable
-        inspect
-        install
-        ls
-        push
+      > upgrade
+        set
         rm
+        push
+        ls
+        install
+        inspect
+        enable
     EOF
-    @tty.send_keys("#{TAB}")
+    @tty.send_keys("cre","#{TAB}")
     @tty.assert_row(0,"$ docker plugin create")
 
   end

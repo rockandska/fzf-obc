@@ -78,11 +78,6 @@ __fzf_compreply() {
   fi
 }
 
-__fzf_obc_sort_cmd() {
-  # sort cmd used to show results
-  (LC_ALL=C sort -z -t ' ' -k2fr -S 50% --parallel="$( awk '/^processor/{print $3}' < /proc/cpuinfo | wc -l)" 2> /dev/null || LC_ALL=C sort -z -t ' ' -k2fr)
-}
-
 __fzf_obc_colorized() {
   local IFS=' '
   local ls_colors_arr
@@ -208,8 +203,6 @@ __fzf_obc_search() {
     cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
   fi
 
-  cmd=" __fzf_obc_sort_cmd < <($cmd)"
-
   if ((${fzf_obc_is_glob:-0}));then
     if [[ "${FZF_OBC_GLOBS_COLORS}" == "1" ]] && [[ "${#LS_COLORS}" -gt 0 ]];then
       cmd="__fzf_obc_colorized < <(${cmd})"
@@ -287,13 +280,15 @@ __fzf_obc_check_empty_compreply() {
 }
 
 __fzf_obc_read_compreply() {
-  local IFS=$'\n'
+  : "${_fzf_obc_complete_func_name:?Missing complete function name in ${FUNCNAME[0]}}"
+  : "${_fzf_obc_complete_cmd_name:?Missing complete command name in ${FUNCNAME[0]}}"
   local fzf_obc_is_glob="${fzf_obc_is_glob:?}"
+  local IFS=$'\n'
   local cmd
   if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
     if ((fzf_obc_is_glob));then
       cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
-      cmd="awk -v RS='\0' -v ORS='\0' '!a[\$0]++' < <($cmd)"
+      cmd="__fzf_obc_sort < <($cmd)"
       cmd=$'FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" __fzf_obc_cmd'" < <($cmd)"
       cmd="local item;while IFS= read -d $'\0' -r item;do sed 's/^\\\~/~/g' < <(printf '%q ' \"\${item}\");done < <($cmd)"
       cmd="sed 's/ $//' < <($cmd)"
@@ -301,7 +296,7 @@ __fzf_obc_read_compreply() {
       eval "$cmd"
     else
       cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
-      cmd="awk -v RS='\0' -v ORS='\0' '!a[\$0]++' < <($cmd)"
+      cmd="__fzf_obc_sort < <($cmd)"
       cmd=$'FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" __fzf_obc_cmd'" < <($cmd)"
       cmd="sed 's#/\x0#\x0#' < <($cmd)"
       cmd="__fzf_compreply < <($cmd)"
@@ -344,7 +339,10 @@ __fzf_obc_update_complete() {
           trap 'eval "\$previous_globstar_setting"' RETURN
           local previous_globstar_setting=\$(shopt -p globstar);
           shopt -u globstar
-          local complete_status fzf_obc_is_glob=0;
+          local _fzf_obc_complete_func_name="${func_name}"
+          local _fzf_obc_complete_cmd_name="\${1}"
+          local fzf_obc_is_glob=0
+          local complete_status=0
           ${func_name} \$@ || complete_status=\$?
           if type -t __fzf_obc_post_${func_name} > /dev/null 2>&1;then
             __fzf_obc_post_${func_name} || return \$?
