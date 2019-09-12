@@ -1,6 +1,6 @@
 .DEFAULT_GOAL:=test
 
-SHELL_CHECK_VERSION := v0.6.0
+SHELL_CHECK_VERSION := v0.7.0
 ASCIINEMA_VERSION := v2.0.2
 
 TEST_PATH := test
@@ -88,7 +88,7 @@ $(TEST_PATH)/opt/asciinema-$(ASCIINEMA_VERSION):
 .PHONY: test
 test: deps
 	@printf "\n##### Start tests with shellcheck #####\n"
-	@$(TEST_PATH)/bin/shellcheck fzf-obc.bash bash_completion.d/*
+	@$(TEST_PATH)/bin/shellcheck  bin/fzf-obc.bash lib/fzf-obc/*.bash
 	@printf "\n##### Start tests with minitest and tmux #####\n"
 	@BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb
 

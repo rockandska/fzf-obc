@@ -11,10 +11,30 @@ It is a replacement to the completion script natively provided by [fzf](https://
 
 All functional tests recording as GIF are available [here](docs/src/tests_gallery.md) for review.
 
+## Functionalities
+
+- compatible with almost all linux complete script ( git, docker, ls, cd, vim ....)
+- allow recursive path search with `**` for complete scripts who use _filedir / _filedir_xspec
+- colorized paths with complete scripts who use _filedir / _filedir_xspec (ls, cd, vi, ....)
+- allow `**` to activate multiple selection capability (select multiple containers, select multiple options)
+- allow custom sort depending of the command / complete function
+- allow replace / modification of the default complete results
+- etc ....
+
 ## Prerequisites
 
+### Gnu Tools
+
+- sed, awk, find
+
+### Bash
+
+- \> 4.0
+
+### Fzf
+
 fzf-obc require to **not use** the default fzf bash complete script provided with fzf since it change the default complete functions too and fzf-obc need to be over default complete functions.  
-fzf-obc should be the last completion function loaded into your profile.
+***fzf-obc should be the last completion function loaded into your profile.***
 
 - In case you install fzf for the first time, follow the [official instructions](https://github.com/junegunn/fzf#using-git) but don't forget to install fzf without its own completion script:
 
@@ -38,7 +58,7 @@ fzf-obc should be the last completion function loaded into your profile.
 $ INSTALL_PATH=~/.local/opt/fzf-obc
 $ mkdir -p ${INSTALL_PATH}
 $ git clone https://github.com/rockandska/fzf-obc ${INSTALL_PATH}
-$ source ${INSTALL_PATH}/fzf-obc.bash && echo "source ${INSTALL_PATH}/fzf-obc.bash" >> ~/.bashrc
+$ source ${INSTALL_PATH}/bin/fzf-obc.bash && echo "source ${INSTALL_PATH}/bin/fzf-obc.bash" >> ~/.bashrc
 ```
 
 ## Details
@@ -57,8 +77,7 @@ $ source ${INSTALL_PATH}/fzf-obc.bash && echo "source ${INSTALL_PATH}/fzf-obc.ba
 fzf-obc startup sequence is :
 
 - add `_longopt` as `fzf` completion script if there is not already one defined
-- clean previous `fzf-obc` load (rollback complete definition, remove wrapper functions, remove post complete functions, remove traps)
-- source default fzf-obc `traps ` / `posts ` functions then load functions from paths specified in `$FZF_OBC_PATH`
+- source default fzf-obc `traps ` / `posts ` / `sorts` functions then load functions from paths specified in `$FZF_OBC_PATH`
 - take a look at already bash complete functions defined and add wrapper to them if not already done.
 - Add traps to private complete functions if they're exists and not already add.
 
@@ -67,18 +86,17 @@ fzf-obc startup sequence is :
 fzf-obc will only add fzf filtering over existing functions and is not magic.  
 If a specific post complete function exists ( `__fzf_obc_post__kill` for example ), it will only be functional if the `_kill` function exists.  
 If the complete function for kill command is not `_kill`, you will see no changes in the `kill` completion.  
-Same for traps, if a specific trap exist (`__fzf_obc_trap__filedir`) , it will only be add if `_filedir` exists.  
+Same for traps, if a specific trap exist (`__fzf_obc_trap__filedir`) , it will only be add if `_filedir` exists and is part of the complete process.  
 
-### Pros
+## Pros
 
 - Compatible with almost known bash completion functions without efforts
 - User configuration / functions / traps loader
 
-### Cons
+## Cons
 
 - young project (some bugs not found yet, need to be test by other users, functions rewrite, ...)
-- results are not shown as they arrive (live streaming). Not a real deal if you not using globs to search inside a directory with too many depths.
-- **/!\ during search using globs inside directories with too many depth, the current prompt is freeze until the end of the search even if pressing CTRL+C (need to find a fix)**
+- when using glob results are not shown as they arrive (live streaming). Not a real deal if you not using globs to search inside a directory with too many depths.
 
 ## Basic / Globs / Specific completion
 
@@ -90,9 +108,11 @@ The default binding to select an entry is the key \<TAB\> ( you already have you
 
 ### Globs
 
-Like the original [fzf](https://github.com/junegunn/fzf) completion script, you could use recursive search with some bash complete functions by adding `**` at the end of your path, then hit key \<TAB\> to recursively looking for corresponding files / path / directories.
+Adding `**` at the end of the cursor before pressing \<TAB\> activate the GLOB completion.
 
-- **Works with complete functions who use for path/files lookup :**
+It will have multiple effects :
+
+- **Allow recursive / multiple select on complete functions used for path/files lookup :**
   - **_filedir**
     - cd
     - ls
@@ -102,8 +122,12 @@ Like the original [fzf](https://github.com/junegunn/fzf) completion script, you 
     - bunzip2
     - lynx
     - and more than 140 commands
-- **If there is no results, you will be aware by seeing the "\*\*" removed from your current search**
-- **Be cautious that using this capability on huge directories could freeze your shell for ages without be able to cancel it with CTRL-C (need to fix it)**
+- **Allow multiple select with all commands **
+  - select multiple docker containers with start/stop
+  - select multiple options for tar
+  - and more....
+- If there is no results, you will be aware by seeing the "\*\*" removed from your current search
+- **Be cautious that using this capability on huge directories could freeze your shell for ages**
 - **The bindings with globs are different ( \<TAB\>, \<SHIFT-TAB\> are used to (un)select multiples results and \<ENTER\> to validate )**
 
 ### Specific completion
@@ -160,41 +184,3 @@ Example:
 ```
 $ echo "FZF_OBC_PATH='~/.local/opt/myfzfcomplete:~/.local/opt/fzf-test'" >> ~/.bashrc
 ```
-
-### Functions
-
-- `_fzf_obc`
-  - main function
-  - load :
-    - __fzf_obc_cleanup
-    - __fzf_obc_init_vars
-    - __fzf_obc_load
-    - __fzf_obc_update_complete
-  - define complete function for fzf if not already done
-- `__fzf_obc_init_vars`
-  - define default variables
-- `__fzf_obc_load`
-  - load default / users defined functions
-- `__fzf_obc_update_complete`
-  - add the wrapper to the complete function
-- `__fzf_obc_globs_exclude`
-  - create exclusion string for __fzf_obc_search
-- `__fzf_obc_search`
-  - recursively search for paths / dirs / files
-  - return list separate by $'\0'
-- `__fzf_obc_expand_tilde_by_ref`
-  - copy of original _expand_tilde_by_ref
-- `__fzf_obc_tilde`
-  - copy of original _tilde
-- `__fzf_obc_cmd`
-  - fzf command to run
-- `__fzf_obc_read_compreply`
-  - default command used to read COMPREPLY
-  - use `$FZF_OBC_GLOBS_OPTIONS` if `**` detected in `$cur`
-- `__fzf_obc_post__kill`
-  - post function to `_kill`
-- `__fzf_obc_sort_cmd`
-  - sort command used to sort results from `compgen` / `find` results
-- `__fzf_obc_post__completion_loader`
-  - post function to `_completion_loader`
-  - reload `fzf-obc` to add fzf-obc wrapper new complete functions automatically loaded by `_completion_loader`
