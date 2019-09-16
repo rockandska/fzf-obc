@@ -2,6 +2,8 @@
 sudo: required
 language: ruby
 dist: xenial
+services:
+  - docker
 addons:
   apt:
     sources:
@@ -30,7 +32,7 @@ jobs:
 
     - stage: mkrelease
       install:
-        - pip install git-semver
+        - sudo pip install git-semver
         - wget --quiet -O /tmp/mkrelease.sh https://raw.githubusercontent.com/rockandska/scripts/${MKRELEASE_REF:-master}/CI/mkrelease.sh
         - chmod +x /tmp/mkrelease.sh
         - wget --quiet -O /tmp/pubrelease.sh https://raw.githubusercontent.com/rockandska/scripts/${PUBRELEASE_REF:-master}/CI/pubrelease.sh
