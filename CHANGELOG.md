@@ -1,13 +1,17 @@
 # Change Log
 
-## [**Next release**](https://github.com/rockandska/fzf-obc/tree/HEAD)
-
+## [1.0.0](https://github.com/rockandska/fzf-obc/tree/1.0.0) (2019-09-19)
 **Closed issues:**
 
+- fix tar completion [\#6](https://github.com/rockandska/fzf-obc/issues/6)
 - add shellcheck CI [\#5](https://github.com/rockandska/fzf-obc/issues/5)
+- fix the cancelation of files lookup with globs [\#4](https://github.com/rockandska/fzf-obc/issues/4)
 
 **Merged pull requests:**
 
+- \[travis\] add sudo [\#14](https://github.com/rockandska/fzf-obc/pull/14) ([rockandska](https://github.com/rockandska))
+- \[Travis\] fix dependencies [\#13](https://github.com/rockandska/fzf-obc/pull/13) ([rockandska](https://github.com/rockandska))
+- Rewrite [\#12](https://github.com/rockandska/fzf-obc/pull/12) ([rockandska](https://github.com/rockandska))
 - \[tests\] fix asciinema version used [\#11](https://github.com/rockandska/fzf-obc/pull/11) ([rockandska](https://github.com/rockandska))
 - \[core\] deduplicate COMPREPLY before fzf [\#10](https://github.com/rockandska/fzf-obc/pull/10) ([rockandska](https://github.com/rockandska))
 - Add shellcheck [\#9](https://github.com/rockandska/fzf-obc/pull/9) ([rockandska](https://github.com/rockandska))
