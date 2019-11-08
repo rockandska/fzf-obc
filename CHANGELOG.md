@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.0.1](https://github.com/rockandska/fzf-obc/tree/1.0.1) (2019-11-08)
+**Closed issues:**
+
+- Symlinked directories are not shown in the results [\#15](https://github.com/rockandska/fzf-obc/issues/15)
+
+**Merged pull requests:**
+
+- Fix \#15 [\#16](https://github.com/rockandska/fzf-obc/pull/16) ([rockandska](https://github.com/rockandska))
+
 ## [1.0.0](https://github.com/rockandska/fzf-obc/tree/1.0.0) (2019-09-19)
 **Closed issues:**
 
