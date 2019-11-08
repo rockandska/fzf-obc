@@ -172,6 +172,8 @@ __fzf_obc_search() {
     cmd+=" -or"
     cmd+=" -type d \( -perm -o=+t -a -perm -o=-w \) -printf 'st %p/\0'"
     cmd+=" -or"
+    cmd+=" \( -type l -a -xtype d -printf 'ln %p/\0' \)"
+    cmd+=" -or"
     cmd+=" -type d -printf 'di %p/\0'"
   fi
   if [[ "${type}" == "paths" ]];then
@@ -184,11 +186,13 @@ __fzf_obc_search() {
     cmd+=" -or"
     cmd+=" -type p -printf 'pi %p\0'"
     cmd+=" -or"
-    cmd+=" -type l -printf 'ln %p\0'"
+    cmd+=" \( -type l -a -xtype l -printf 'or %p\0' \)"
     cmd+=" -or"
     cmd+=" -type s -printf 'so %p\0'"
     cmd+=" -or"
     cmd+=" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -printf 'ex %p\0'"
+    cmd+=" -or"
+    cmd+=" \( -type l -a -xtype f -printf 'ln %p\0' \)"
     cmd+=" -or"
     cmd+=" -type f -printf 'fi %p\0'"
   fi
