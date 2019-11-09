@@ -281,6 +281,8 @@ __fzf_obc_check_empty_compreply() {
       [[ -z "${COMPREPLY[*]}" ]] && COMPREPLY=(' ')
     fi
   fi
+  # Remove space if last reply is a long-option with args
+  [[ "${#COMPREPLY[@]}" -ne 0 ]] && [[ "${COMPREPLY[-1]}" == --*= ]] && compopt -o nospace;
 }
 
 __fzf_obc_read_compreply() {
