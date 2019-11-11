@@ -146,15 +146,17 @@ Default fzf-obc configuration could be customize by settings some environment va
 - `$FZF_OBC_HEIGHT`
   - default: `40%`
   - height of the fzf filtering windows
+- `$FZF_OBC_SHORT_FILEDIR`
+  - default: `1`
+  - cause files/paths completion who use `_filedir`/`_filedir_xpsec` to not showing the full path but only the last part of it (like the original completion).
 - `$FZF_OBC_EXCLUDE_PATH`
   - default: `.git:.svn`
   - paths to exclude from the completion results
   - if using multiples paths, paths need to be separate by `:`
-  - **works only with globs completion**
+  - **only used with globs completion**
 - `$FZF_OBC_COLORS`
   - default: 1
   - add colors similar to `ls`
-  - **doesn't handle broken symlink for now**
 - `$FZF_OBC_OPTS`
   - default: `--select-1 --exit-0`
   - options used for basic completion
@@ -167,7 +169,6 @@ Default fzf-obc configuration could be customize by settings some environment va
 - `$FZF_OBC_GLOBS_COLORS`
   - default: 1
   - add colors similar to `ls` to globs completion
-  - **doesn't handle broken symlink for now**
 - `$FZF_OBC_GLOBS_OPTS`
   - default: `-m --select-1 --exit-0`
   - options used for globs completion
