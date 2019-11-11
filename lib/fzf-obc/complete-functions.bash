@@ -6,6 +6,11 @@ _filedir()
   local cur="${cur}"
   __fzf_obc_tilde "${cur}" || return
 
+  # shellcheck disable=SC2001
+  cur=$(echo "$cur" | sed s#//*#/#g)
+  # shellcheck disable=SC2034
+  fzf_obc_filedir_depth="$(echo "$cur" | tr -cd '/' | wc -c )"
+
   if [[ "$1" != -d ]]; then
     local xspec=${1:+"*.@($1|${1^^})"};
     __fzf_add2compreply < <(__fzf_obc_search "${cur}" "paths" "${xspec}")
@@ -28,6 +33,12 @@ _filedir_xspec()
   _init_completion || return;
 
   __fzf_obc_tilde "${cur}" || return
+
+  # shellcheck disable=SC2001
+  cur=$(echo "$cur" | sed s#//*#/#g)
+  # shellcheck disable=SC2034
+  fzf_obc_filedir_depth="$(echo "$cur" | tr -cd '/' | wc -c )"
+
   local xspec
   # shellcheck disable=SC2154
   xspec="${_xspecs[${1##*/}]}"

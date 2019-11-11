@@ -12,6 +12,7 @@ __fzf_obc_get_env() {
     # - $FZF_OBC_PATH               (default: )
     # - $FZF_OBC_COLORS             (default: 1)
     # - $FZF_OBC_HEIGHT             (default: 40%)
+    # - $FZF_OBC_SHORT_FILEDIR      (default: 1)
     # - $FZF_OBC_EXCLUDE_PATH       (default: .git:.svn)
     # - $FZF_OBC_OPTS               (default: --select-1 --exit-0)
     # - $FZF_OBC_BINDINGS           (default: --bind tab:accept)
@@ -26,6 +27,7 @@ __fzf_obc_get_env() {
     local trap_prefix='__fzf_obc_trap_'
     : "${FZF_OBC_PATH:=}"
     : "${FZF_OBC_HEIGHT:=40%}"
+    : "${FZF_OBC_SHORT_FILEDIR:=1}"
     : "${FZF_OBC_EXCLUDE_PATH:=.git:.svn}"
     : "${FZF_OBC_COLORS:=1}"
     : "${FZF_OBC_OPTS:=--select-1 --exit-0}"
@@ -268,7 +270,19 @@ __fzf_obc_tilde ()
 }
 
 __fzf_obc_cmd() {
-    fzf --read0 --print0 --ansi
+  if ((fzf_obc_is_glob));then
+    fzf_default_opts+=" --reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}"
+  else
+    fzf_default_opts+=" --reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}"
+  fi
+  if ((FZF_OBC_SHORT_FILEDIR)) && ((fzf_obc_filedir_depth));then
+    fzf_obc_filedir_depth=$((fzf_obc_filedir_depth+1))
+    fzf_default_opts+=" -d '/' --with-nth=${fzf_obc_filedir_depth}.. "
+  elif ! ((FZF_OBC_SHORT_FILEDIR)) && ((fzf_obc_filedir_depth));then
+    fzf_obc_filedir_depth=$((fzf_obc_filedir_depth+1))
+    fzf_default_opts+=" -d '/' --nth=${fzf_obc_filedir_depth}.. "
+  fi
+  FZF_DEFAULT_OPTS="${fzf_default_opts}" fzf --read0 --print0 --ansi
 }
 
 __fzf_obc_check_empty_compreply() {
@@ -295,7 +309,7 @@ __fzf_obc_read_compreply() {
     if ((fzf_obc_is_glob));then
       cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
       cmd="__fzf_obc_sort < <($cmd)"
-      cmd=$'FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_GLOBS_OPTS} ${FZF_OBC_GLOBS_BINDINGS}" __fzf_obc_cmd'" < <($cmd)"
+      cmd="__fzf_obc_cmd < <($cmd)"
       cmd="local item;while IFS= read -d $'\0' -r item;do sed 's/^\\\~/~/g' < <(printf '%q ' \"\${item}\");done < <($cmd)"
       cmd="sed 's/ $//' < <($cmd)"
       cmd="__fzf_compreply < <($cmd)"
@@ -303,7 +317,7 @@ __fzf_obc_read_compreply() {
     else
       cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
       cmd="__fzf_obc_sort < <($cmd)"
-      cmd=$'FZF_DEFAULT_OPTS="--reverse --height ${FZF_OBC_HEIGHT} ${FZF_OBC_OPTS} ${FZF_OBC_BINDINGS}" __fzf_obc_cmd'" < <($cmd)"
+      cmd="__fzf_obc_cmd < <($cmd)"
       cmd="sed 's#/\x0#\x0#' < <($cmd)"
       cmd="__fzf_compreply < <($cmd)"
       eval "$cmd"
@@ -349,6 +363,8 @@ __fzf_obc_update_complete() {
           local _fzf_obc_complete_func_name="${func_name}"
           local _fzf_obc_complete_cmd_name="\${1}"
           local fzf_obc_is_glob=0
+          local fzf_obc_filedir_depth=0
+          local fzf_default_opts=""
           local complete_status=0
           ${func_name} \$@ || complete_status=\$?
           __fzf_obc_run_post_cmd
