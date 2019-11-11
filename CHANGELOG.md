@@ -1,9 +1,9 @@
 # Change Log
 
-## [**Next release**](https://github.com/rockandska/fzf-obc/tree/HEAD)
-
+## [1.1.0](https://github.com/rockandska/fzf-obc/tree/1.1.0) (2019-11-11)
 **Merged pull requests:**
 
+- Add short filedir completion [\#18](https://github.com/rockandska/fzf-obc/pull/18) ([rockandska](https://github.com/rockandska))
 - Fix no space if long-option with args [\#17](https://github.com/rockandska/fzf-obc/pull/17) ([rockandska](https://github.com/rockandska))
 
 ## [1.0.1](https://github.com/rockandska/fzf-obc/tree/1.0.1) (2019-11-08)
