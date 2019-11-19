@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.1.1](https://github.com/rockandska/fzf-obc/tree/1.1.1) (2019-11-19)
+**Closed issues:**
+
+- Error message on macOS [\#19](https://github.com/rockandska/fzf-obc/issues/19)
+
+**Merged pull requests:**
+
+- Fix \#19 : error on macos with parallel sort function [\#20](https://github.com/rockandska/fzf-obc/pull/20) ([rockandska](https://github.com/rockandska))
+
 ## [1.1.0](https://github.com/rockandska/fzf-obc/tree/1.1.0) (2019-11-11)
 **Merged pull requests:**
 
