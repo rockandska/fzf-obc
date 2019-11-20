@@ -30,7 +30,9 @@ RESTORE_TIMESTAMP := @$(shell \
 		for ___gif___ in $(GIF_FILES);do \
 			if test -f $$___gif___; then \
 				if git ls-files --full-name | grep "^$${___gif___}$$" 1> /dev/null; then \
-					touch -d @$$(git log -1 --format="%at" -- $$___gif___) $$___gif___; \
+					if ! git diff --name-only HEAD | grep "^$${___gif___}$$" 1> /dev/null; then \
+						touch -d @$$(git log -1 --format="%at" -- $$___gif___) $$___gif___; \
+					fi; \
 				fi; \
 			fi; \
 		done; \
@@ -118,7 +120,7 @@ gifs: $(GIF_FILES)
 	@printf "\n##### Start demo gifs generations #####\n\n"
 	@$(if $(SPECS_CHANGED), \
 		printf "\n##### Generation of casts files used to generate gifs #####\n"; \
-		BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb -n "/$(SPECS_CHANGED:|=)/"; \
+		BUNDLE_GEMFILE=test/Gemfile bundle exec ruby test/test-fzf-obc.rb -n "/^($(SPECS_CHANGED:|=))$$/"; \
 	)
 	@printf "\n##### Generation of gifs from casts files #####\n";
 	@$(foreach ___gif___, $(subst |,$(space),$(SPECS_CHANGED)), \
