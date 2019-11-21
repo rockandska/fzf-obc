@@ -1,5 +1,3 @@
-# FZF-OBC (FZF Over Bash Complete)
-
 ## What is fzf-obc
 
 A bash completion script intend to add [fzf](https://github.com/junegunn/fzf) over all known bash completion functions on your system with minimal modifications on original completion scripts.  
@@ -7,9 +5,7 @@ It is a replacement to the completion script natively provided by [fzf](https://
 
 ## Demo
 
-![demo](docs/img/demo.gif)
-
-All functional tests recording as GIF are available [here](docs/src/tests_gallery.md) for review.
+![demo](img/demo.gif)
 
 ## Functionalities
 

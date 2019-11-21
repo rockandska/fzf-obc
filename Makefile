@@ -10,7 +10,6 @@ TEST_CASTS_PATH := $(TEST_TMP_PATH)/casts
 TEST_SPEC_PATH := $(TEST_PATH)/spec
 
 DOC_PATH := docs
-DOC_SRC_PATH := $(DOC_PATH)/src
 IMG_PATH := $(DOC_PATH)/img
 GIF_PATH := $(IMG_PATH)/tests
 
@@ -109,11 +108,10 @@ $(IMG_PATH)/demo.gif: $(GIF_PATH)/test_insmod.gif $(GIF_PATH)/test_docker.gif $(
 	@docker run --rm --user $$(id -u) -v "$(CURDIR)/$(GIF_PATH)":"$(CURDIR)/$(GIF_PATH)" -v "$(CURDIR)/$(IMG_PATH)":"$(CURDIR)/$(IMG_PATH)" starefossen/gifsicle -m $(addprefix $(CURDIR)/,$+) > $(CURDIR)/$(IMG_PATH)/demo.gif
 
 # Generate demo gallery from functionnal tests
-$(DOC_SRC_PATH)/tests_gallery.md: $(sort $(GIF_FILES))
+$(DOC_PATH)/tests_gallery.md: $(sort $(GIF_FILES))
 	@printf "\n##### Generate demo gallery #####\n"
-	@printf "# Demo Gallery\n**Those images are generated from the functional tests**\n" > $@
-	@$(foreach ___img___, $+, printf "\n  - [$(notdir $(___img___:.gif=))](#$(notdir $(___img___:.gif=)))\n" >> $@;)
-	@$(foreach ___img___, $+, printf "\n## $(notdir $(___img___:.gif=))\n![]($(subst $(DOC_PATH)/,../,$(___img___)))\n" >> $@;)
+	@printf "**Those images are generated from the functional tests**\n" > $@
+	@$(foreach ___img___, $+, printf "\n## $(notdir $(___img___:.gif=))\n![]($(subst $(DOC_PATH)/,$(empty),$(___img___)))\n" >> $@;)
 
 .PHONY: gifs
 gifs: $(GIF_FILES)
@@ -127,4 +125,7 @@ gifs: $(GIF_FILES)
 		docker run --rm --user $$(id -u) -v $(CURDIR)/$(TEST_CASTS_PATH):/data -v $(CURDIR)/$(GIF_PATH):/data/out asciinema/asciicast2gif -s 0.1 -w 80 -h 12 -S 1 "$(___gif___).cast" "out/$(___gif___).gif"; \
 	)
 	@$(MAKE) --no-print-directory $(IMG_PATH)/demo.gif
-	@$(MAKE) --no-print-directory $(DOC_SRC_PATH)/tests_gallery.md
+	@$(MAKE) --no-print-directory $(DOC_PATH)/tests_gallery.md
+
+.PHONY: docs
+docs: gifs
