@@ -31,4 +31,4 @@ $ echo "source ${INSTALL_PATH}/bin/fzf-obc.bash" >> ~/.bashrc
 
 ---
 
-If you start a new shell you sould be able to trigger fzf-obc by pressing `<TAB>` (only once) where you have to hit `<TAB>` twice with original bash completion before to see completion proposals.
+If you start a new shell you should be able to trigger fzf-obc by pressing `<TAB>` (only once) where you have to hit `<TAB>` twice with original bash completion before to see completion proposals.

@@ -1,4 +1,4 @@
-User have the possibility to place all its personal `fzf-obc` 
+User has the possibility to place all its personal `fzf-obc` 
 configurations/functions in directories of its choice and split in multiple
 files if necessary.
 

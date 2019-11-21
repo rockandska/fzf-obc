@@ -1,5 +1,7 @@
 # FZF-OBC (FZF Over Bash Complete)
 
+More informations on [https://fzf-obc.readthedocs.io/](https://fzf-obc.readthedocs.io/)
+
 ## What is fzf-obc
 
 A bash completion script intend to add [fzf](https://github.com/junegunn/fzf) over all known bash completion functions on your system with minimal modifications on original completion scripts.  
@@ -13,10 +15,10 @@ All functional tests recording as GIF are available [here](docs/src/tests_galler
 
 ## Functionalities
 
-- compatible with almost all linux complete script ( git, docker, ls, cd, vim ....)
-- allow recursive path search with `**` for complete scripts who use _filedir / _filedir_xspec
-- colorized paths with complete scripts who use _filedir / _filedir_xspec (ls, cd, vi, ....)
-- allow `**` to activate multiple selection capability (select multiple containers, select multiple options)
-- allow custom sort depending of the command / complete function
-- allow replace / modification of the default complete results
+- Compatible with almost all linux complete script ( git, docker, ls, cd, vim ....)
+- Recursive path search by adding `**` for completion scripts who use _filedir / _filedir_xspec
+- Colorized paths with completion scripts who use _filedir / _filedir_xspec (ls, cd, vi, ....)
+- Allow multiple selection capability by adding `**` (select multiple containers, select multiple options)
+- Allow custom sort depending on the command / complete function
+- Allow modifications of the default complete results
 - etc ....

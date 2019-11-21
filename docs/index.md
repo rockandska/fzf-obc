@@ -9,10 +9,10 @@ It is a replacement to the completion script natively provided by [fzf](https://
 
 ## Functionalities
 
-- compatible with almost all linux complete script ( git, docker, ls, cd, vim ....)
-- allow recursive path search with `**` for complete scripts who use _filedir / _filedir_xspec
-- colorized paths with complete scripts who use _filedir / _filedir_xspec (ls, cd, vi, ....)
-- allow `**` to activate multiple selection capability (select multiple containers, select multiple options)
-- allow custom sort depending of the command / complete function
-- allow replace / modification of the default complete results
+- Compatible with almost all linux complete script ( git, docker, ls, cd, vim ....)
+- Recursive path search by adding `**` for completion scripts who use _filedir / _filedir_xspec
+- Colorized paths with completion scripts who use _filedir / _filedir_xspec (ls, cd, vi, ....)
+- Allow multiple selection capability by adding `**` (select multiple containers, select multiple options)
+- Allow custom sort depending on the command / complete function
+- Allow modifications of the default complete results
 - etc ....

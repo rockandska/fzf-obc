@@ -16,7 +16,7 @@ The default binding to select an entry is the key <TAB\> ( you already have your
 
 Adding `**` at the end of the cursor before pressing <TAB\> activate the GLOB completion.
 
-It have multiple effects depending on the situation :
+It has multiple effects depending on the situation :
 
 - Allow recursive and multiple selection on complete functions used for path/files lookup :
     - _filedir
@@ -32,7 +32,7 @@ It have multiple effects depending on the situation :
     - select multiple docker containers to start/stop
     - select multiple options for tar
     - and more....
-- If there is no results, you will be aware by seeing the `\*\*` removed from your current search
+- If there are no results, you will be aware by seeing the `\*\*` removed from your current search
 
 **Be aware that using this capability on huge directories could freeze your shell for ages**
 

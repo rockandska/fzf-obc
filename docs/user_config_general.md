@@ -1,5 +1,5 @@
-Default fzf-obc configuration could be customize by settings some environment
- variables with your own needs and are describe bellow.  
+Default fzf-obc configuration could be customized by settings some environment
+ variables with your own needs and are described below.  
 Those environment variables could be set per directory if needed by using [direnv](https://direnv.net/) for
 example.
 
@@ -8,8 +8,8 @@ example.
     - Height of the fzf filtering window
 - `FZF_OBC_SHORT_FILEDIR`
     - Default : `1`
-    - Cause files/paths completion who use `_filedir`/`_filedir_xpsec` to not
-        showing the full path but only the last part of it (like the original completion).
+    - Do not show the full path but only the last part of it (like the original
+        completion) for completion who use `_filedir`/`_filedir_xpsec`.
 - `FZF_OBC_EXCLUDE_PATH`
     - Default : `.git:.svn`
     - Paths to exclude from the completion results

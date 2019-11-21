@@ -3,11 +3,11 @@ Fzf-obc post completion functions are called right after the original
 completion.
 
 They are generally being used to modify results present in `${COMPREPLY}` before
-being send to fzf to display them or reuse original results to add nice preview
+being sent to fzf to display them or reuse original results to add nice preview
 for example ( as `__fzf_obc_post_kill` does for the kill command ).  
 
-User can add their own post completion functions if fzf-obc doesn't works well
-for particulary completion function or if the default post completion provided
+User can add their own post completion functions if fzf-obc doesn't work well
+for particularly completion function or if the default post completion provided
 with fzf-obc doesn't fit the user.
 
 ---
@@ -19,10 +19,10 @@ for a specific command.
 
 The post completion prefix is `__fzf_obc_post_`.
 
-So if you want to alterate the results displayed for `ls` command for example, you
+So if you want to alter the results displayed for `ls` command for example, you
 will create a function called `__fzf_obc_post_ls`.
 
-But if you want to alterate all results for commands who use completion function 
+But if you want to alter all results for commands who use completion function 
 `_longopt`, you will create a function called `__fzf_obc_post__longopt`.
 
 **/!\ If both post command/completion function exist, they will be executed both

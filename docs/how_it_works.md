@@ -3,7 +3,7 @@
 Fzf-obc create a wrapper over existing completion function when it is load and
 create new ones when new completion functions are loaded dynamically.  
 Basically, fzf-obc don't touch anything (except two core function from
-bashc-ompletion) until there is specific function for it.
+bash-completion) until there is specific function for it.
 
 The only core bash-completion functions override are `_filedir` /
 `_filedir_xspec` for those reasons :
