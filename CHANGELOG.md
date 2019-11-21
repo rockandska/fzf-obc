@@ -4,6 +4,7 @@
 
 **Merged pull requests:**
 
+- Add docs [\#25](https://github.com/rockandska/fzf-obc/pull/25) ([rockandska](https://github.com/rockandska))
 - Fix CI gifs generations [\#24](https://github.com/rockandska/fzf-obc/pull/24) ([rockandska](https://github.com/rockandska))
 
 ## [1.1.1](https://github.com/rockandska/fzf-obc/tree/1.1.1) (2019-11-19)
