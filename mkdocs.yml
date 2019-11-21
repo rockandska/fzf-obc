@@ -1,0 +1,30 @@
+site_name: FZF-OBC
+site_url: https://fzf-obc.readthedocs.io
+site_description: Fzf over bash complete
+site_author: RockAndSka
+
+repo_url: https://github.com/rockandska/fzf-obc/
+
+nav:
+  - Home: index.md
+  - Prerequisites: prerequisites.md
+  - Installation: installation.md
+  - Basic / Globs completion: basic_vs_globs.md
+  - User configuration:
+      - Setup: user_config_setup.md
+      - General configuration: user_config_general.md
+      - Completion post functions: user_config_completion_post.md
+      - Completion trap functions: user_config_completion_trap.md
+      - Completion sort functions: user_config_completion_sort.md
+  - About:
+      - Changelog: changelog.md
+      - Demo Gallery: tests_gallery.md
+      - How fzf-obc works: how_it_works.md
+
+theme:
+    name: readthedocs
+    highlightjs: true
+    navigation_depth: 2
+
+plugins:
+    - search
