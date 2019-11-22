@@ -76,7 +76,8 @@ __fzf_add2compreply() {
 __fzf_compreply() {
   # Input: string separated by $'\0'
   if ! readarray -d $'\0' COMPREPLY 2> /dev/null;then
-    IFS=$'\0' read -r -d '' -a COMPREPLY
+    COMPREPLY=()
+    while IFS= read -r -d $'\0' line;do COMPREPLY+=("${line}");done
   fi
 }
 
@@ -299,30 +300,35 @@ __fzf_obc_check_empty_compreply() {
   [[ "${#COMPREPLY[@]}" -ne 0 ]] && [[ "${COMPREPLY[-1]}" == --*= ]] && compopt -o nospace;
 }
 
-__fzf_obc_read_compreply() {
-  : "${_fzf_obc_complete_func_name:?Missing complete function name in ${FUNCNAME[0]}}"
-  : "${_fzf_obc_complete_cmd_name:?Missing complete command name in ${FUNCNAME[0]}}"
-  local fzf_obc_is_glob="${fzf_obc_is_glob:?}"
+__fzf_obc_display_compreply() {
   local IFS=$'\n'
   local cmd
   if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
-    if ((fzf_obc_is_glob));then
-      cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
-      cmd="__fzf_obc_sort < <($cmd)"
-      cmd="__fzf_obc_cmd < <($cmd)"
-      cmd="local item;while IFS= read -d $'\0' -r item;do sed 's/^\\\~/~/g' < <(printf '%q ' \"\${item}\");done < <($cmd)"
-      cmd="sed 's/ $//' < <($cmd)"
-      cmd="__fzf_compreply < <($cmd)"
-      eval "$cmd"
-    else
-      cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
-      cmd="__fzf_obc_sort < <($cmd)"
-      cmd="__fzf_obc_cmd < <($cmd)"
-      cmd="sed 's#/\x0#\x0#' < <($cmd)"
-      cmd="__fzf_compreply < <($cmd)"
-      eval "$cmd"
-    fi
+    cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
+    cmd="__fzf_obc_sort < <($cmd)"
+    cmd="__fzf_obc_cmd < <($cmd)"
+    cmd="__fzf_compreply < <($cmd)"
+    eval "$cmd"
     printf '\e[5n'
+  fi
+}
+
+__fzf_obc_set_compreply() {
+  local fzf_obc_is_glob="${fzf_obc_is_glob:?}"
+  local IFS=$'\n'
+  local line
+  local result
+  if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
+    if ((fzf_obc_is_glob));then
+      for line in "${COMPREPLY[@]}";do
+        result+=$(sed 's/^\\\~/~/g' < <(printf '%q ' "$line"))
+      done
+      result=${result%% }
+      COMPREPLY=()
+      COMPREPLY[0]="$result"
+    else
+      __fzf_compreply < <(printf '%s\0' "${COMPREPLY[@]}")
+    fi
   fi
   __fzf_obc_check_empty_compreply
 }
@@ -368,7 +374,9 @@ __fzf_obc_update_complete() {
           local complete_status=0
           ${func_name} \$@ || complete_status=\$?
           __fzf_obc_run_post_cmd
-          __fzf_obc_read_compreply
+          __fzf_obc_display_compreply
+          __fzf_obc_run_finish_cmd
+          __fzf_obc_set_compreply
           # always check complete wrapper
           # example: tar complete function is update on 1st exec
           __fzf_obc_update_complete
