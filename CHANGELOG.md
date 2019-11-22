@@ -1,9 +1,13 @@
 # Change Log
 
-## [**Next release**](https://github.com/rockandska/fzf-obc/tree/HEAD)
+## [1.2.0](https://github.com/rockandska/fzf-obc/tree/1.2.0) (2019-11-22)
+**Closed issues:**
+
+- Difficult to use fzf-obc with gradle [\#23](https://github.com/rockandska/fzf-obc/issues/23)
 
 **Merged pull requests:**
 
+- add finish hook [\#26](https://github.com/rockandska/fzf-obc/pull/26) ([rockandska](https://github.com/rockandska))
 - Add docs [\#25](https://github.com/rockandska/fzf-obc/pull/25) ([rockandska](https://github.com/rockandska))
 - Fix CI gifs generations [\#24](https://github.com/rockandska/fzf-obc/pull/24) ([rockandska](https://github.com/rockandska))
 
