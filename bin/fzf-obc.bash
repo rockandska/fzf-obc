@@ -8,11 +8,11 @@ _fzf_obc() {
   fzf_obc_path=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 
   local lib
-  for lib in "${fzf_obc_path}"/../lib/fzf-obc/*.{sh,bash};do
+  while IFS= read -r -d '' lib;do
     [[ -e "${lib}" && ! -d "${lib}" ]] || continue
     # shellcheck source=/dev/null
     source "${lib}"
-  done
+  done < <(find "${fzf_obc_path}/../lib/fzf-obc/" -type f \( -name '*.sh' -o -name '*.bash' \) -print0 2>/dev/null)
 
   complete -p fzf &> /dev/null || complete -F _longopt fzf
 
