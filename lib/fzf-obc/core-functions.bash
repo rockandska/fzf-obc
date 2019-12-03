@@ -22,9 +22,6 @@ __fzf_obc_get_env() {
     # - $FZF_OBC_GLOBS_BINDINGS     (default: )
     # - $FZF_OBC_GLOBS_MAXDEPTH     (default: 999999)
 
-    local wrapper_prefix='__fzf_obc_wrapper_'
-    local post_prefix='__fzf_obc_post_'
-    local trap_prefix='__fzf_obc_trap_'
     : "${FZF_OBC_PATH:=}"
     : "${FZF_OBC_HEIGHT:=40%}"
     : "${FZF_OBC_SHORT_FILEDIR:=1}"
@@ -42,12 +39,9 @@ EOF
 }
 
 __fzf_obc_add_trap() {
-  : "${wrapper_prefix:?Not defined in ${FUNCNAME[0]}}"
-  : "${post_prefix:?Not defined in ${FUNCNAME[0]}}"
-  : "${trap_prefix:?Not defined in ${FUNCNAME[0]}}"
   local f="$1"
   shift
-  local trap=${trap_prefix}${f}
+  local trap=__fzf_obc_trap_${f}
   # Ensure that the function exist
   type -t "${f}" > /dev/null 2>&1 || return 1
   # Get the original definition
@@ -347,9 +341,6 @@ __fzf_obc_load_user_functions() {
 
 __fzf_obc_update_complete() {
   eval "$(__fzf_obc_get_env)"
-  : "${wrapper_prefix:?Not defined in ${FUNCNAME[0]}}"
-  : "${post_prefix:?Not defined in ${FUNCNAME[0]}}"
-  : "${trap_prefix:?Not defined in ${FUNCNAME[0]}}"
   # Get complete function not already wrapped
   local wrapper_name
   local func_name
@@ -358,7 +349,7 @@ __fzf_obc_update_complete() {
   while IFS= read -r complete_def;do
     IFS=' ' read -r -a complete_def_arr <<< "${complete_def}"
     func_name="${complete_def_arr[${#complete_def_arr[@]}-2]}"
-    wrapper_name="${wrapper_prefix}${func_name}"
+    wrapper_name="__fzf_obc_wrapper_${func_name}"
     if ! type -t "${wrapper_name}" > /dev/null 2>&1 ; then
       local cmd
       read -r -d '' cmd <<-EOF
@@ -387,16 +378,15 @@ __fzf_obc_update_complete() {
     fi
     complete_def_arr[${#complete_def_arr[@]}-2]="${wrapper_name}"
     eval "${complete_def_arr[@]//\\/\\\\}"
-  done < <(complete | grep -E -- '-F ([^ ]+)( |$)' | grep -v " -F ${wrapper_prefix}" | sed -r "s/(-F [^ ]+) ?$/\1 ''/")
+  done < <(complete | grep -E -- '-F ([^ ]+)( |$)' | grep -v " -F __fzf_obc_wrapper_" | sed -r "s/(-F [^ ]+) ?$/\1 ''/")
 }
 
 __fzf_obc_add_all_traps() {
-  eval "$(__fzf_obc_get_env)"
   # Loop over existing trap and add them
   local f
   local loaded_trap
   while IFS= read -r loaded_trap;do
-    f="${loaded_trap/${trap_prefix}}"
+    f="${loaded_trap/__fzf_obc_trap_}"
     __fzf_obc_add_trap "$f"
-  done < <(declare -F | grep -E -o -- "-f ${trap_prefix}.*" | awk '{print $2}')
+  done < <(declare -F | grep -E -o -- "-f __fzf_obc_trap_.*" | awk '{print $2}')
 }
