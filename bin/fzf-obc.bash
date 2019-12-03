@@ -3,7 +3,7 @@
 # To redraw line after fzf closes (printf '\e[5n')
 bind '"\e[0n": redraw-current-line'
 
-_fzf_obc() {
+fzf-obc() {
   local fzf_obc_path
   fzf_obc_path=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 
@@ -23,4 +23,4 @@ _fzf_obc() {
   return 0
 }
 
-_fzf_obc "$@"
+fzf-obc "$@"
