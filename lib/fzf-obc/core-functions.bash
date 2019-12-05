@@ -386,7 +386,7 @@ __fzf_obc_update_complete() {
 			eval "$cmd"
     fi
     complete_def_arr[${#complete_def_arr[@]}-2]="${wrapper_name}"
-    eval "${complete_def_arr[@]}"
+    eval "${complete_def_arr[@]//\\/\\\\}"
   done < <(complete | grep -E -- '-F ([^ ]+)( |$)' | grep -v " -F ${wrapper_prefix}" | sed -r "s/(-F [^ ]+) ?$/\1 ''/")
 }
 
