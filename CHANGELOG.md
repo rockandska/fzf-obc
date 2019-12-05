@@ -1,5 +1,15 @@
 # Change Log
 
+## [**Next release**](https://github.com/rockandska/fzf-obc/tree/HEAD)
+
+**Closed issues:**
+
+- leading backslash [\#27](https://github.com/rockandska/fzf-obc/issues/27)
+
+**Merged pull requests:**
+
+- Fix completion update with leading backlash commands [\#28](https://github.com/rockandska/fzf-obc/pull/28) ([rockandska](https://github.com/rockandska))
+
 ## [1.2.0](https://github.com/rockandska/fzf-obc/tree/1.2.0) (2019-11-22)
 **Closed issues:**
 
