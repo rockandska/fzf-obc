@@ -390,3 +390,25 @@ __fzf_obc_add_all_traps() {
     __fzf_obc_add_trap "$f"
   done < <(declare -F | grep -E -o -- "-f __fzf_obc_trap_.*" | awk '{print $2}')
 }
+
+__fzf_obc_set_opt() {
+	local trigger="${1}"; shift
+	local opt="${1}"; shift
+	local default="${1}"; shift
+	local env_var
+	# First try FZF_OBC[option_type] env
+	env_var="FZF_OBC_${trigger^^}_${opt^^}"
+	if [[ -n "${!env_var+x}" ]];then
+		eval "${trigger}_${opt}=\"${!env_var}\""
+	fi
+	# Then, if additional env vars are here, take the last one
+	for env_var in "$@";do
+		if [[ -n "${!env_var+x}" ]];then
+			eval "${trigger}_${opt}=\"${!env_var}\""
+		fi
+	done
+	env_var="${trigger}_${opt}"
+	if [[ -z "${!env_var+x}" ]];then
+		eval "${trigger}_${opt}=\"${default}\""
+	fi
+}
