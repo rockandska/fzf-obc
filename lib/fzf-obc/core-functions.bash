@@ -341,6 +341,8 @@ __fzf_obc_load_user_functions() {
 
 __fzf_obc_update_complete() {
   eval "$(__fzf_obc_get_env)"
+  local fzf_obc_path
+  fzf_obc_path=$( cd "$( dirname "${BASH_SOURCE[0]%%\/..*}" )" >/dev/null 2>&1 && pwd )
   # Get complete function not already wrapped
   local wrapper_name
   local func_name
@@ -359,9 +361,7 @@ __fzf_obc_update_complete() {
           shopt -u globstar
           local _fzf_obc_complete_func_name="${func_name}"
           local _fzf_obc_complete_cmd_name="\${1}"
-          local fzf_obc_is_glob=0
-          local fzf_obc_filedir_depth=0
-          local fzf_default_opts=""
+          source ${fzf_obc_path}/lib/fzf-obc/default.cfg.inc
           local complete_status=0
           ${func_name} \$@ || complete_status=\$?
           __fzf_obc_run_post_cmd
