@@ -31,15 +31,7 @@ a trap function named `__fzf_obc_trap__a_private_func`.
 ### Example
 
 As an example, `fzf-obc` use a trap on `_get_comp_words_by_ref` to remove the
-eventual `**` used to trigger "globs completion" and initialize a variable used
-by later functions.
+pattern used as 'fzf-obc' trigger and to initialize some internal variables.
 
 ```bash
-__fzf_obc_trap__get_comp_words_by_ref() {
-  : "${fzf_obc_is_glob:=0}"
-  if [[ "${cur}" == *'**' ]];then
-    fzf_obc_is_glob=1
-    cur="${cur%\*\*}"
-  fi
-}
 ```

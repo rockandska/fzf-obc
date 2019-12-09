@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
 # Internal vars
-local fzf_obc_is_glob=0
 local fzf_obc_filedir_depth=0
 local fzf_default_opts=""
+local actual_trigger_type
+local actual_cur
+local actual_prev
+local actual_words
+local actual_cword
 
 # Declare local variables by trigger type
 # Standard, Multi selection, Recursive
