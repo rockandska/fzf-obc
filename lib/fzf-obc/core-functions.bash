@@ -313,7 +313,7 @@ __fzf_obc_set_compreply() {
 __fzf_obc_load_user_functions() {
 	local fzf_obc_path_array path file
 	IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH:-}"
-	for path in "${fzf_obc_path_array[@]}";do
+	for path in "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc" "${fzf_obc_path_array[@]}";do
 		while IFS= read -r -d '' file;do
 			[[ -e "${file}" && ! -d "${file}" ]] || continue
 			# shellcheck disable=SC1090
