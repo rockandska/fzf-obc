@@ -15,8 +15,7 @@ __fzf_obc_trap__get_comp_words_by_ref() {
 		if [[ ${cur} =~ (.*)"${option_value}" ]];then
 			if [[ "${#option_value}" -gt "${trigger_size}" ]];then
 				trigger_size="${#option_value}"
-				# shellcheck disable=SC2034
-				current_trigger="${trigger_type}"
+				__fzf_obc_set_all_current_opt "${trigger_type}"
 				new_cur="${BASH_REMATCH[1]}"
 			fi
 		fi

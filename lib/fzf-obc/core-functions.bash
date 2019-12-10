@@ -69,9 +69,7 @@ __fzf_obc_colorized() {
 __fzf_obc_globs_exclude() {
 	local var=$1
 	local sep str fzf_obc_globs_exclude_array
-	local exclude_path
-	__fzf_obc_get_opt "${current_trigger:-}" "filedir_exclude_path" exclude_path
-	IFS=':' read -r -a fzf_obc_globs_exclude_array <<< "${exclude_path}"
+	IFS=':' read -r -a fzf_obc_globs_exclude_array <<< "${current_filedir_exclude_path:-}"
 	if [[ ${#fzf_obc_globs_exclude_array[@]} -ne 0 ]];then
 		str="\( -path '*/${fzf_obc_globs_exclude_array[0]%/}"
 		for pattern in "${fzf_obc_globs_exclude_array[@]:1}";do
@@ -115,12 +113,12 @@ __fzf_obc_search() {
 		maxdepth="1"
 	fi
 
-	if [[ "${current_trigger:-}" == "rec" ]];then
-		__fzf_obc_get_opt "${current_trigger}" filedir_maxdepth maxdepth
+	if [[ "${current_trigger_type:-}" == "rec" ]];then
+		__fzf_obc_get_opt "${current_trigger_type}" filedir_maxdepth maxdepth
 	fi
 
 	local slash
-	if [[ -n "${current_trigger:-}" ]];then
+	if [[ -n "${current_trigger_type:-}" ]];then
 		slash="/"
 	fi
 
@@ -174,10 +172,9 @@ __fzf_obc_search() {
 		cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
 	fi
 
-	if [[ -n "${current_trigger:-}" ]];then
-		local colorized
-		__fzf_obc_get_opt "${current_trigger:-}" "filedir_colors" colorized
-		if ((colorized)) && [[ "${#LS_COLORS}" -gt 0 ]];then
+	if [[ -n "${current_trigger_type:-}" ]];then
+		# shellcheck disable=SC2154
+		if ((current_filedir_colors)) && [[ "${#LS_COLORS}" -gt 0 ]];then
 			cmd="__fzf_obc_colorized < <(${cmd})"
 		fi
 	fi
@@ -233,37 +230,25 @@ __fzf_obc_tilde ()
 }
 
 __fzf_obc_cmd() {
-	local height
-	__fzf_obc_get_opt "${current_trigger:-}" "fzf_height" height
-	local opts
-	__fzf_obc_get_opt "${current_trigger:-}" "fzf_opts" opts
-	local bindings
-	__fzf_obc_get_opt "${current_trigger:-}" "fzf_binds" bindings
-	local multi
-	__fzf_obc_get_opt "${current_trigger:-}" "fzf_multi" multi
-	local short
-	__fzf_obc_get_opt "${current_trigger:-}" "filedir_short" short
-
-	if ((short)) && ((current_filedir_depth));then
-		current_filedir_depth=$((current_filedir_depth+1))
-		fzf_default_opts+=" -d '/' --with-nth=${current_filedir_depth}.. "
-	elif ! ((short)) && ((current_filedir_depth));then
-		current_filedir_depth=$((current_filedir_depth+1))
-		fzf_default_opts+=" -d '/' --nth=${current_filedir_depth}.. "
+	# shellcheck disable=SC2154
+	if ((current_filedir_short)) && ((current_filedir_depth));then
+		fzf_default_opts+=" -d '/' --with-nth=$((current_filedir_depth+1)).. "
+	elif ! ((current_filedir_short)) && ((current_filedir_depth));then
+		fzf_default_opts+=" -d '/' --nth=$((current_filedir_depth+1)).. "
 	fi
-	if ((multi));then
+	: "${current_fzf_multi:-0}"
+	if ((current_fzf_multi));then
 		fzf_default_opts+=" -m "
 	fi
 
-	fzf_default_opts+=" --reverse --height ${height} ${opts} ${bindings}"
+	fzf_default_opts+=" --reverse --height ${current_fzf_height:-} ${current_fzf_opts:-} ${current_fzf_binds:-}"
 
 	FZF_DEFAULT_OPTS="${fzf_default_opts}" fzf --read0 --print0 --ansi
 }
 
 __fzf_obc_check_empty_compreply() {
-	local multi
-	__fzf_obc_get_opt "${current_trigger:-}" "fzf_multi" multi
-	if ((multi));then
+	: "${current_fzf_multi:-0}"
+	if ((current_fzf_multi));then
 		compopt +o filenames
 		if [[ "${#COMPREPLY[@]}" -eq 0 ]];then
 			compopt -o nospace
@@ -293,10 +278,9 @@ __fzf_obc_set_compreply() {
 	local IFS=$'\n'
 	local line
 	local result
-	local multi
-	__fzf_obc_get_opt "${current_trigger:-}" "fzf_multi" multi
+	: "${current_fzf_multi:-0}"
 	if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
-		if ((multi));then
+		if ((current_fzf_multi));then
 			for line in "${COMPREPLY[@]}";do
 				result+=$(sed 's/^\\\~/~/g' < <(printf '%q ' "$line"))
 			done
@@ -346,7 +330,7 @@ __fzf_obc_update_complete() {
 				source ${fzf_obc_path}/lib/fzf-obc/default.cfg.inc
 				local complete_status=0
 				${func_name} \$@ || complete_status=\$?
-				if [[ -n "\${current_trigger}" ]];then
+				if [[ -n "\${current_trigger_type}" ]];then
 					__fzf_obc_run_post_cmd
 					__fzf_obc_display_compreply
 					__fzf_obc_run_finish_cmd
@@ -401,4 +385,16 @@ __fzf_obc_set_opt() {
 	if [[ -z "${!env_var+x}" ]];then
 		eval "${trigger}_${opt}=\"${default}\""
 	fi
+}
+
+__fzf_obc_set_all_current_opt() {
+	if [[ -n "${1:-}" ]];then
+		local value
+		for opt in "${options_type_arr[@]:?}";do
+			value="${1}_${opt}"
+			eval "current_${opt}=\"${!value}\""
+		done
+		eval "current_trigger_type=\"${1}\""
+	fi
+	return 0
 }

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 # Internal vars
-local actual_filedir_depth=0
+local current_filedir_depth=0
 local fzf_default_opts=""
-local actual_trigger_type
-local actual_cur
-local actual_prev
-local actual_words
-local actual_cword
+local current_trigger_type
+local current_cur
+local current_prev
+local current_words
+local current_cword
 
 # Declare local variables by trigger type
 # Standard, Multi selection, Recursive
@@ -39,11 +39,13 @@ local options_type_arr=(
 # loop to declare all variables as local
 # local [trigger_type]_[options_type]
 # local [options_type]
+# local current_[options_type]
 local x y
 for x in "${trigger_type_arr[@]}";do
 	for y in "${options_type_arr[@]}";do
 		eval "local ${x}_${y}"
 		eval "local ${y}"
+		eval "local current_${y}"
 	done
 done
 
@@ -52,11 +54,11 @@ done
 if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg" ]];then
 	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg"
 fi
-if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${actual_func_name:-}.cfg" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${actual_func_name:-}.cfg"
+if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_func_name:-}.cfg" ]];then
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_func_name:-}.cfg"
 fi
-if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${actual_cmd_name:-}.cfg" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${actual_cmd_name}.cfg"
+if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_cmd_name:-}.cfg" ]];then
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_cmd_name}.cfg"
 fi
 
 ###########################
