@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Internal vars
-local fzf_obc_filedir_depth=0
+local actual_filedir_depth=0
 local fzf_default_opts=""
 local actual_trigger_type
 local actual_cur
@@ -52,11 +52,11 @@ done
 if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg" ]];then
 	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg"
 fi
-if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_func_name:-}.cfg" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_func_name}.cfg"
+if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${actual_func_name:-}.cfg" ]];then
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${actual_func_name:-}.cfg"
 fi
-if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_cmd_name:-}.cfg" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_cmd_name}.cfg"
+if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${actual_cmd_name:-}.cfg" ]];then
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${actual_cmd_name}.cfg"
 fi
 
 ###########################
@@ -75,8 +75,8 @@ __fzf_obc_set_opt rec fzf_trigger '**'
 ######################################################
 
 __fzf_obc_set_opt std enable '1'
-__fzf_obc_set_opt mlt enable '1'
-__fzf_obc_set_opt rec enable '1'
+__fzf_obc_set_opt mlt enable "${std_enable}"
+__fzf_obc_set_opt rec enable "${mlt_enable}"
 
 ###########################################
 # Fzf display / usage options for fzf-obc #
@@ -120,8 +120,8 @@ __fzf_obc_set_opt rec fzf_tmux "${mlt_fzf_tmux}"
 ##################################
 
 __fzf_obc_set_opt std sort_opts ''
-__fzf_obc_set_opt mlt sort_opts ''
-__fzf_obc_set_opt rec sort_opts ''
+__fzf_obc_set_opt mlt sort_opts "${std_sort_opts}"
+__fzf_obc_set_opt rec sort_opts "${mlt_sort_opts}"
 
 ###########################################
 # specific options for complete functions #
@@ -140,11 +140,11 @@ __fzf_obc_set_opt rec filedir_colors "${mlt_filedir_colors}" 'FZF_OBC_GLOBS_COLO
 __fzf_obc_set_opt std filedir_hidden_first '0'
 __fzf_obc_set_opt mlt filedir_hidden_first "${std_filedir_hidden_first}"
 __fzf_obc_set_opt rec filedir_hidden_first "${mlt_filedir_hidden_first}"
-# Maximum depth for the recusrive files/path lookup
+# Maximum depth for the files/path lookup
 __fzf_obc_set_opt std filedir_maxdepth '1'
 __fzf_obc_set_opt mlt filedir_maxdepth "${std_filedir_maxdepth}"
 __fzf_obc_set_opt rec filedir_maxdepth '999999' 'FZF_OBC_GLOBS_MAXDEPTH'
-# Dont search files in those paths for recursive lookup
+# Dont search files in those paths for lookup
 __fzf_obc_set_opt std filedir_exclude_path ''
 __fzf_obc_set_opt mlt filedir_exclude_path "${std_filedir_exclude_path}"
 __fzf_obc_set_opt rec filedir_exclude_path '.git:.svn' 'FZF_OBC_EXCLUDE_PATH'

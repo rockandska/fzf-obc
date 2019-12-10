@@ -16,18 +16,18 @@ __fzf_obc_trap__get_comp_words_by_ref() {
 			if [[ "${#option_value}" -gt "${trigger_size}" ]];then
 				trigger_size="${#option_value}"
 				# shellcheck disable=SC2034
-				actual_trigger_type="${trigger_type}"
+				current_trigger="${trigger_type}"
 				new_cur="${BASH_REMATCH[1]}"
 			fi
 		fi
 	done
 	cur="${new_cur}"
 	# shellcheck disable=SC2034
-	actual_cur="${cur:-}"
+	current_cur="${cur:-}"
 	# shellcheck disable=SC2034
-	actual_prev="${prev:-}"
+	current_prev="${prev:-}"
 	# shellcheck disable=SC2034
-	actual_words="${words:-}"
+	current_words="${words:-}"
 	# shellcheck disable=SC2034
-	actual_cword="${cword:-}"
+	current_cword="${cword:-}"
 }

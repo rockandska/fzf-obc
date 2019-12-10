@@ -70,7 +70,7 @@ __fzf_obc_globs_exclude() {
 	local var=$1
 	local sep str fzf_obc_globs_exclude_array
 	local exclude_path
-	__fzf_obc_get_opt "${actual_trigger_type:-}" "filedir_exclude_path" exclude_path
+	__fzf_obc_get_opt "${current_trigger:-}" "filedir_exclude_path" exclude_path
 	IFS=':' read -r -a fzf_obc_globs_exclude_array <<< "${exclude_path}"
 	if [[ ${#fzf_obc_globs_exclude_array[@]} -ne 0 ]];then
 		str="\( -path '*/${fzf_obc_globs_exclude_array[0]%/}"
@@ -115,12 +115,12 @@ __fzf_obc_search() {
 		maxdepth="1"
 	fi
 
-	if [[ "${actual_trigger_type:-}" == "rec" ]];then
-		__fzf_obc_get_opt "${actual_trigger_type}" filedir_maxdepth maxdepth
+	if [[ "${current_trigger:-}" == "rec" ]];then
+		__fzf_obc_get_opt "${current_trigger}" filedir_maxdepth maxdepth
 	fi
 
 	local slash
-	if [[ -n "${actual_trigger_type:-}" ]];then
+	if [[ -n "${current_trigger:-}" ]];then
 		slash="/"
 	fi
 
@@ -174,9 +174,9 @@ __fzf_obc_search() {
 		cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
 	fi
 
-	if [[ -n "${actual_trigger_type:-}" ]];then
+	if [[ -n "${current_trigger:-}" ]];then
 		local colorized
-		__fzf_obc_get_opt "${actual_trigger_type:-}" "filedir_colors" colorized
+		__fzf_obc_get_opt "${current_trigger:-}" "filedir_colors" colorized
 		if ((colorized)) && [[ "${#LS_COLORS}" -gt 0 ]];then
 			cmd="__fzf_obc_colorized < <(${cmd})"
 		fi
@@ -234,22 +234,22 @@ __fzf_obc_tilde ()
 
 __fzf_obc_cmd() {
 	local height
-	__fzf_obc_get_opt "${actual_trigger_type:-}" "fzf_height" height
+	__fzf_obc_get_opt "${current_trigger:-}" "fzf_height" height
 	local opts
-	__fzf_obc_get_opt "${actual_trigger_type:-}" "fzf_opts" opts
+	__fzf_obc_get_opt "${current_trigger:-}" "fzf_opts" opts
 	local bindings
-	__fzf_obc_get_opt "${actual_trigger_type:-}" "fzf_binds" bindings
+	__fzf_obc_get_opt "${current_trigger:-}" "fzf_binds" bindings
 	local multi
-	__fzf_obc_get_opt "${actual_trigger_type:-}" "fzf_multi" multi
+	__fzf_obc_get_opt "${current_trigger:-}" "fzf_multi" multi
 	local short
-	__fzf_obc_get_opt "${actual_trigger_type:-}" "filedir_short" short
+	__fzf_obc_get_opt "${current_trigger:-}" "filedir_short" short
 
-	if ((short)) && ((fzf_obc_filedir_depth));then
-		fzf_obc_filedir_depth=$((fzf_obc_filedir_depth+1))
-		fzf_default_opts+=" -d '/' --with-nth=${fzf_obc_filedir_depth}.. "
-	elif ! ((short)) && ((fzf_obc_filedir_depth));then
-		fzf_obc_filedir_depth=$((fzf_obc_filedir_depth+1))
-		fzf_default_opts+=" -d '/' --nth=${fzf_obc_filedir_depth}.. "
+	if ((short)) && ((current_filedir_depth));then
+		current_filedir_depth=$((current_filedir_depth+1))
+		fzf_default_opts+=" -d '/' --with-nth=${current_filedir_depth}.. "
+	elif ! ((short)) && ((current_filedir_depth));then
+		current_filedir_depth=$((current_filedir_depth+1))
+		fzf_default_opts+=" -d '/' --nth=${current_filedir_depth}.. "
 	fi
 	if ((multi));then
 		fzf_default_opts+=" -m "
@@ -262,12 +262,12 @@ __fzf_obc_cmd() {
 
 __fzf_obc_check_empty_compreply() {
 	local multi
-	__fzf_obc_get_opt "${actual_trigger_type:-}" "fzf_multi" multi
+	__fzf_obc_get_opt "${current_trigger:-}" "fzf_multi" multi
 	if ((multi));then
 		compopt +o filenames
 		if [[ "${#COMPREPLY[@]}" -eq 0 ]];then
 			compopt -o nospace
-			COMP_WORDS[${COMP_CWORD}]="${actual_cur:-}"
+			COMP_WORDS[${COMP_CWORD}]="${current_cur:-}"
 			__fzf_add2compreply < <(printf '%s\0' "${COMP_WORDS[${COMP_CWORD}]}" )
 			[[ -z "${COMPREPLY[*]}" ]] && COMPREPLY=(' ')
 		fi
@@ -294,7 +294,7 @@ __fzf_obc_set_compreply() {
 	local line
 	local result
 	local multi
-	__fzf_obc_get_opt "${actual_trigger_type:-}" "fzf_multi" multi
+	__fzf_obc_get_opt "${current_trigger:-}" "fzf_multi" multi
 	if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
 		if ((multi));then
 			for line in "${COMPREPLY[@]}";do
@@ -341,16 +341,16 @@ __fzf_obc_update_complete() {
 				trap 'eval "\$previous_globstar_setting"' RETURN
 				local previous_globstar_setting=\$(shopt -p globstar);
 				shopt -u globstar
-				local _fzf_obc_complete_func_name="${func_name}"
-				local _fzf_obc_complete_cmd_name="\${1}"
+				local current_func_name="${func_name}"
+				local current_cmd_name="\${1}"
 				source ${fzf_obc_path}/lib/fzf-obc/default.cfg.inc
 				local complete_status=0
 				${func_name} \$@ || complete_status=\$?
-				if [[ -n "\${actual_trigger_type}" ]];then
-				__fzf_obc_run_post_cmd
-				__fzf_obc_display_compreply
-				__fzf_obc_run_finish_cmd
-				__fzf_obc_set_compreply
+				if [[ -n "\${current_trigger}" ]];then
+					__fzf_obc_run_post_cmd
+					__fzf_obc_display_compreply
+					__fzf_obc_run_finish_cmd
+					__fzf_obc_set_compreply
 				fi
 				# always check complete wrapper
 				# example: tar complete function is update on 1st exec

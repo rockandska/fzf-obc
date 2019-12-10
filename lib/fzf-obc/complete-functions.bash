@@ -9,7 +9,7 @@ _filedir()
 	# shellcheck disable=SC2001
 	cur=$(echo "$cur" | sed s#//*#/#g)
 	# shellcheck disable=SC2034
-	fzf_obc_filedir_depth="$(echo "$cur" | tr -cd '/' | wc -c )"
+	current_filedir_depth="$(echo "$cur" | tr -cd '/' | wc -c )"
 
 	if [[ "$1" != -d ]]; then
 		local xspec=${1:+"*.@($1|${1^^})"};
@@ -37,7 +37,7 @@ _filedir_xspec()
 	# shellcheck disable=SC2001
 	cur=$(echo "$cur" | sed s#//*#/#g)
 	# shellcheck disable=SC2034
-	fzf_obc_filedir_depth="$(echo "$cur" | tr -cd '/' | wc -c )"
+	current_filedir_depth="$(echo "$cur" | tr -cd '/' | wc -c )"
 
 	local xspec
 	# shellcheck disable=SC2154
