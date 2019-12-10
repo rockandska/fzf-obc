@@ -49,14 +49,14 @@ done
 
 
 # load user/function/command config
-if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg.inc" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg.inc"
+if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg" ]];then
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg"
 fi
-if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_func_name:-}.cfg.inc" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_func_name}.cfg.inc"
+if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_func_name:-}.cfg" ]];then
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_func_name}.cfg"
 fi
-if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_cmd_name:-}.cfg.inc" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_cmd_name}.cfg.inc"
+if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_cmd_name:-}.cfg" ]];then
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${_fzf_obc_complete_cmd_name}.cfg"
 fi
 
 ###########################
