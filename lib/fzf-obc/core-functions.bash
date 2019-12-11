@@ -114,7 +114,7 @@ __fzf_obc_search() {
 	fi
 
 	if [[ "${current_trigger_type:-}" == "rec" ]];then
-		__fzf_obc_get_opt "${current_trigger_type}" filedir_maxdepth maxdepth
+		maxdepth="${current_filedir_maxdepth:?}"
 	fi
 
 	local slash
@@ -357,12 +357,6 @@ __fzf_obc_add_all_traps() {
 		f="${loaded_trap/__fzf_obc_trap_}"
 		__fzf_obc_add_trap "$f"
 	done < <(declare -F | grep -E -o -- "-f __fzf_obc_trap_.*" | awk '{print $2}')
-}
-
-__fzf_obc_get_opt() {
-	local trigger_opt="${1}_${2}"
-	local var="${3}"
-	eval "${var}=\"${!trigger_opt}\""
 }
 
 __fzf_obc_set_opt() {
