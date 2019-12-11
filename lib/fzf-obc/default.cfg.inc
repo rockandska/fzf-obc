@@ -76,7 +76,7 @@ __fzf_obc_set_opt rec fzf_trigger '**'
 
 __fzf_obc_set_opt std enable '1'
 __fzf_obc_set_opt mlt enable "${std_enable}"
-__fzf_obc_set_opt rec enable "${mlt_enable}"
+__fzf_obc_set_opt rec enable "${std_enable}"
 
 ###########################################
 # Fzf display / usage options for fzf-obc #
@@ -89,7 +89,7 @@ __fzf_obc_set_opt rec fzf_multi '1'
 # fzf options for fzf-obc
 __fzf_obc_set_opt std fzf_opts '--select-1 --exit-0 --no-sort' 'FZF_OBC_OPTS'
 __fzf_obc_set_opt mlt fzf_opts "${std_fzf_opts}" 'FZF_OBC_OPTS'
-__fzf_obc_set_opt rec fzf_opts "${mlt_fzf_opts}" 'FZF_OBC_GLOBS_OPTS'
+__fzf_obc_set_opt rec fzf_opts "${std_fzf_opts}" 'FZF_OBC_GLOBS_OPTS'
 # Bindings use for fzf-obc
 __fzf_obc_set_opt std fzf_binds '--bind tab:accept' 'FZF_OBC_BINDINGS'
 __fzf_obc_set_opt mlt fzf_binds '--bind tab:toggle+down;shift-tab:toggle+up' 'FZF_OBC_GLOBS_BINDINGS'
@@ -101,15 +101,15 @@ fi
 # Size of the fzf-obc selector
 __fzf_obc_set_opt std fzf_size '40%' 'FZF_OBC_HEIGHT'
 __fzf_obc_set_opt mlt fzf_size "${std_fzf_size}" 'FZF_OBC_HEIGHT'
-__fzf_obc_set_opt rec fzf_size "${mlt_fzf_size}" 'FZF_OBC_HEIGHT'
+__fzf_obc_set_opt rec fzf_size "${std_fzf_size}" 'FZF_OBC_HEIGHT'
 # Position of the fzf-obc selector (when using fzf-tmux)
 __fzf_obc_set_opt std fzf_position 'r'
 __fzf_obc_set_opt mlt fzf_position "${std_fzf_position}"
-__fzf_obc_set_opt rec fzf_position "${mlt_fzf_position}"
+__fzf_obc_set_opt rec fzf_position "${std_fzf_position}"
 # Use fzf-tmux script if in tmux or not
 __fzf_obc_set_opt std fzf_tmux '1'
 __fzf_obc_set_opt mlt fzf_tmux "${std_fzf_tmux}"
-__fzf_obc_set_opt rec fzf_tmux "${mlt_fzf_tmux}"
+__fzf_obc_set_opt rec fzf_tmux "${std_fzf_tmux}"
 
 ##################################
 # Sort (GNU) options for results #
@@ -117,7 +117,7 @@ __fzf_obc_set_opt rec fzf_tmux "${mlt_fzf_tmux}"
 
 __fzf_obc_set_opt std sort_opts '-Vdf'
 __fzf_obc_set_opt mlt sort_opts "${std_sort_opts}"
-__fzf_obc_set_opt rec sort_opts "${mlt_sort_opts}"
+__fzf_obc_set_opt rec sort_opts "${std_sort_opts}"
 
 ###########################################
 # specific options for complete functions #
@@ -127,15 +127,15 @@ __fzf_obc_set_opt rec sort_opts "${mlt_sort_opts}"
 # display short files/path as the original completion or display the full path
 __fzf_obc_set_opt std filedir_short '1' 'FZF_OBC_SHORT_FILEDIR'
 __fzf_obc_set_opt mlt filedir_short "${std_filedir_short}" 'FZF_OBC_SHORT_FILEDIR'
-__fzf_obc_set_opt rec filedir_short "${mlt_filedir_short}" 'FZF_OBC_SHORT_FILEDIR'
+__fzf_obc_set_opt rec filedir_short "${std_filedir_short}" 'FZF_OBC_SHORT_FILEDIR'
 # Colorized files/paths based on LS_COLORS if available
 __fzf_obc_set_opt std filedir_colors '1' 'FZF_OBC_COLORS'
 __fzf_obc_set_opt mlt filedir_colors "${std_filedir_colors}" 'FZF_OBC_COLORS'
-__fzf_obc_set_opt rec filedir_colors "${mlt_filedir_colors}" 'FZF_OBC_GLOBS_COLORS'
+__fzf_obc_set_opt rec filedir_colors "${std_filedir_colors}" 'FZF_OBC_GLOBS_COLORS'
 # Display hidden files firts or at the end
 __fzf_obc_set_opt std filedir_hidden_first '0'
 __fzf_obc_set_opt mlt filedir_hidden_first "${std_filedir_hidden_first}"
-__fzf_obc_set_opt rec filedir_hidden_first "${mlt_filedir_hidden_first}"
+__fzf_obc_set_opt rec filedir_hidden_first "${std_filedir_hidden_first}"
 # Maximum depth for the files/path lookup
 __fzf_obc_set_opt std filedir_maxdepth '1'
 __fzf_obc_set_opt mlt filedir_maxdepth "${std_filedir_maxdepth}"

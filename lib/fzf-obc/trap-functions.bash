@@ -8,7 +8,7 @@ __fzf_obc_trap__get_comp_words_by_ref() {
 	local option
 	local option_value
 	local new_cur="$cur"
-	: "${trigger_type_arr:=trigger_type_arr not init in ${FUNCNAME[@]}}"
+	: "${trigger_type_arr:=}"
 	for trigger_type in "${trigger_type_arr[@]}";do
 		option="${trigger_type}_${option_type}"
 		option_value="${!option}"
