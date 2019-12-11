@@ -26,9 +26,9 @@ class FzfObcTest
         $ cat #{temp_test_home_dir}/
         > 'fzf-obc.test
           3/5
-        > #{start_dir}test-fzf-obc.test
+        > #{start_dir}fzf-obc.test
+          #{start_dir}test-fzf-obc.test
           #{start_dir}test fzf-obc.test
-          #{start_dir}fzf-obc.test
       TTY
       @tty.send_keys(<<~EOF)
         #{CTRLC}
@@ -42,6 +42,9 @@ class FzfObcTest
       TTY
       @tty.send_keys(<<~EOF)
         #{CTRLC}
+        #{DOWN}
+        #{DOWN}
+        #{DOWN}
         #{DOWN}
         #{TAB}
       EOF
@@ -60,14 +63,14 @@ class FzfObcTest
         $ cat #{temp_test_home_dir}/**
         > 'fzf-obc.test
           9/11
-        > #{start_dir}test-fzf-obc.test
-          #{start_dir}test fzf-obc.test
-          #{start_dir}fzf-obc.test
+        > #{start_dir}d1/fzf-obc.test
           #{start_dir}d1/test-fzf-obc.test
           #{start_dir}d1/test fzf-obc.test
-          #{start_dir}d1/fzf-obc.test
+          #{start_dir}d1 0/fzf-obc.test
           #{start_dir}d1 0/test-fzf-obc.test
           #{start_dir}d1 0/test fzf-obc.test
+          #{start_dir}fzf-obc.test
+          #{start_dir}test-fzf-obc.test
       TTY
       @tty.send_keys(<<~EOF)
         #{CTRLC}
@@ -77,15 +80,24 @@ class FzfObcTest
         $ cat #{temp_test_home_dir}/**
         > 'test-fzf-obc.test
           3/11
-        > #{start_dir}test-fzf-obc.test
-          #{start_dir}d1/test-fzf-obc.test
+        > #{start_dir}d1/test-fzf-obc.test
           #{start_dir}d1 0/test-fzf-obc.test
+          #{start_dir}test-fzf-obc.test
       TTY
       @tty.send_keys(<<~EOF)
         #{CTRLC}
         'fzf-obc.test
         #{DOWN}
+        #{DOWN}
+        #{DOWN}
+        #{DOWN}
+        #{DOWN}
+        #{DOWN}
+        #{DOWN}
+        #{DOWN}
         #{TAB}
+        #{UP}
+        #{UP}
         #{TAB}
         #{ENTER}
       EOF

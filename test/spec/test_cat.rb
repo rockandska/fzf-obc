@@ -25,13 +25,13 @@ class FzfObcTest
         $ cat #{temp_test_dir}/
         >
           5/5
-        > #{start_dir}yyy
-          #{start_dir}xxx xxx
-          #{start_dir}xxx
-          #{start_dir}d1/
+        > #{start_dir}d1/
           #{start_dir}d1 0/
+          #{start_dir}xxx
+          #{start_dir}xxx xxx
+          #{start_dir}yyy
       TTY
-      @tty.send_keys('x',"#{TAB}")
+      @tty.send_keys('x',"#{DOWN}","#{TAB}")
       @tty.assert_matches <<~TTY
         $ cat #{temp_test_dir}/xxx\\ xxx
       TTY
@@ -46,25 +46,25 @@ class FzfObcTest
         $ cat #{temp_test_dir}/**
         >
           11/11
-        > #{start_dir}yyy
-          #{start_dir}xxx xxx
-          #{start_dir}xxx
-          #{start_dir}d1/yyy
-          #{start_dir}d1/xxx xxx
+        > #{start_dir}d1/
           #{start_dir}d1/xxx
-          #{start_dir}d1/
+          #{start_dir}d1/xxx xxx
+          #{start_dir}d1/yyy
+          #{start_dir}d1 0/
+          #{start_dir}d1 0/xxx
+          #{start_dir}d1 0/xxx xxx
           #{start_dir}d1 0/yyy
       TTY
       @tty.send_keys(<<~EOF)
         x
-        #{TAB}
         #{DOWN}
+        #{TAB}
         #{DOWN}
         #{TAB}
         #{ENTER}
       EOF
       @tty.assert_matches <<~TTY
-        $ cat #{temp_test_dir}/xxx\\ xxx #{temp_test_dir}/d1/xxx
+        $ cat #{temp_test_dir}/d1/xxx\\ xxx #{temp_test_dir}/d1\\ 0/xxx\\ xxx
       TTY
 
       @tty.clear_screen()

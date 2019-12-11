@@ -1,4 +1,3 @@
-# Demo Gallery
 **Those images are generated from the functional tests**
 
 ## test_cat

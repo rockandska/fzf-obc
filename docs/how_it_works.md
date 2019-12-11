@@ -15,13 +15,15 @@ The only core bash-completion functions override are `_filedir` /
 #### Startup sequence
 
 - Source default fzf-obc `traps ` / `posts ` / `sorts` functions
-- Load functions from paths specified in `$FZF_OBC_PATH`
+- Load functions from ~/.config/fzf-obc and from paths specified in `$FZF_OBC_PATH`
 - Add `_longopt` as `fzf` completion script if there is not already one defined
 - Take a look at already bash complete functions defined and add the wrapper to them if not already done.
 - Add traps to functions if they exist and not already add.
 
 #### Wrapper workflow
 
+- load configuration : default config, default user config, complete function config,
+    command config
 - call the original completion script (the one in charge to populate `COMPREPLY`)
 - if a specific `__fzf_obc_trap_[function_name]`  function exist, execute it
     before exiting the completion script

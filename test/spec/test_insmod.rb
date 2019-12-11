@@ -25,10 +25,11 @@ class FzfObcTest
         $ insmod #{temp_test_dir}/
         >
           3/3
-        > #{start_dir}test.ko.gz
+        > #{start_dir}d1/
+          #{start_dir}test.ko.gz
           #{start_dir}test 1.ko.gz
-          #{start_dir}d1/
       EOF
+      @tty.send_keys("#{DOWN}")
       @tty.send_keys("#{DOWN}")
       @tty.send_keys("#{TAB}")
       @tty.assert_row(0,"$ insmod #{temp_test_dir}/test\\ 1.ko.gz")

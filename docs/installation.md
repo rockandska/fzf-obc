@@ -1,22 +1,25 @@
+# Installation 
+
+***Don't forget to deactivate to check the [prerequisites](prerequisites.md)***  
 ***Don't forget to deactivate original fzf auto-completion as described in
 [prerequisites](prerequisites.md)***
 
 ---
 
-**Set the path where to install fzf-obc**
+## Set the path where to install fzf-obc
 ```bash
 $ INSTALL_PATH=~/.local/opt/fzf-obc
 ```
 
-**Clone the repository**
+## Clone the repository
 
-- use latest source :
+### use latest source
 
 ```bash
 $ git clone https://github.com/rockandska/fzf-obc ${INSTALL_PATH}
 ```
 
-- use a specific release :
+### use a specific release
 
 ```bash
 $ git clone https://github.com/rockandska/fzf-obc ${INSTALL_PATH}
@@ -24,7 +27,7 @@ $ cd ${INSTALL_PATH}
 $ git checkout x.x.X
 ```
 
-**Add fzf-obc to your .bashrc**
+## Add fzf-obc to your .bashrc
 ```bash
 $ echo "source ${INSTALL_PATH}/bin/fzf-obc.bash" >> ~/.bashrc
 ```
