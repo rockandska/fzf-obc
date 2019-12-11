@@ -16,12 +16,5 @@ __fzf_obc_sort() {
 }
 
 __fzf_obc_default_sort() {
-	local cmd
-	# move colors to the right
-	cmd="sed -z -r 's/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])(.*)/\5\1/g'"
-	# sort cmd used to show results
-	cmd="(set -euo pipefail; eval LC_ALL=C sort -z -fru $* -S 50% --parallel=\"$(awk '/^processor/{print $3}' /proc/cpuinfo 2> /dev/null | wc -l)\" 2> /dev/null || eval LC_ALL=C sort -z -fru $*) < <($cmd)"
-	# move colors back to the left
-	cmd="sed -z -r 's/(.*)(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])$/\2\1/g' < <($cmd)"
-	eval "$cmd"
+	(set -euo pipefail; eval "LC_ALL=C sort -z -u ${current_sort_opts:-} -S 50% --parallel=\"$(awk	'/^processor/{print $3}' /proc/cpuinfo 2> /dev/null | wc -l)\" 2> /dev/null" || eval "LC_ALL=C sort -z -u ${current_sort_opts:-}")
 }

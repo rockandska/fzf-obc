@@ -47,9 +47,9 @@ __fzf_obc_colorized() {
 	for arg in "${ls_colors_arr[@]}";do
 	IFS='=' read -r -a r <<< "${arg}"
 	if [[ "${r[0]}" == "*"* ]];then
-		fzf_obc_colors_arr[ext_${r[0]/\*\.}]="${r[1]}"
+		printf -v fzf_obc_colors_arr["ext_${r[0]/\*\.}"] "%0$((12-${#r[1]}))d%s" 0 "${r[1]}"
 	else
-		fzf_obc_colors_arr[type_${r[0]}]="${r[1]}"
+		printf -v fzf_obc_colors_arr["type_${r[0]/\*\.}"] "%0$((12-${#r[1]}))d%s" 0 "${r[1]}"
 	fi
 	done
 
@@ -58,9 +58,9 @@ __fzf_obc_colorized() {
 		file="${line:3}"
 		if [[ "${type}" == "fi"  ]];then
 			ext="${file##*.}"
-			printf "%s \e[${fzf_obc_colors_arr[ext_${ext}]:-0}m%s\e[0m\0" "${type}" "$file"
+			printf "%s \e[${fzf_obc_colors_arr[ext_${ext}]:-000000000000}m%s\0" "${type}" "$file"
 		else
-			printf "%s \e[${fzf_obc_colors_arr[type_${type}]:-0}m%s\e[0m\0" "${type}" "$file"
+			printf "%s \e[${fzf_obc_colors_arr[type_${type}]:-000000000000}m%s\0" "${type}" "$file"
 		fi
 	done
 }
@@ -262,12 +262,24 @@ __fzf_obc_check_empty_compreply() {
 	[[ "${#COMPREPLY[@]}" -ne 0 ]] && [[ "${COMPREPLY[-1]}" == --*= ]] && compopt -o nospace;
 }
 
+__fzf_obc_move_hidden_files() {
+	sed -z -r -n '/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])?\./MH;//!p;$!d;x;//s/.//p;d'
+}
+
 __fzf_obc_display_compreply() {
 	local IFS=$'\n'
 	local cmd
+	: "${current_filedir_colors:-}"
+	: "${current_filedir_hidden_first:-}"
 	if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
 		cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
+		if [[ -n "${current_filedir_depth:-}" ]] && ((current_filedir_colors));then
+			current_sort_opts+=" -k 1.15"
+		fi
 		cmd="__fzf_obc_sort < <($cmd)"
+		if [[ -n "${current_filedir_depth:-}" ]] && ! ((current_filedir_hidden_first));then
+			cmd="__fzf_obc_move_hidden_files < <($cmd)"
+		fi
 		cmd="__fzf_obc_cmd < <($cmd)"
 		cmd="__fzf_compreply < <($cmd)"
 		eval "$cmd"

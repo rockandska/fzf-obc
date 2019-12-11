@@ -19,7 +19,7 @@ class FzfObcTest
 
     @tty.send_keys("git c","#{TAB}")
     @tty.send_keys("mm","#{TAB}")
-    @tty.send_keys("--","#{TAB}","ssage","#{DOWN}","#{DOWN}", "#{TAB}","'First commit'","#{ENTER}")
+    @tty.send_keys("--","#{TAB}","ssage","#{TAB}","'First commit'","#{ENTER}")
     @tty.assert_row(0,"$ git commit --message='First commit'")
 
     @tty.clear_screen()
@@ -27,15 +27,15 @@ class FzfObcTest
     g.branch('new_branch').checkout
 
     @tty.send_keys("git ", "#{TAB}")
-    @tty.send_keys("check", "#{DOWN}", "#{TAB}")
+    @tty.send_keys("check", "#{TAB}")
     @tty.send_keys("#{TAB}")
     @tty.assert_matches(<<~EOF)
     $ git checkout
     >
       3/3
-    > new_branch
+    > HEAD
       master
-      HEAD
+      new_branch
     EOF
     @tty.send_keys('new',"#{TAB}")
     @tty.assert_matches(<<~EOF)

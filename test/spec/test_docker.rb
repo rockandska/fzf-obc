@@ -1,42 +1,40 @@
 class FzfObcTest
   def test_docker
-    @tty.send_keys("docker ","#{TAB}", delay: 0.01)
+    @tty.send_keys("docker p","#{TAB}", delay: 0.01)
     @tty.assert_matches(<<~EOF)
-      $ docker
+      $ docker p
       >
-        54/54
-      > wait
-        volume
-        version
-        update
-        unpause
-        trust
-        top
-        tag
+        6/6
+      > pause
+        plugin
+        port
+        ps
+        pull
+        push
     EOF
 
     @tty.send_keys("pl")
     @tty.assert_matches(<<~EOF)
-      $ docker
+      $ docker p
       > pl
-        2/54
-      > pull
-        plugin
+        2/6
+      > plugin
+        pull
     EOF
 
-    @tty.send_keys("#{DOWN}","#{TAB}","#{TAB}")
+    @tty.send_keys("#{TAB}","#{TAB}")
     @tty.assert_matches(<<~EOF)
       $ docker plugin
       >
         10/10
-      > upgrade
-        set
-        rm
-        push
-        ls
-        install
-        inspect
+      > create
+        disable
         enable
+        inspect
+        install
+        ls
+        push
+        rm
     EOF
     @tty.send_keys("cre","#{TAB}")
     @tty.assert_row(0,"$ docker plugin create")

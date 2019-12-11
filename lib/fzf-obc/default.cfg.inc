@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Internal vars
-local current_filedir_depth=0
+local current_filedir_depth
 local fzf_default_opts=""
 local current_trigger_type
 local current_cur
@@ -88,7 +88,7 @@ __fzf_obc_set_opt std fzf_multi '0'
 __fzf_obc_set_opt mlt fzf_multi '1'
 __fzf_obc_set_opt rec fzf_multi '1'
 # fzf options for fzf-obc
-__fzf_obc_set_opt std fzf_opts '--select-1 --exit-0' 'FZF_OBC_OPTS'
+__fzf_obc_set_opt std fzf_opts '--select-1 --exit-0 --no-sort' 'FZF_OBC_OPTS'
 __fzf_obc_set_opt mlt fzf_opts "${std_fzf_opts}" 'FZF_OBC_OPTS'
 __fzf_obc_set_opt rec fzf_opts "${mlt_fzf_opts}" 'FZF_OBC_GLOBS_OPTS'
 # Bindings use for fzf-obc
@@ -120,7 +120,7 @@ __fzf_obc_set_opt rec fzf_tmux "${mlt_fzf_tmux}"
 # Sort (GNU) options for results #
 ##################################
 
-__fzf_obc_set_opt std sort_opts ''
+__fzf_obc_set_opt std sort_opts '-Vdf'
 __fzf_obc_set_opt mlt sort_opts "${std_sort_opts}"
 __fzf_obc_set_opt rec sort_opts "${mlt_sort_opts}"
 

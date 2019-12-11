@@ -26,10 +26,11 @@ class FzfObcTest
         $ vi #{temp_test_dir}/
         >
           3/3
-        > #{start_dir}test.conf
+        > #{start_dir}d1/
+          #{start_dir}test.conf
           #{start_dir}test 1.conf
-          #{start_dir}d1/
       EOF
+      @tty.send_keys("#{DOWN}")
       @tty.send_keys("#{DOWN}")
       @tty.send_keys("#{TAB}")
       @tty.assert_row(0,"$ vi #{temp_test_dir}/test\\ 1.conf")
@@ -44,16 +45,16 @@ class FzfObcTest
         $ vi #{temp_test_dir}/**
         >
           5/5
-        > #{start_dir}test.conf
-          #{start_dir}test 1.conf
+        > #{start_dir}d1/
           #{start_dir}d1/test.conf
           #{start_dir}d1/test 1.conf
-          #{start_dir}d1/
+          #{start_dir}test.conf
+          #{start_dir}test 1.conf
       EOF
       @tty.send_keys("#{DOWN}")
       @tty.send_keys("#{DOWN}")
       @tty.send_keys("#{ENTER}")
-      @tty.assert_row(0,"$ vi #{temp_test_dir}/d1/test.conf")
+      @tty.assert_row(0,"$ vi #{temp_test_dir}/d1/test\\ 1.conf")
 
       @tty.clear_screen()
 
@@ -66,11 +67,13 @@ class FzfObcTest
         $ vi #{temp_test_dir}/
         >
           4/4
-        > #{start_dir}test.conf
-          #{start_dir}test 1.conf
+        > #{start_dir}d1/
           #{start_dir}link_test.conf
-          #{start_dir}d1/
+          #{start_dir}test.conf
+          #{start_dir}test 1.conf
       EOF
+      @tty.send_keys("#{DOWN}")
+      @tty.send_keys("#{DOWN}")
       @tty.send_keys("#{TAB}")
       @tty.assert_row(0,"$ vi #{temp_test_dir}/test.conf")
     
@@ -83,9 +86,9 @@ class FzfObcTest
         $ vi #{temp_test_dir}/
         >
           3/3
-        > #{start_dir}test 1.conf
+        > #{start_dir}d1/
           #{start_dir}link_test.conf
-          #{start_dir}d1/
+          #{start_dir}test 1.conf
       EOF
       @tty.send_keys("#{DOWN}")
       @tty.send_keys("#{TAB}")

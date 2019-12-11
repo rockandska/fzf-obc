@@ -106,12 +106,14 @@ $(GIF_PATH)/%.gif: $(TEST_SPEC_PATH)/%.rb
 $(IMG_PATH)/demo.gif: $(GIF_PATH)/test_insmod.gif $(GIF_PATH)/test_docker.gif $(GIF_PATH)/test_git.gif
 	@printf "\n##### Generating demo gif #####\n"
 	@docker run --rm --user $$(id -u) -v "$(CURDIR)/$(GIF_PATH)":"$(CURDIR)/$(GIF_PATH)" -v "$(CURDIR)/$(IMG_PATH)":"$(CURDIR)/$(IMG_PATH)" starefossen/gifsicle -m $(addprefix $(CURDIR)/,$+) > $(CURDIR)/$(IMG_PATH)/demo.gif
+	@echo OK
 
 # Generate demo gallery from functionnal tests
 $(DOC_PATH)/tests_gallery.md: $(sort $(GIF_FILES))
 	@printf "\n##### Generate demo gallery #####\n"
 	@printf "**Those images are generated from the functional tests**\n" > $@
 	@$(foreach ___img___, $+, printf "\n## $(notdir $(___img___:.gif=))\n![]($(subst $(DOC_PATH)/,$(empty),$(___img___)))\n" >> $@;)
+	@echo OK
 
 .PHONY: gifs
 gifs: $(GIF_FILES)
