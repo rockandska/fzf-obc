@@ -242,9 +242,14 @@ __fzf_obc_cmd() {
 		fzf_default_opts+=" -m "
 	fi
 
-	fzf_default_opts+=" --reverse --height ${current_fzf_height:-} ${current_fzf_opts:-} ${current_fzf_binds:-}"
+	fzf_default_opts+=" --reverse --height ${current_fzf_size:-} ${current_fzf_opts:-} ${current_fzf_binds:-}"
 
-	FZF_DEFAULT_OPTS="${fzf_default_opts}" fzf --read0 --print0 --ansi
+	: "${current_fzf_tmux:-}"
+	if((current_fzf_tmux));then
+		eval "FZF_DEFAULT_OPTS=\"${fzf_default_opts}\" fzf-tmux	-${current_fzf_position:-}	${current_fzf_size:-} --  --read0 --print0 --ansi"
+	else
+		eval "FZF_DEFAULT_OPTS=\"${fzf_default_opts}\" fzf --read0 --print0 --ansi"
+	fi
 }
 
 __fzf_obc_check_empty_compreply() {

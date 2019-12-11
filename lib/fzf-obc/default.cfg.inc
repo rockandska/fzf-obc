@@ -24,8 +24,7 @@ local options_type_arr=(
 		"fzf_trigger"
 		"fzf_opts"
 		"fzf_binds"
-		"fzf_height"
-		"fzf_width"
+		"fzf_size"
 		"fzf_position"
 		"fzf_tmux"
 		"sort_opts"
@@ -99,14 +98,10 @@ if ((rec_fzf_multi));then
 else
 	__fzf_obc_set_opt rec fzf_binds "${std_fzf_binds}" 'FZF_OBC_BINDINGS'
 fi
-# Height of the fzf-obc selector
-__fzf_obc_set_opt std fzf_height '40%' 'FZF_OBC_HEIGHT'
-__fzf_obc_set_opt mlt fzf_height "${std_fzf_height}" 'FZF_OBC_HEIGHT'
-__fzf_obc_set_opt rec fzf_height "${mlt_fzf_height}" 'FZF_OBC_HEIGHT'
-# Width of the fzf-obc selector (when using fzf-tmux with left/right position)
-__fzf_obc_set_opt std fzf_width '40%'
-__fzf_obc_set_opt mlt fzf_width "${std_fzf_width}"
-__fzf_obc_set_opt rec fzf_width "${mlt_fzf_width}"
+# Size of the fzf-obc selector
+__fzf_obc_set_opt std fzf_size '40%' 'FZF_OBC_HEIGHT'
+__fzf_obc_set_opt mlt fzf_size "${std_fzf_size}" 'FZF_OBC_HEIGHT'
+__fzf_obc_set_opt rec fzf_size "${mlt_fzf_size}" 'FZF_OBC_HEIGHT'
 # Position of the fzf-obc selector (when using fzf-tmux)
 __fzf_obc_set_opt std fzf_position 'r'
 __fzf_obc_set_opt mlt fzf_position "${std_fzf_position}"
