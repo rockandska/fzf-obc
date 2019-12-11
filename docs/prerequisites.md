@@ -1,10 +1,30 @@
+# Prerequisites
+
 ## Gnu Tools
 
 - awk, find, sed, sort
 
+**MacOS user**
+
+```
+$ brew install gnu-sed
+$ brew install coreutils
+$ brew install findutils
+$ echo "export PATH=$(brew --prefix gnu-sed)/bin:$(brew --prefix coreutils)/bin:$(brew --prefix findutils)/bin:$PATH" >> ~/.bash_profile
+```
+
 ## Bash
 
 - version \>= 4.0
+
+**MacOS user**
+
+```
+$ brew install bash
+$ echo "export PATH=$(brew --prefix bash)/bin:$PATH" >> ~/.bash_profile
+$ sudo bash -c "echo $(brew --prefix)/bin/bash >> /private/etc/shells"
+$ chsh -s "$(brew --prefix bash)/bin/bash"
+```
 
 ## Fzf
 
@@ -15,7 +35,7 @@
 
 ---
 
-**If you install fzf for the first time :**  
+### If you install fzf for the first time
 
 Follow the [official instructions](https://github.com/junegunn/fzf#using-git) but don't forget to install fzf without its own completion script:
 
@@ -31,7 +51,7 @@ $ ./install
 
 ---
 
-**If you already have fzf installed :**  
+### If you already have fzf installed
 
 You surely need to deactivate the auto-completion provided by fzf.  
 You could deactivate it inside your fzf config (usually `~/.fzf.bash` or `~/.config/fzf/fzf.bash`) by commenting the auto-completion section.
