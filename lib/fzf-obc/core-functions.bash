@@ -117,8 +117,9 @@ __fzf_obc_search() {
 		maxdepth="${current_filedir_maxdepth:?}"
 	fi
 
+	: "${current_enable:=0}"
 	local slash
-	if [[ -n "${current_trigger_type:-}" ]];then
+	if ((current_enable)) && [[ -n "${current_trigger_type:-}" ]];then
 		slash="/"
 	fi
 
@@ -172,7 +173,7 @@ __fzf_obc_search() {
 		cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
 	fi
 
-	if [[ -n "${current_trigger_type:-}" ]];then
+	if ((current_enable)) && [[ -n "${current_trigger_type:-}" ]];then
 		# shellcheck disable=SC2154
 		if ((current_filedir_colors)) && [[ "${#LS_COLORS}" -gt 0 ]];then
 			cmd="__fzf_obc_colorized < <(${cmd})"
