@@ -330,7 +330,7 @@ __fzf_obc_update_complete() {
 				source ${fzf_obc_path}/lib/fzf-obc/default.cfg.inc
 				local complete_status=0
 				${func_name} \$@ || complete_status=\$?
-				if [[ -n "\${current_trigger_type}" ]];then
+				if ((current_enable)) && [[ -n "\${current_trigger_type}" ]];then
 					__fzf_obc_run_post_cmd
 					__fzf_obc_display_compreply
 					__fzf_obc_run_finish_cmd
