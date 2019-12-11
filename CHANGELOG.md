@@ -2,9 +2,15 @@
 
 ## [**Next release**](https://github.com/rockandska/fzf-obc/tree/HEAD)
 
+**Implemented enhancements:**
+
+- Feat/new config files [\#31](https://github.com/rockandska/fzf-obc/pull/31) ([rockandska](https://github.com/rockandska))
+
 **Closed issues:**
 
+- Add prerequisites step for MacOS [\#30](https://github.com/rockandska/fzf-obc/issues/30)
 - leading backslash [\#27](https://github.com/rockandska/fzf-obc/issues/27)
+- Items appear in reverse alphabetical order [\#21](https://github.com/rockandska/fzf-obc/issues/21)
 
 **Merged pull requests:**
 
