@@ -1,6 +1,6 @@
 # FZF-OBC (FzF Over Bash Complete)
 
-![demo](doc/img/demo.gif)
+[![demo](docs/img/demo.gif)](https://fzf-obc.readthedocs.io/)
 
 ## Description
 

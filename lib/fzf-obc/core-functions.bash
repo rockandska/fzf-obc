@@ -175,7 +175,7 @@ __fzf_obc_search() {
 
 	if ((current_enable)) && [[ -n "${current_trigger_type:-}" ]];then
 		# shellcheck disable=SC2154
-		if ((current_filedir_colors)) && [[ "${#LS_COLORS}" -gt 0 ]];then
+		if ((current_filedir_colors));then
 			cmd="__fzf_obc_colorized < <(${cmd})"
 		fi
 	fi
@@ -267,14 +267,28 @@ __fzf_obc_check_empty_compreply() {
 	[[ "${#COMPREPLY[@]}" -ne 0 ]] && [[ "${COMPREPLY[-1]}" == --*= ]] && compopt -o nospace;
 }
 
-__fzf_obc_move_hidden_files() {
-	sed -z -r -n '/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])?\./MH;//!p;$!d;x;//s/.//p;d'
+__fzf_obc_move_hidden_files_last() {
+	# shellcheck disable=SC2154
+	if ((current_filedir_colors));then
+		sed -z -r '/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])(.*\/\.|\.)/MH;//!p;$!d;x;//s/\x0//p;d'
+	else
+		sed -z -r '/^(.*\/\.|\.)/MH;//!p;$!d;x;//s/\x0//p;d'
+	fi
+}
+
+__fzf_obc_move_hidden_files_first() {
+	# shellcheck disable=SC2154
+	if ((current_filedir_colors));then
+		sed -z -r	'/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])(.*\/\.|\.)/!H;//p;$!d;g;s/\x0//'
+	else
+		sed -z -r '/^(.*\/\.|\.)/!H;//p;$!d;g;s/\x0//'
+	fi
 }
 
 __fzf_obc_display_compreply() {
 	local IFS=$'\n'
 	local cmd
-	: "${current_filedir_colors:-}"
+	# shellcheck disable=SC2154
 	: "${current_filedir_hidden_first:-}"
 	if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
 		cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
@@ -282,8 +296,10 @@ __fzf_obc_display_compreply() {
 			current_sort_opts+=" -k 1.15"
 		fi
 		cmd="__fzf_obc_sort < <($cmd)"
-		if [[ -n "${current_filedir_depth:-}" ]] && ! ((current_filedir_hidden_first));then
-			cmd="__fzf_obc_move_hidden_files < <($cmd)"
+		if [[ -n "${current_filedir_depth:-}" ]] &&  [[ "${current_filedir_hidden_first}" == 1 ]];then
+			cmd="__fzf_obc_move_hidden_files_first < <($cmd)"
+		elif [[ -n "${current_filedir_depth:-}" ]] && [[ "${current_filedir_hidden_first}" == 0 ]];then
+			cmd="__fzf_obc_move_hidden_files_last < <($cmd)"
 		fi
 		cmd="__fzf_obc_cmd < <($cmd)"
 		cmd="__fzf_compreply < <($cmd)"

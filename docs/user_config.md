@@ -247,7 +247,8 @@ Each setting are available for each trigger type and could be set indenpendently
 
 ### filedir_hidden_first
 
-- Should we put hidden files first in results or not
+- Should we put hidden files/directories first in results, at the end, or untouched
+- Could be `0`,`1`,`<empty>`
 - standard trigger:
     - default : `0`
     - config variables :
