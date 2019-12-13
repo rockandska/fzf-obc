@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # Internal vars
-local current_filedir_depth
+local current_filedir_depth=""
 local fzf_default_opts=""
-local current_trigger_type
+local current_trigger_type=""
 local current_cur
 local current_prev
 local current_words
@@ -33,7 +33,6 @@ local options_type_arr=(
 		"filedir_hidden_first"
 		"filedir_maxdepth"
 		"filedir_exclude_path"
-		"plugin_enable"
 	)
 
 # loop to declare all variables as local

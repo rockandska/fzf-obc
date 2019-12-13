@@ -338,6 +338,26 @@ __fzf_obc_load_user_functions() {
 	done
 }
 
+__fzf_obc_load_plugin_config() {
+	: "${current_cmd_name:?Missing complete command name in ${FUNCNAME[0]}}"
+	: "${fzf_obc_path:?Missing fzf_obc_path in ${FUNCNAME[0]}}"
+	local plugin="${1:-default}"
+	local previous_values
+	previous_values="$(declare -p | grep 'declare -. current_' | sed 's/declare -. //')"
+	if [[ -r "${fzf_obc_path}/plugins/${current_cmd_name}/${plugin}.cfg" ]];then
+		# shellcheck disable=SC1090
+		source "${fzf_obc_path}/plugins/${current_cmd_name}/${plugin}.cfg"
+	fi
+	if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/plugins/${current_cmd_name}/${plugin}.cfg" ]];then
+		# shellcheck disable=SC1090
+		source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/plugins/${current_cmd_name}/${plugin}.cfg"
+	fi
+	if ! ((current_enable));then
+		eval "${previous_values}"
+		current_enable=0
+	fi
+}
+
 __fzf_obc_update_complete() {
 	local fzf_obc_path
 	fzf_obc_path=$( cd "$( dirname "${BASH_SOURCE[0]%%\/..*}" )" >/dev/null 2>&1 && pwd )
@@ -365,9 +385,10 @@ __fzf_obc_update_complete() {
 				${func_name} \$@ || complete_status=\$?
 				[[ "\${current_func_name}" == "_completion_loader" ]] && __fzf_obc_post__completion_loader
 				if ((current_enable));then
-					__fzf_obc_run_post_cmd
+					__fzf_obc_load_plugin_config
+					((current_enable)) && __fzf_obc_run_post_cmd
 					__fzf_obc_display_compreply
-					__fzf_obc_run_finish_cmd
+					((current_enable)) && __fzf_obc_run_finish_cmd
 					__fzf_obc_set_compreply
 				fi
 				# always check complete wrapper
