@@ -49,15 +49,12 @@ for x in "${trigger_type_arr[@]}";do
 	done
 done
 
-# load user/function/command config
+# load user/command config
 if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg" ]];then
 	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg"
 fi
-if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_func_name:-}.cfg" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_func_name:-}.cfg"
-fi
 if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_cmd_name:-}.cfg" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_cmd_name}.cfg"
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_cmd_name:-}.cfg"
 fi
 
 ###########################

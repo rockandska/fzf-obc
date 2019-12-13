@@ -119,7 +119,7 @@ __fzf_obc_search() {
 
 	: "${current_enable:=0}"
 	local slash
-	if ((current_enable)) && [[ -n "${current_trigger_type:-}" ]];then
+	if ((current_enable));then
 		slash="/"
 	fi
 
@@ -173,7 +173,7 @@ __fzf_obc_search() {
 		cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
 	fi
 
-	if ((current_enable)) && [[ -n "${current_trigger_type:-}" ]];then
+	if ((current_enable));then
 		# shellcheck disable=SC2154
 		if ((current_filedir_colors));then
 			cmd="__fzf_obc_colorized < <(${cmd})"
@@ -363,7 +363,8 @@ __fzf_obc_update_complete() {
 				source \${fzf_obc_path}/lib/fzf-obc/default.cfg.inc
 				local complete_status=0
 				${func_name} \$@ || complete_status=\$?
-				if ((current_enable)) && [[ -n "\${current_trigger_type}" ]];then
+				[[ "\${current_func_name}" == "_completion_loader" ]] && __fzf_obc_post__completion_loader
+				if ((current_enable));then
 					__fzf_obc_run_post_cmd
 					__fzf_obc_display_compreply
 					__fzf_obc_run_finish_cmd
