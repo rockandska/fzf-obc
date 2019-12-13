@@ -14,7 +14,7 @@ The only core bash-completion functions override are `_filedir` /
 
 #### Startup sequence
 
-- Source default fzf-obc `traps ` / `posts ` / `sorts` functions
+- Source default fzf-obc functions
 - Load functions from ~/.config/fzf-obc and from paths specified in `$FZF_OBC_PATH`
 - Add `_longopt` as `fzf` completion script if there is not already one defined
 - Take a look at already bash complete functions defined and add the wrapper to them if not already done.
@@ -22,12 +22,19 @@ The only core bash-completion functions override are `_filedir` /
 
 #### Wrapper workflow
 
-- load configuration : default config, default user config, complete function config,
-    command config
+- load configuration : default config, default user config, command config
 - call the original completion script (the one in charge to populate `COMPREPLY`)
-- if a specific `__fzf_obc_trap_[function_name]`  function exist, execute it
-    before exiting the completion script
-- if a specific `__fzf_obc_post_[completion_script_name/command]` function exist, run them
-- if a specific `__fzf_obc_sort_[completion_script_name/command]` function exist, run it
-- display `$COMPREPLY` with fzf
-- check new complete functions loaded to add the wrapper
+- if fzf-obc is enable for the actual command
+    - load plugin config
+    - plugin exist for the actual command and is enable
+        - if a specific `__fzf_obc_post_[command]` function exist, run it
+            - load subplugin config
+            - execute subplugin functions if enable
+        - display results by using `__fzf_obc_sort_[command]` function if exist, or the default one
+        - if a specific `__fzf_obc_finish_[command]` function exist, run it
+            - execute subplugin functions if enable
+    - plugin doesn't exist for the actual command or is disable
+        - display results by using default sort function
+- if fzf_obc is disable for the actual command
+    - try to act as if fzf-obc was not there
+- check new complete functions loaded to add wrapper to them

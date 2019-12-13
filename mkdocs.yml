@@ -11,7 +11,7 @@ nav:
   - installation.md
   - triggers_type.md
   - user_config.md
-  - user_functions.md
+  - plugins.md
   - About:
       - Changelog: changelog.md
       - Demo Gallery: tests_gallery.md

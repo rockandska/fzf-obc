@@ -1,6 +1,6 @@
 # Installation 
 
-***Don't forget to deactivate to check the [prerequisites](prerequisites.md)***  
+***Don't forget to check the [prerequisites](prerequisites.md)***  
 ***Don't forget to deactivate original fzf auto-completion as described in
 [prerequisites](prerequisites.md)***
 
@@ -31,6 +31,9 @@ $ git checkout x.x.X
 ```bash
 $ echo "source ${INSTALL_PATH}/bin/fzf-obc.bash" >> ~/.bashrc
 ```
+
+**Make sure that fzf-obc is always the last completion script loaded in your
+profile**
 
 ---
 

@@ -7,12 +7,9 @@ configurations in `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/`.
 - User configuration is dynamic and is load each time a completion is asked and  
 does not require to reload fzf-obc when the configuration is changed.
 - Each trigger type has its own configuration
-- The configuration could be changed at 3 level (global,complete function,
-    command). The configuration are loaded in the following order :
-    - `fzf-obc default install config`
-    - `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg`
-    - `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/[complete function].cfg`
-    - `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/[command].cfg`
+- The configuration could be changed at :
+    - Global level : `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg`
+    - Command level : `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/[command].cfg`
 
 ## Settings
 
