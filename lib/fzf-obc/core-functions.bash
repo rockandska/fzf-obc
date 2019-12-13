@@ -258,8 +258,6 @@ __fzf_obc_check_empty_compreply() {
 		compopt +o filenames
 		if [[ "${#COMPREPLY[@]}" -eq 0 ]];then
 			compopt -o nospace
-			COMP_WORDS[${COMP_CWORD}]="${current_cur:-}"
-			__fzf_add2compreply < <(printf '%s\0' "${COMP_WORDS[${COMP_CWORD}]}" )
 			[[ -z "${COMPREPLY[*]}" ]] && COMPREPLY=(' ')
 		fi
 	fi
@@ -361,7 +359,8 @@ __fzf_obc_update_complete() {
 				shopt -u globstar
 				local current_func_name="${func_name}"
 				local current_cmd_name="\${1}"
-				source ${fzf_obc_path}/lib/fzf-obc/default.cfg.inc
+				local fzf_obc_path="${fzf_obc_path}"
+				source \${fzf_obc_path}/lib/fzf-obc/default.cfg.inc
 				local complete_status=0
 				${func_name} \$@ || complete_status=\$?
 				if ((current_enable)) && [[ -n "\${current_trigger_type}" ]];then

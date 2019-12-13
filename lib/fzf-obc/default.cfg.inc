@@ -33,6 +33,7 @@ local options_type_arr=(
 		"filedir_hidden_first"
 		"filedir_maxdepth"
 		"filedir_exclude_path"
+		"plugin_enable"
 	)
 
 # loop to declare all variables as local
@@ -144,7 +145,6 @@ __fzf_obc_set_opt rec filedir_maxdepth '999999' 'FZF_OBC_GLOBS_MAXDEPTH'
 __fzf_obc_set_opt std filedir_exclude_path ''
 __fzf_obc_set_opt mlt filedir_exclude_path "${std_filedir_exclude_path}"
 __fzf_obc_set_opt rec filedir_exclude_path '.git:.svn' 'FZF_OBC_EXCLUDE_PATH'
-
 
 ###################
 
