@@ -16,11 +16,13 @@ $ echo "export PATH=$(brew --prefix gnu-sed)/gnubin:$(brew --prefix coreutils)/g
 ## Bash
 
 - version \>= 4.0
+- bash completion \>= 2.0
 
 **MacOS user**
 
 ```
 $ brew install bash
+$ brew install bash-completion@2
 $ echo "export PATH=$(brew --prefix bash)/bin:$PATH" >> ~/.bash_profile
 $ sudo bash -c "echo $(brew --prefix)/bin/bash >> /private/etc/shells"
 $ chsh -s "$(brew --prefix bash)/bin/bash"
