@@ -14,6 +14,7 @@
 
 **Merged pull requests:**
 
+- Fix setup instructions in prerequisites.md [\#32](https://github.com/rockandska/fzf-obc/pull/32) ([timurb](https://github.com/timurb))
 - Fix completion update with leading backlash commands [\#28](https://github.com/rockandska/fzf-obc/pull/28) ([rockandska](https://github.com/rockandska))
 
 ## [1.2.0](https://github.com/rockandska/fzf-obc/tree/1.2.0) (2019-11-22)
