@@ -10,17 +10,19 @@
 $ brew install gnu-sed
 $ brew install coreutils
 $ brew install findutils
-$ echo "export PATH=$(brew --prefix gnu-sed)/bin:$(brew --prefix coreutils)/bin:$(brew --prefix findutils)/bin:$PATH" >> ~/.bash_profile
+$ echo "export PATH=$(brew --prefix gnu-sed)/gnubin:$(brew --prefix coreutils)/gnubin:$(brew --prefix findutils)/gnubin:\$PATH" >> ~/.bash_profile
 ```
 
 ## Bash
 
 - version \>= 4.0
+- bash completion \>= 2.0
 
 **MacOS user**
 
 ```
 $ brew install bash
+$ brew install bash-completion@2
 $ echo "export PATH=$(brew --prefix bash)/bin:$PATH" >> ~/.bash_profile
 $ sudo bash -c "echo $(brew --prefix)/bin/bash >> /private/etc/shells"
 $ chsh -s "$(brew --prefix bash)/bin/bash"
