@@ -10,7 +10,7 @@
 $ brew install gnu-sed
 $ brew install coreutils
 $ brew install findutils
-$ echo "export PATH=$(brew --prefix gnu-sed)/bin:$(brew --prefix coreutils)/bin:$(brew --prefix findutils)/bin:$PATH" >> ~/.bash_profile
+$ echo "export PATH=$(brew --prefix gnu-sed)/gnubin:$(brew --prefix coreutils)/gnubin:$(brew --prefix findutils)/gnubin:\$PATH" >> ~/.bash_profile
 ```
 
 ## Bash
