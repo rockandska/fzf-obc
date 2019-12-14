@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # Internal vars
-local current_filedir_depth
+local current_filedir_depth=""
 local fzf_default_opts=""
-local current_trigger_type
+local current_trigger_type=""
 local current_cur
 local current_prev
 local current_words
@@ -27,6 +27,7 @@ local options_type_arr=(
 		"fzf_size"
 		"fzf_position"
 		"fzf_tmux"
+		"fzf_colors"
 		"sort_opts"
 		"filedir_short"
 		"filedir_colors"
@@ -48,15 +49,12 @@ for x in "${trigger_type_arr[@]}";do
 	done
 done
 
-# load user/function/command config
+# load user/command config
 if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg" ]];then
 	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg"
 fi
-if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_func_name:-}.cfg" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_func_name:-}.cfg"
-fi
 if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_cmd_name:-}.cfg" ]];then
-	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_cmd_name}.cfg"
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${current_cmd_name:-}.cfg"
 fi
 
 ###########################
@@ -103,13 +101,17 @@ __fzf_obc_set_opt std fzf_size '40%' 'FZF_OBC_HEIGHT'
 __fzf_obc_set_opt mlt fzf_size "${std_fzf_size}" 'FZF_OBC_HEIGHT'
 __fzf_obc_set_opt rec fzf_size "${std_fzf_size}" 'FZF_OBC_HEIGHT'
 # Position of the fzf-obc selector (when using fzf-tmux)
-__fzf_obc_set_opt std fzf_position 'r'
+__fzf_obc_set_opt std fzf_position 'd'
 __fzf_obc_set_opt mlt fzf_position "${std_fzf_position}"
 __fzf_obc_set_opt rec fzf_position "${std_fzf_position}"
 # Use fzf-tmux script if in tmux or not
 __fzf_obc_set_opt std fzf_tmux '1'
 __fzf_obc_set_opt mlt fzf_tmux "${std_fzf_tmux}"
 __fzf_obc_set_opt rec fzf_tmux "${std_fzf_tmux}"
+# Colors scheme to use with fzf
+__fzf_obc_set_opt std fzf_colors 'border:15'
+__fzf_obc_set_opt mlt fzf_colors "${std_fzf_colors}"
+__fzf_obc_set_opt rec fzf_colors "${std_fzf_colors}"
 
 ##################################
 # Sort (GNU) options for results #
@@ -144,7 +146,6 @@ __fzf_obc_set_opt rec filedir_maxdepth '999999' 'FZF_OBC_GLOBS_MAXDEPTH'
 __fzf_obc_set_opt std filedir_exclude_path ''
 __fzf_obc_set_opt mlt filedir_exclude_path "${std_filedir_exclude_path}"
 __fzf_obc_set_opt rec filedir_exclude_path '.git:.svn' 'FZF_OBC_EXCLUDE_PATH'
-
 
 ###################
 

@@ -25,14 +25,17 @@ __fzf_obc_trap__get_comp_words_by_ref() {
 		__fzf_obc_set_all_current_opt "${final_trigger}"
 		# shellcheck disable=SC2034
 		[[ "${#LS_COLORS}" == 0 ]] && current_filedir_colors=0
+		cur="${new_cur}"
+		# shellcheck disable=SC2034
+		current_cur="${cur:-}"
+		# shellcheck disable=SC2034
+		current_prev="${prev:-}"
+		# shellcheck disable=SC2034
+		current_words="${words:-}"
+		# shellcheck disable=SC2034
+		current_cword="${cword:-}"
+	else
+		# shellcheck disable=SC2034
+		current_enable=0
 	fi
-	cur="${new_cur}"
-	# shellcheck disable=SC2034
-	current_cur="${cur:-}"
-	# shellcheck disable=SC2034
-	current_prev="${prev:-}"
-	# shellcheck disable=SC2034
-	current_words="${words:-}"
-	# shellcheck disable=SC2034
-	current_cword="${cword:-}"
 }

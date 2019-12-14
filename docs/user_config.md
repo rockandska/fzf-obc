@@ -7,12 +7,9 @@ configurations in `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/`.
 - User configuration is dynamic and is load each time a completion is asked and  
 does not require to reload fzf-obc when the configuration is changed.
 - Each trigger type has its own configuration
-- The configuration could be changed at 3 level (global,complete function,
-    command). The configuration are loaded in the following order :
-    - `fzf-obc default install config`
-    - `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg`
-    - `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/[complete function].cfg`
-    - `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/[command].cfg`
+- The configuration could be changed at :
+    - Global level : `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/default.cfg`
+    - Command level : `${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/[command].cfg`
 
 ## Settings
 
@@ -181,6 +178,25 @@ Each setting are available for each trigger type and could be set indenpendently
     - config variables :
         - `rec_fzf_tmux`
         - `FZF_OBC_REC_FZF_TMUX`
+
+### fzf_colors
+
+- Color scheme options for fzf
+- standard trigger:
+    - default : `border:15`
+    - config variables :
+        - `std_fzf_colors`
+        - `FZF_OBC_STD_FZF_COLORS`
+- multi selection trigger
+    - default : inherited from standard trigger
+    - config variables :
+        - `mlt_fzf_colors`
+        - `FZF_OBC_MLT_FZF_COLORS`
+- recursive trigger
+    - default : inherited from standard trigger
+    - config variables :
+        - `rec_fzf_colors`
+        - `FZF_OBC_REC_FZF_COLORS`
 
 ### sort_opts
 
