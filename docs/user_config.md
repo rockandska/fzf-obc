@@ -179,6 +179,25 @@ Each setting are available for each trigger type and could be set indenpendently
         - `rec_fzf_tmux`
         - `FZF_OBC_REC_FZF_TMUX`
 
+### fzf_colors
+
+- Color scheme options for fzf
+- standard trigger:
+    - default : `border:15`
+    - config variables :
+        - `std_fzf_colors`
+        - `FZF_OBC_STD_FZF_COLORS`
+- multi selection trigger
+    - default : inherited from standard trigger
+    - config variables :
+        - `mlt_fzf_colors`
+        - `FZF_OBC_MLT_FZF_COLORS`
+- recursive trigger
+    - default : inherited from standard trigger
+    - config variables :
+        - `rec_fzf_colors`
+        - `FZF_OBC_REC_FZF_COLORS`
+
 ### sort_opts
 
 - Which options to use with gnu sort when displaying the results
