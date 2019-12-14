@@ -151,5 +151,5 @@ current_enable=0
 
 ```
 $ cat > ~/.config/fzf-obc/plugins/kill/process.cfg
-current_fzf_opts+=" --color border:124"
+current_fzf_colors="border:124"
 ```

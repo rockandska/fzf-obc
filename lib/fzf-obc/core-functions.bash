@@ -241,6 +241,10 @@ __fzf_obc_cmd() {
 	if ((current_fzf_multi));then
 		fzf_default_opts+=" -m "
 	fi
+	: "${current_fzf_colors:-}"
+	if [[ -n "${current_fzf_colors}" ]];then
+		fzf_default_opts+=" --color='${current_fzf_colors}' "
+	fi
 
 	fzf_default_opts+=" --reverse --height ${current_fzf_size:-} ${current_fzf_opts:-} ${current_fzf_binds:-}"
 

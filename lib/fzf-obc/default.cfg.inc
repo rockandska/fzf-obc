@@ -27,6 +27,7 @@ local options_type_arr=(
 		"fzf_size"
 		"fzf_position"
 		"fzf_tmux"
+		"fzf_colors"
 		"sort_opts"
 		"filedir_short"
 		"filedir_colors"
@@ -100,13 +101,17 @@ __fzf_obc_set_opt std fzf_size '40%' 'FZF_OBC_HEIGHT'
 __fzf_obc_set_opt mlt fzf_size "${std_fzf_size}" 'FZF_OBC_HEIGHT'
 __fzf_obc_set_opt rec fzf_size "${std_fzf_size}" 'FZF_OBC_HEIGHT'
 # Position of the fzf-obc selector (when using fzf-tmux)
-__fzf_obc_set_opt std fzf_position 'r'
+__fzf_obc_set_opt std fzf_position 'd'
 __fzf_obc_set_opt mlt fzf_position "${std_fzf_position}"
 __fzf_obc_set_opt rec fzf_position "${std_fzf_position}"
 # Use fzf-tmux script if in tmux or not
 __fzf_obc_set_opt std fzf_tmux '1'
 __fzf_obc_set_opt mlt fzf_tmux "${std_fzf_tmux}"
 __fzf_obc_set_opt rec fzf_tmux "${std_fzf_tmux}"
+# Colors scheme to use with fzf
+__fzf_obc_set_opt std fzf_colors 'border:15'
+__fzf_obc_set_opt mlt fzf_colors "${std_fzf_colors}"
+__fzf_obc_set_opt rec fzf_colors "${std_fzf_colors}"
 
 ##################################
 # Sort (GNU) options for results #
