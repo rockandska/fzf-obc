@@ -1,9 +1,9 @@
 # Change Log
 
-## [**Next release**](https://github.com/rockandska/fzf-obc/tree/HEAD)
-
+## [1.3.0](https://github.com/rockandska/fzf-obc/tree/1.3.0) (2019-12-14)
 **Implemented enhancements:**
 
+- Feat/plugins [\#33](https://github.com/rockandska/fzf-obc/pull/33) ([rockandska](https://github.com/rockandska))
 - Feat/new config files [\#31](https://github.com/rockandska/fzf-obc/pull/31) ([rockandska](https://github.com/rockandska))
 
 **Closed issues:**
