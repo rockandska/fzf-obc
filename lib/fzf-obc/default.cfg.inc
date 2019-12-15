@@ -8,6 +8,7 @@ local current_cur
 local current_prev
 local current_words
 local current_cword
+local current_plugin
 
 # Declare local variables by trigger type
 # Standard, Multi selection, Recursive

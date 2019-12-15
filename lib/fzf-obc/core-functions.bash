@@ -364,6 +364,8 @@ __fzf_obc_load_plugin_config() {
 	if ! ((current_enable));then
 		eval "${previous_values}"
 		current_enable=0
+	else
+		current_plugin="${current_cmd_name}/${plugin}"
 	fi
 }
 
