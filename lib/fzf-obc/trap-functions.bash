@@ -31,7 +31,7 @@ __fzf_obc_trap__get_comp_words_by_ref() {
 		# shellcheck disable=SC2034
 		current_prev="${prev:-}"
 		# shellcheck disable=SC2034
-		current_words="${words:-}"
+		current_words=("${words[@]}")
 		# shellcheck disable=SC2034
 		current_cword="${cword:-}"
 	else
