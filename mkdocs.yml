@@ -12,6 +12,7 @@ nav:
   - triggers_type.md
   - user_config.md
   - plugins.md
+  - plugins_list.md
   - About:
       - Changelog: changelog.md
       - Demo Gallery: tests_gallery.md

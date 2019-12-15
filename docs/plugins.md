@@ -58,35 +58,6 @@ A plugin for a particular command could be composed of :
 - User functions loaded will override `fzf-obc` functions with the same names
 - User functions are **not dynamic** and only loaded on the first load of `fzf-obc`
 
-## Default plugins
-
-### kill
-
-- Allow to have a nice window displaying `ps` output instead of PID list.
-- Functions used
-    - `__fzf_obc_post_kill`
-    - `__fzf_obc_finish_kill`
-- Configuration files
-    - `plugins/kill/default.cfg`
-        - default `<empty>`
-    - `plugins/kill/process.cfg`
-        - options specific when displaying process (current_[option])
-        - default:
-            - `current_fzf_opts+=" --min-height 15 --preview 'echo {}' --preview-window down:3:wrap"`
-
-### gradle
-
-- Remove options comments after selecting them
-- Functions used
-    - `__fzf_obc_finish_gradle`
-- Configuration files
-    - `plugins/gradle/default.cfg`
-        - default `<empty>`
-    - `plugins/gradle/remove_comments.cfg`
-        - options specific when displaying completion and need to remove comments
-        - default:
-            - `<empty>`
-
 ## Internal environment variables available
 
 Some variables are available in all fzf-obc functions triggered by the fzf-obc wrapper :
