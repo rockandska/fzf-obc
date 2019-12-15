@@ -237,13 +237,18 @@ __fzf_obc_cmd() {
 	elif ! ((current_filedir_short)) && ((current_filedir_depth));then
 		fzf_default_opts+=" -d '/' --nth=$((current_filedir_depth+1)).. "
 	fi
+
 	: "${current_fzf_multi:-0}"
 	if ((current_fzf_multi));then
 		fzf_default_opts+=" -m "
 	fi
-	: "${current_fzf_colors:-}"
-	if [[ -n "${current_fzf_colors}" ]];then
+
+	if [[ -n "${current_fzf_colors:-}" ]];then
 		fzf_default_opts+=" --color='${current_fzf_colors}' "
+	fi
+
+	if [[ -n "${current_fzf_preview_window:-}" ]];then
+		fzf_default_opts+=" --preview-window=${current_fzf_preview_window}"
 	fi
 
 	fzf_default_opts+=" --reverse --height ${current_fzf_size:-} ${current_fzf_opts:-} ${current_fzf_binds:-}"

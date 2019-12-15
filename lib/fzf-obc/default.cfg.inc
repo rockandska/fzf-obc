@@ -28,6 +28,7 @@ local options_type_arr=(
 		"fzf_position"
 		"fzf_tmux"
 		"fzf_colors"
+		"fzf_preview_window"
 		"sort_opts"
 		"filedir_short"
 		"filedir_colors"
@@ -112,6 +113,10 @@ __fzf_obc_set_opt rec fzf_tmux "${std_fzf_tmux}"
 __fzf_obc_set_opt std fzf_colors 'border:15'
 __fzf_obc_set_opt mlt fzf_colors "${std_fzf_colors}"
 __fzf_obc_set_opt rec fzf_colors "${std_fzf_colors}"
+# preview options
+__fzf_obc_set_opt std fzf_preview_window ''
+__fzf_obc_set_opt mlt fzf_preview_window "${std_fzf_colors}"
+__fzf_obc_set_opt rec fzf_preview_window "${std_fzf_colors}"
 
 ##################################
 # Sort (GNU) options for results #
