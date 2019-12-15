@@ -17,11 +17,11 @@ A plugin for a particular command could be composed of :
         - Should be named `__fzf_obc_post_[command]`
         - Could change completion results before sending them to fzf
         - Could change / add fzf (and other) options used to display results
-        - Subplugin config should be load here
+        - Plugin and subplugin config should be load here
         - **Not executed if the cmd plugin is disable**
     - Sort functions
         - Should be named `__fzf_obc_sort_[command]`
-        - If your not satisfied with default sort function capability
+        - If your not satisfied with the default sort capability
         - **Not executed if the cmd plugin is disable**
     - Finish functions
         - Should be named `__fzf_obc_finish_[command]`
@@ -41,6 +41,11 @@ A plugin for a particular command could be composed of :
     - Load order :
         - `[fzf_obc_path]/plugins/[command]/default.cfg`
         - `${XDG_CONFIG_HOME:-$HOME/.config}/plugins/[command]/[specific].cfg`
+- An optional plugin variables declaration file
+    - automatically sourced before the completion function
+    - Load order :
+        - `[fzf_obc_path]/plugins/[command]/plugin_vars.cfg`
+        - `${XDG_CONFIG_HOME:-$HOME/.config}/plugins/[command]/plugin_vars.cfg`
 
 
 ## Add personnal functions

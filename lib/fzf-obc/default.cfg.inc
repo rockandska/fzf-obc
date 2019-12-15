@@ -159,3 +159,13 @@ for x in "${trigger_type_arr[@]}";do
 		fi
 	done
 done
+
+# Load additional plugin vars
+if [[ -r "${fzf_obc_path}/plugins/${current_cmd_name}/plugin_vars.cfg" ]];then
+	# shellcheck disable=SC1090
+	source "${fzf_obc_path}/plugins/${current_cmd_name}/plugin_vars.cfg"
+fi
+if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/plugins/${current_cmd_name}/plugin_vars.cfg" ]];then
+	# shellcheck disable=SC1090
+	source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/plugins/${current_cmd_name}/plugin_vars.cfg"
+fi
