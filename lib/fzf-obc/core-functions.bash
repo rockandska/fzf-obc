@@ -250,9 +250,9 @@ __fzf_obc_cmd() {
 
 	: "${current_fzf_tmux:-}"
 	if((current_fzf_tmux));then
-		eval "FZF_DEFAULT_OPTS=\"${fzf_default_opts}\" fzf-tmux	-${current_fzf_position:-}	${current_fzf_size:-} --  --read0 --print0 --ansi"
+		FZF_DEFAULT_OPTS="${fzf_default_opts}" fzf-tmux	-"${current_fzf_position:-}" "${current_fzf_size:-}" --  --read0 --print0 --ansi
 	else
-		eval "FZF_DEFAULT_OPTS=\"${fzf_default_opts}\" fzf --read0 --print0 --ansi"
+		FZF_DEFAULT_OPTS="${fzf_default_opts}" fzf --read0 --print0 --ansi
 	fi
 }
 
@@ -450,4 +450,11 @@ __fzf_obc_set_all_current_opt() {
 		eval "current_trigger_type=\"${1}\""
 	fi
 	return 0
+}
+
+__fzf_obc_check_string_in_array() {
+	local e match="$1"
+	shift
+	for e ; do [[ "$e" == "$match" ]] && return 0; done
+	return 1
 }
