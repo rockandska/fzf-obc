@@ -13,6 +13,7 @@ __fzf_obc_post_kill() {
 		# Processes fuzzy finder #
 		###############################
 		__fzf_obc_load_plugin_config process
+		# shellcheck disable=SC2154
 		if ((current_enable));then
 			__fzf_compreply < <(command ps -ef \
 				| sed 1d \

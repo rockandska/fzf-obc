@@ -12,6 +12,7 @@ __fzf_obc_finish_kill() {
 		##########################
 		# Processes fuzzy finder #
 		##########################
+		# shellcheck disable=SC2154
 		if ((current_enable));then
 			if [[ "${#COMPREPLY[@]}" -gt 0 ]];then
 				__fzf_compreply < <(tr '\n' '\0' < <(awk '{print $2}' <(printf '%s\n'	"${COMPREPLY[@]}")))

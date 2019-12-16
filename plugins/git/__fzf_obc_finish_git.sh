@@ -1,9 +1,11 @@
+#!/usr/bin/env bash
 __fzf_obc_finish_git() {
+	# shellcheck disable=SC2154
 	if ((current_enable));then
 		#############
 		# DIff view #
 		#############
-		if  [[ "${current_plugin}" == "git/diff" ]];then
+		if  [[ "${current_plugin:-}" == "git/diff" ]];then
 			if ((current_git_is_ref)) && ((current_fzf_multi));then
 				# Merge ref if there is two ref selected
 				if [[ "${#COMPREPLY[@]}" -eq 2 ]];then

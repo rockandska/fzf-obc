@@ -1,6 +1,9 @@
+#!/usr/bin/env bash
+
 __fzf_obc_git_addfiles2compreply() {
 	local args="${1:-}"
 	# Fill COMPREPLY with files if -- is present and COMPREPLY is empty
+	# shellcheck disable=SC2154
 	[[ "${#COMPREPLY}" -eq 0 ]] \
 		&& __fzf_obc_check_string_in_array "--" "${current_words[@]}" \
 		&& cur="${current_cur}" __git_complete_index_file "${args}"
@@ -9,6 +12,7 @@ __fzf_obc_git_addfiles2compreply() {
 __fzf_obc_git_add_files_status() {
 	local files
 	files=$(printf '%q ' "${COMPREPLY[@]}")
+	# shellcheck disable=SC1090
 	__fzf_compreply < <(source <(
 		cat <<-EOF
 		# bug with git status and -z so using newline as separator.
