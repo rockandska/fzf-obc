@@ -198,6 +198,44 @@ Each setting are available for each trigger type and could be set indenpendently
         - `rec_fzf_colors`
         - `FZF_OBC_REC_FZF_COLORS`
 
+### fzf_preview
+
+- Preview command for fzf
+- standard trigger:
+    - default : `<empty>`
+    - config variables :
+        - `std_fzf_preview`
+        - `FZF_OBC_STD_FZF_PREVIEW`
+- multi selection trigger
+    - default : inherited from standard trigger
+    - config variables :
+        - `mlt_fzf_preview`
+        - `FZF_OBC_MLT_FZF_PREVIEW`
+- recursive trigger
+    - default : inherited from standard trigger
+    - config variables :
+        - `rec_fzf_preview`
+        - `FZF_OBC_REC_FZF_PREVIEW`
+
+### fzf_preview_window
+
+- Preview window options for fzf
+- standard trigger:
+    - default : `<empty>`
+    - config variables :
+        - `std_fzf_preview_window`
+        - `FZF_OBC_STD_FZF_PREVIEW_WINDOW`
+- multi selection trigger
+    - default : inherited from standard trigger
+    - config variables :
+        - `mlt_fzf_preview_window`
+        - `FZF_OBC_MLT_FZF_PREVIEW_WINDOW`
+- recursive trigger
+    - default : inherited from standard trigger
+    - config variables :
+        - `rec_fzf_preview_window`
+        - `FZF_OBC_REC_FZF_PREVIEW_WINDOW`
+
 ### sort_opts
 
 - Which options to use with gnu sort when displaying the results

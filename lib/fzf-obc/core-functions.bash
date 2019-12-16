@@ -247,6 +247,10 @@ __fzf_obc_cmd() {
 		fzf_default_opts+=" --color='${current_fzf_colors}' "
 	fi
 
+	if [[ -n "${current_fzf_preview:-}" ]];then
+		fzf_default_opts+=" --preview=\"${current_fzf_preview:-}\""
+	fi
+
 	if [[ -n "${current_fzf_preview_window:-}" ]];then
 		fzf_default_opts+=" --preview-window=${current_fzf_preview_window}"
 	fi
