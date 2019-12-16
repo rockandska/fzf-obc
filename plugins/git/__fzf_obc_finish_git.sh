@@ -1,4 +1,15 @@
 __fzf_obc_finish_git() {
+	#############
+	# DIff view #
+	#############
+	if  [[ "${current_git_cmd}" == "diff" ]];then
+		if ((current_git_is_ref)) && ((current_fzf_multi));then
+			if [[ "${#COMPREPLY[@]}" -eq 2 ]];then
+				__fzf_compreply < <(printf '%s..%s\0' "${COMPREPLY[0]%% }" "${COMPREPLY[1]%% }")
+			fi
+		fi
+	fi
+
 	##############
 	# Add viewer #
 	##############
