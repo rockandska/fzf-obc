@@ -365,6 +365,7 @@ __fzf_obc_load_plugin_config() {
 		eval "${previous_values}"
 		current_enable=0
 	else
+		# shellcheck disable=SC2034
 		current_plugin="${current_cmd_name}/${plugin}"
 	fi
 }
