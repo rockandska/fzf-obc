@@ -351,12 +351,22 @@ __fzf_obc_load_user_functions() {
 	done
 }
 
+__fzf_obc_backup_vars() {
+	local output_var="${1:?Output var is require in ${FUNC_NAME[@]}}"
+	local pattern="${2:-.*}"
+	local vars_arr=()
+	while IFS= read -r var;do
+		vars_arr+=("${var%%=*}")
+	done < <(declare -p | grep -o "declare -. ${pattern}" | sed 's/^declare -. //')
+	eval "$output_var=\"\$(declare -p ${vars_arr[*]} | sed 's/^declare -. //')\""
+}
+
 __fzf_obc_load_plugin_config() {
 	: "${current_cmd_name:?Missing complete command name in ${FUNCNAME[0]}}"
 	: "${fzf_obc_path:?Missing fzf_obc_path in ${FUNCNAME[0]}}"
 	local plugin="${1:-default}"
 	local previous_values
-	previous_values="$(declare -p | grep 'declare -. current_' | sed 's/declare -. //')"
+	__fzf_obc_backup_vars previous_values "current_.*"
 	if [[ -r "${fzf_obc_path}/plugins/${current_cmd_name}/${plugin}.cfg" ]];then
 		# shellcheck disable=SC1090
 		source "${fzf_obc_path}/plugins/${current_cmd_name}/${plugin}.cfg"
