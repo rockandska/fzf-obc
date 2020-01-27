@@ -1,5 +1,5 @@
 class FzfObcTest
-  def test_options
+  def test_option_filedir_hidden_first
 
     create_files_dirs(
       dest: "#{temp_test_dir}",

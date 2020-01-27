@@ -295,7 +295,11 @@ __fzf_obc_display_compreply() {
 	if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
 		cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
 		if [[ -n "${current_filedir_depth:-}" ]] && ((current_filedir_colors));then
-			current_sort_opts+=" -k 1.15"
+			if [[ "${current_sort_opts}" =~ (^| )(-[a-z]*(d|i)[a-z]*|--dictionary-order|--ignore-nonprinting)( |$) ]];then
+				current_sort_opts+=" -k 1.15"
+			else
+				current_sort_opts+=" -k 1.16"
+			fi
 		fi
 		cmd="__fzf_obc_sort < <($cmd)"
 		if [[ -n "${current_filedir_depth:-}" ]] &&  [[ "${current_filedir_hidden_first}" == 1 ]];then
