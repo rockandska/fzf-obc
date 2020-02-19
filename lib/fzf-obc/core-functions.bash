@@ -281,9 +281,9 @@ __fzf_obc_move_hidden_files_last() {
 __fzf_obc_move_hidden_files_first() {
 	# shellcheck disable=SC2154
 	if ((current_filedir_colors));then
-		sed -z -r	'/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])(.*\/\.|\.)/!H;//p;$!d;g;s/\x0//'
+		sed -z -r	'/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])(.*\/\.|\.)/!H;//p;$!d;g;s/\x0//p;d'
 	else
-		sed -z -r '/^(.*\/\.|\.)/!H;//p;$!d;g;s/\x0//'
+		sed -z -r '/^(.*\/\.|\.)/!H;//p;$!d;g;s/\x0//p;d'
 	fi
 }
 
