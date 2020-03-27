@@ -43,6 +43,8 @@ Follow the [official instructions](https://github.com/junegunn/fzf#using-git) bu
 
 ```bash
 $ ./install --no-completion
+# or if you would like keybindings provided by fzf too
+$ ./install --key-bindings --no-completion
 ```
 
 instead of

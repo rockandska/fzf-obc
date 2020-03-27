@@ -18,6 +18,9 @@
 ## test_insmod_home
 ![](img/tests/test_insmod_home.gif)
 
+## test_options
+![](img/tests/test_options.gif)
+
 ## test_vi
 ![](img/tests/test_vi.gif)
 
