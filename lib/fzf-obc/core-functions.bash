@@ -364,7 +364,10 @@ __fzf_obc_load_plugin_config() {
 				| sed -r 's/(declare -[a-zA-Z-]+ )([^=]+)(.*)/\2\3;/'
 		fi
 	)
-
+	if ((${current_enable:-}));then
+		# shellcheck disable=SC2034
+		current_plugin="${current_cmd_name:-}/${plugin}"
+	fi
 }
 
 __fzf_obc_update_complete() {

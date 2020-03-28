@@ -23,6 +23,7 @@ __fzf_obc_wrapper_::FUNC_NAME::() {
 				current_prev \
 				current_words \
 				current_cword \
+				current_plugin \
 				fzf_default_opts \
 				current_cmd_name="${1}" \
 				complete_status=0
