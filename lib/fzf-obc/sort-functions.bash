@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
 __fzf_obc_sort() {
-	: "${current_cmd_name:?Missing complete command name in ${FUNCNAME[0]}}"
-	: "${current_enable:=0}"
-	if ((current_enable));then
+	if ((${current_enable:-})) && [[ -n "${current_cmd_name:-}" ]];then
 		# try sort function for the completed cmd first
 		if type "__fzf_obc_sort_${current_cmd_name}" &> /dev/null;then
 			"__fzf_obc_sort_${current_cmd_name}"

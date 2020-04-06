@@ -13,14 +13,13 @@ __fzf_obc_load_user_functions() {
 }
 
 __fzf_obc_load_plugin_config() {
-	: "${current_cmd_name:?Missing complete command name in ${FUNCNAME[0]}}"
 	: "${fzf_obc_path:?Missing fzf_obc_path in ${FUNCNAME[0]}}"
 
 	local plugin="${1:-}"
 	if [[ -z "${plugin}" ]];then
 		plugin="default"
 	else
-		plugin="${current_cmd_name}/${plugin}"
+		plugin="${current_cmd_name:-}/${plugin}"
 	fi
 
 	# shellcheck disable=SC1090
