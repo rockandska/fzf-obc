@@ -4,10 +4,12 @@
 
 **Closed issues:**
 
+- Dot files not sorted [\#37](https://github.com/rockandska/fzf-obc/issues/37)
 - Pathname completion opens fzf when not needed [\#36](https://github.com/rockandska/fzf-obc/issues/36)
 
 **Merged pull requests:**
 
+- Configuration loader for default/command/plugin refactored [\#39](https://github.com/rockandska/fzf-obc/pull/39) ([rockandska](https://github.com/rockandska))
 - Fix/36 [\#38](https://github.com/rockandska/fzf-obc/pull/38) ([rockandska](https://github.com/rockandska))
 
 ## [1.3.0](https://github.com/rockandska/fzf-obc/tree/1.3.0) (2019-12-14)
