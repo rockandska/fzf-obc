@@ -117,9 +117,8 @@ __fzf_obc_search() {
 		maxdepth="${current_filedir_maxdepth:?}"
 	fi
 
-	: "${current_enable:=0}"
 	local slash
-	if ((current_enable));then
+	if ((${current_enable:-}));then
 		slash="/"
 	fi
 
@@ -173,9 +172,8 @@ __fzf_obc_search() {
 		cmd=" __fzf_obc_search_filter_bash '${xspec}' < <(${cmd})"
 	fi
 
-	if ((current_enable));then
-		# shellcheck disable=SC2154
-		if ((current_filedir_colors));then
+	if ((${current_enable:-}));then
+		if ((${current_filedir_colors:-}));then
 			cmd="__fzf_obc_colorized < <(${cmd})"
 		fi
 	fi
@@ -231,25 +229,21 @@ __fzf_obc_tilde ()
 }
 
 __fzf_obc_cmd() {
-	# shellcheck disable=SC2154
-	if ((current_filedir_short)) && ((current_filedir_depth));then
+	if ((${current_filedir_short:-})) && ((${current_filedir_depth:-}));then
 		fzf_default_opts+=" -d '/' --with-nth=$((current_filedir_depth+1)).. "
 	elif ! ((current_filedir_short)) && ((current_filedir_depth));then
 		fzf_default_opts+=" -d '/' --nth=$((current_filedir_depth+1)).. "
 	fi
-	: "${current_fzf_multi:-0}"
-	if ((current_fzf_multi));then
+	if ((${current_fzf_multi:-}));then
 		fzf_default_opts+=" -m "
 	fi
-	: "${current_fzf_colors:-}"
-	if [[ -n "${current_fzf_colors}" ]];then
+	if [[ -n "${current_fzf_colors:-}" ]];then
 		fzf_default_opts+=" --color='${current_fzf_colors}' "
 	fi
 
 	fzf_default_opts+=" --reverse --height ${current_fzf_size:-} ${current_fzf_opts:-} ${current_fzf_binds:-}"
 
-	: "${current_fzf_tmux:-}"
-	if((current_fzf_tmux));then
+	if((${current_fzf_tmux:-}));then
 		eval "FZF_DEFAULT_OPTS=\"${fzf_default_opts}\" fzf-tmux	-${current_fzf_position:-}	${current_fzf_size:-} --  --read0 --print0 --ansi"
 	else
 		eval "FZF_DEFAULT_OPTS=\"${fzf_default_opts}\" fzf --read0 --print0 --ansi"
@@ -257,8 +251,7 @@ __fzf_obc_cmd() {
 }
 
 __fzf_obc_check_empty_compreply() {
-	: "${current_fzf_multi:-0}"
-	if ((current_fzf_multi));then
+	if ((${current_fzf_multi:-}));then
 		compopt +o filenames
 		if [[ "${#COMPREPLY[@]}" -eq 0 ]];then
 			compopt -o nospace
@@ -290,17 +283,18 @@ __fzf_obc_move_hidden_files_first() {
 __fzf_obc_display_compreply() {
 	local IFS=$'\n'
 	local cmd
-	# shellcheck disable=SC2154
-	: "${current_filedir_hidden_first:-}"
+
+	__fzf_obc_set_display_opts
+
 	if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
 		cmd="printf '%s\0' \"\${COMPREPLY[@]}\""
 		if [[ -n "${current_filedir_depth:-}" ]] && ((current_filedir_colors));then
 			current_sort_opts+=" -k 1.15"
 		fi
 		cmd="__fzf_obc_sort < <($cmd)"
-		if [[ -n "${current_filedir_depth:-}" ]] &&  [[ "${current_filedir_hidden_first}" == 1 ]];then
+		if [[ -n "${current_filedir_depth:-}" ]] &&  [[ "${current_filedir_hidden_first:-}" == 1 ]];then
 			cmd="__fzf_obc_move_hidden_files_first < <($cmd)"
-		elif [[ -n "${current_filedir_depth:-}" ]] && [[ "${current_filedir_hidden_first}" == 0 ]];then
+		elif [[ -n "${current_filedir_depth:-}" ]] && [[ "${current_filedir_hidden_first:-}" == 0 ]];then
 			cmd="__fzf_obc_move_hidden_files_last < <($cmd)"
 		fi
 		cmd="__fzf_obc_cmd < <($cmd)"
@@ -314,9 +308,8 @@ __fzf_obc_set_compreply() {
 	local IFS=$'\n'
 	local line
 	local result
-	: "${current_fzf_multi:-0}"
 	if [[ "${#COMPREPLY[@]}" -ne 0 ]];then
-		if ((current_fzf_multi));then
+		if ((${current_fzf_multi:-}));then
 			for line in "${COMPREPLY[@]}";do
 				result+=$(sed 's/^\\\~/~/g' < <(printf '%q ' "$line"))
 			done
@@ -330,44 +323,12 @@ __fzf_obc_set_compreply() {
 	__fzf_obc_check_empty_compreply
 }
 
-__fzf_obc_load_user_functions() {
-	local fzf_obc_path_array path file
-	IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH:-}"
-	for path in "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc" "${fzf_obc_path_array[@]}";do
-		while IFS= read -r -d '' file;do
-			[[ -e "${file}" && ! -d "${file}" ]] || continue
-			# shellcheck disable=SC1090
-			source "${file}"
-		done < <(find "${path}" -type f \( -name '*.sh' -o -name '*.bash' \) -print0 2>/dev/null)
-	done
-}
-
-__fzf_obc_load_plugin_config() {
-	: "${current_cmd_name:?Missing complete command name in ${FUNCNAME[0]}}"
-	: "${fzf_obc_path:?Missing fzf_obc_path in ${FUNCNAME[0]}}"
-	local plugin="${1:-default}"
-	local previous_values
-	previous_values="$(declare -p | grep 'declare -. current_' | sed 's/declare -. //')"
-	if [[ -r "${fzf_obc_path}/plugins/${current_cmd_name}/${plugin}.cfg" ]];then
-		# shellcheck disable=SC1090
-		source "${fzf_obc_path}/plugins/${current_cmd_name}/${plugin}.cfg"
-	fi
-	if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/plugins/${current_cmd_name}/${plugin}.cfg" ]];then
-		# shellcheck disable=SC1090
-		source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/plugins/${current_cmd_name}/${plugin}.cfg"
-	fi
-	if ! ((current_enable));then
-		eval "${previous_values}"
-		current_enable=0
-	fi
-}
-
 __fzf_obc_update_complete() {
 	local fzf_obc_path
 	fzf_obc_path=$( cd "$( dirname "${BASH_SOURCE[0]%%\/..*}" )" >/dev/null 2>&1 && pwd )
 	# Get complete function not already wrapped
-	local wrapper_name
 	local func_name
+	local wrapper_name
 	local complete_def
 	local complete_def_arr
 	while IFS= read -r complete_def;do
@@ -375,33 +336,11 @@ __fzf_obc_update_complete() {
 		func_name="${complete_def_arr[${#complete_def_arr[@]}-2]}"
 		wrapper_name="__fzf_obc_wrapper_${func_name}"
 		if ! type -t "${wrapper_name}" > /dev/null 2>&1 ; then
-			local cmd
-			read -r -d '' cmd <<-EOF
-				${wrapper_name}() {
-				trap 'eval "\$previous_globstar_setting"' RETURN
-				local previous_globstar_setting=\$(shopt -p globstar);
-				shopt -u globstar
-				local current_func_name="${func_name}"
-				local current_cmd_name="\${1}"
-				local fzf_obc_path="${fzf_obc_path}"
-				source \${fzf_obc_path}/lib/fzf-obc/default.cfg.inc
-				local complete_status=0
-				${func_name} \$@ || complete_status=\$?
-				[[ "\${current_func_name}" == "_completion_loader" ]] && __fzf_obc_post__completion_loader
-				if ((current_enable));then
-					__fzf_obc_load_plugin_config
-					((current_enable)) && __fzf_obc_run_post_cmd
-					__fzf_obc_display_compreply
-					((current_enable)) && __fzf_obc_run_finish_cmd
-					__fzf_obc_set_compreply
-				fi
-				# always check complete wrapper
-				# example: tar complete function is update on 1st exec
-				__fzf_obc_update_complete
-				return \$complete_status
-				}
-			EOF
-			eval "$cmd"
+			# shellcheck disable=SC1090
+			source <(
+					sed "s#::FUNC_NAME::#${func_name}#g" "${fzf_obc_path}/lib/fzf-obc/wrapper.tpl.bash" \
+					| sed "s#::FZF_OBC_PATH::#${fzf_obc_path}#"
+			)
 		fi
 		complete_def_arr[${#complete_def_arr[@]}-2]="${wrapper_name}"
 		eval "${complete_def_arr[@]//\\/\\\\}"
@@ -416,38 +355,4 @@ __fzf_obc_add_all_traps() {
 		f="${loaded_trap/__fzf_obc_trap_}"
 		__fzf_obc_add_trap "$f"
 	done < <(declare -F | grep -E -o -- "-f __fzf_obc_trap_.*" | awk '{print $2}')
-}
-
-__fzf_obc_set_opt() {
-	local trigger="${1}"; shift
-	local opt="${1}"; shift
-	local default="${1}"; shift
-	local env_var
-	# First try FZF_OBC[option_type] env
-	env_var="FZF_OBC_${trigger^^}_${opt^^}"
-	if [[ -n "${!env_var+x}" ]];then
-		eval "${trigger}_${opt}=\"${!env_var}\""
-	fi
-	# Then, if additional env vars are here, take the last one
-	for env_var in "$@";do
-		if [[ -n "${!env_var+x}" ]];then
-			eval "${trigger}_${opt}=\"${!env_var}\""
-		fi
-	done
-	env_var="${trigger}_${opt}"
-	if [[ -z "${!env_var+x}" ]];then
-		eval "${trigger}_${opt}=\"${default}\""
-	fi
-}
-
-__fzf_obc_set_all_current_opt() {
-	if [[ -n "${1:-}" ]];then
-		local value
-		for opt in "${options_type_arr[@]:?}";do
-			value="${1}_${opt}"
-			eval "current_${opt}=\"${!value}\""
-		done
-		eval "current_trigger_type=\"${1}\""
-	fi
-	return 0
 }

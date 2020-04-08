@@ -6,6 +6,8 @@ _filedir()
 	local cur="${cur}"
 	__fzf_obc_tilde "${cur}" || return
 
+	__fzf_obc_set_filedir_opts
+
 	# shellcheck disable=SC2001
 	cur=$(echo "$cur" | sed s#//*#/#g)
 	# shellcheck disable=SC2034
@@ -33,6 +35,8 @@ _filedir_xspec()
 	_init_completion || return;
 
 	__fzf_obc_tilde "${cur}" || return
+
+	__fzf_obc_set_filedir_opts
 
 	# shellcheck disable=SC2001
 	cur=$(echo "$cur" | sed s#//*#/#g)

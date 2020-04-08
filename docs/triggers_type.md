@@ -57,7 +57,7 @@ $ ls /s*<TAB>
 ### Description
 
 - Multiple items could be selected.
-- Allow recursive llokup on complete functions used for path/files lookup :
+- Allow recursive files lookup on complete functions used for path/files lookup :
     - _filedir
         - cd
         - ls
@@ -73,7 +73,7 @@ $ ls /s*<TAB>
 ### Trigger
 
 - Default : `**`
-- fzf-obc will be trigger in multiple select mode only if the trigger is  
+- fzf-obc will be trigger in recursive mode only if the trigger is  
 present at the end of the string before pressing `<TAB>`
 
 Example:
