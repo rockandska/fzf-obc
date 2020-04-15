@@ -13,7 +13,7 @@ require_relative 'lib/ttytest_addons'
 FILE = File.expand_path(__FILE__)
 BASE = File.expand_path('../../', __FILE__)
 
-TEST_DIR = "test/tmp"
+TEST_DIR = "test/tmp/tty"
 TEST_HOME_DIR = "~/.local/tmp/fzf-obc"
 TEST_REC_DIR = "#{TEST_DIR}/casts"
 TEST_BASHRC = "#{BASE}/#{TEST_DIR}/test_bashrc"

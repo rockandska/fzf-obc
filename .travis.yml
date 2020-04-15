@@ -20,14 +20,11 @@ stages:
 jobs:
   include:
     - stage: tests
-      rvm: "2.5"
       install:
         - git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         - ~/.fzf/install --no-key-bindings --no-completion --update-rc
         - source ~/.bashrc
-        - gem install bundler -v $(cat test/Gemfile.lock | grep -A 1 "BUNDLED WITH" | tail -n1 | sed "s/ //g")
       script:
-        - make deps
         - make test
 
     - stage: mkrelease
