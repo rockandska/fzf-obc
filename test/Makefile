@@ -6,10 +6,13 @@ else ifneq ($(CURDIR),$(SELF_DIR))
   $(error Makefile need to be run from $(SELF_DIR))
 endif
 
+export PATH := $(SELF_DIR)/bin:$(PATH)
+
 BASH_FILES := $(shell find $(SELF_DIR)/../bin $(SELF_DIR)/../lib $(SELF_DIR)/../plugins \( -name '*.sh' -o -name '*.bash' \) )
 
 SHELL_CHECK_VERSION := v0.7.0
 ASCIINEMA_VERSION := v2.0.2
+FZF_VERSION := 0.18.0
 RUBY_VERSION := $(shell cat $(SELF_DIR)/.ruby-version)
 
 ifndef RUBY_VERSION
@@ -24,6 +27,26 @@ else
   RB_TOOL = unknown
 endif
 
+define check_cmd_path
+  $(eval
+  _EXECUTABLE = $(1)
+  _EXPECTED_PATH = $(2)
+  ifndef _EXECUTABLE
+    $$(error Missing argument on 'check_cmd' call)
+  endif
+  _CMD_PATH = $$(shell PATH="$$(PATH)" which $$(_EXECUTABLE))
+  ifdef _CMD_PATH
+    ifdef _EXPECTED_PATH
+      ifneq ($$(_CMD_PATH),$$(_EXPECTED_PATH))
+        $$(error Expecting '$$(_EXECUTABLE)' to be in '$$(_EXPECTED_PATH)' but found in '$$(_CMD_PATH)')
+      endif
+    endif
+  else
+    $$(error '$$(_EXECUTABLE)' not found in $$$$PATH)
+  endif
+  )
+endef
+
 define check_cmds
   $(eval
   _EXECUTABLES = $(1)
@@ -32,7 +55,7 @@ define check_cmds
   endif
   $$(info Check required commands... ($$(_EXECUTABLES)))
   K := $$(foreach _exec,$$(_EXECUTABLES),\
-    $$(if $$(shell which $$(_exec)),$$(info -- Ok -- Command '$$(_exec)' found in $$$$PATH),$$(eval _MISSING_EXEC ?= 1 )$$(info -- ERROR -- Missing '$$(_exec)' command)))
+    $$(if $$(shell PATH="$$(PATH)" which $$(_exec)),$$(info -- Ok -- Command '$$(_exec)' found in $$$$PATH),$$(eval _MISSING_EXEC ?= 1 )$$(info -- ERROR -- Missing '$$(_exec)' command)))
   ifdef _MISSING_EXEC
     $$(error Some required commands are not installed)
   endif
@@ -51,39 +74,43 @@ all: test-shellcheck test-tty
 ############
 
 .PHONY: test-shellcheck
-test-shellcheck: $(SELF_DIR)/bin/shellcheck
+test-shellcheck: bin/shellcheck
 	$(info ##### Start tests with shellcheck #####)
-	$(SELF_DIR)/bin/shellcheck $(BASH_FILES)
+	$(call check_cmds,shellcheck)
+	$(call check_cmd_path,shellcheck,$(SELF_DIR)/bin/shellcheck)
+	shellcheck $(BASH_FILES)
 
 .PHONY: test-tty
-test-tty: $(SELF_DIR)/vendor $(SELF_DIR)/bin/asciinema ruby-env
-	$(info #### Start tests with minitest and tmux)
-	$(call check_cmds,tmux python3)
+test-tty: vendor bin/asciinema bin/fzf bin/fzf-tmux ruby-env
+	$(info ##### Start tests with minitest and tmux #####)
+	$(call check_cmds,tmux python3 fzf fzf-tmux)
+	$(call check_cmd_path,fzf,$(SELF_DIR)/bin/fzf)
+	$(call check_cmd_path,fzf-tmux,$(SELF_DIR)/bin/fzf-tmux)
 	ruby --version
-	BUNDLE_GEMFILE=$(SELF_DIR)/Gemfile bundle exec ruby $(SELF_DIR)/test-fzf-obc.rb
+	BUNDLE_GEMFILE=Gemfile bundle exec ruby test-fzf-obc.rb
 
 ############
 # Ruby env
 ############
 
-$(SELF_DIR)/Gemfile.lock: $(SELF_DIR)/Gemfile $(SELF_DIR)/.ruby-version | ruby-env
+Gemfile.lock: Gemfile .ruby-version | ruby-env
 	$(info ##### Updating Gemfile.lock #####)
 	$(call check_cmds,bundle)
-	@rm $(SELF_DIR)/Gemfile.lock
-	BUNDLE_GEMFILE=$(SELF_DIR)/Gemfile bundle lock
+	@rm Gemfile.lock
+	BUNDLE_GEMFILE=Gemfile bundle lock
 
-$(SELF_DIR)/vendor: $(SELF_DIR)/Gemfile.lock $(SELF_DIR)/.ruby-version | ruby-env
+vendor: Gemfile.lock .ruby-version | ruby-env
 	$(info ##### Downloading / Installing Ruby gems  #####)
 	$(call check_cmds,bundle)
-	BUNDLE_GEMFILE=$(SELF_DIR)/Gemfile bundle install --path=vendor
+	BUNDLE_GEMFILE=Gemfile bundle install --path=vendor
 	@touch $@
 
 .PHONY: ruby-env
-ruby-env: $(SELF_DIR)/tmp/$(RB_TOOL).mk.env
+ruby-env: tmp/$(RB_TOOL).mk.env
 	$(info ##### Loading Ruby ENV #####)
 	$(eval include $<)
 
-$(SELF_DIR)/tmp/$(RB_TOOL).mk.env: $(SELF_DIR)/.ruby-version
+tmp/$(RB_TOOL).mk.env: .ruby-version
 	$(info ##### Generating Ruby env file ##### )
 	@mkdir -p $(@D)
 ifeq (rvm,$(RB_TOOL))
@@ -118,27 +145,49 @@ endif
 # Test dependencies
 #####################
 
-$(SELF_DIR)/bin/shellcheck: $(SELF_DIR)/opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck
-	$(info ##### Installing Shellcheck $(SHELL_CHECK_VERSION))
+.PHONY: bin/shellcheck
+bin/shellcheck: opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck
 	@mkdir -p $(@D)
-	cp $< $@
+	@ln -f -s $(SELF_DIR)/$< $@
 
-$(SELF_DIR)/opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck:
+opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck:
 	$(info ##### Downloading Shellcheck $(SHELL_CHECK_VERSION))
 	$(call check_cmds,wget)
 	@mkdir -p $(@D)
-	wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-"$(SHELL_CHECK_VERSION)".linux.x86_64.tar.xz" | tar -xJv -C $(SELF_DIR)/opt
+	wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-"$(SHELL_CHECK_VERSION)".linux.x86_64.tar.xz" | tar -xJv -C opt
 
-.PHONY: $(SELF_DIR)/bin/asciinema
-$(SELF_DIR)/bin/asciinema: $(SELF_DIR)/opt/asciinema-$(ASCIINEMA_VERSION)
-	$(info ##### Generating Asciinema $(SHELL_CHECK_VERSION) binary)
+.PHONY: bin/fzf
+bin/fzf: opt/fzf-$(FZF_VERSION)/fzf
+	$(info ##### Linking opt/fzf-$(FZF_VERSION)/fzf -> bin/fzf #####)
+	@mkdir -p $(@D)
+	@ln -f -s $(SELF_DIR)/$< $@
+
+opt/fzf-$(FZF_VERSION)/fzf:
+	$(info ##### Downloading fzf $(FZF_VERSION))
+	@mkdir -p $(@D)
+	cd $(@D) ; wget -qO - "https://github.com/junegunn/fzf-bin/releases/download/$(FZF_VERSION)/fzf-$(FZF_VERSION)-linux_amd64.tgz" | tar -xzf -
+
+.PHONY: bin/fzf-tmux
+bin/fzf-tmux: opt/fzf-$(FZF_VERSION)/fzf-tmux
+	$(info ##### Linking opt/fzf-$(FZF_VERSION)/fzf-tmux -> bin/fzf-tmux #####)
+	@mkdir -p $(@D)
+	@ln -f -s $(SELF_DIR)/$< $@
+
+opt/fzf-$(FZF_VERSION)/fzf-tmux:
+	$(info ##### Downloading fzf-tmux $(FZF_VERSION))
+	@mkdir -p $(@D)
+	wget -qO - "https://raw.githubusercontent.com/junegunn/fzf/$(FZF_VERSION)/bin/fzf-tmux" > $@ && chmod +x $@
+
+.PHONY: bin/asciinema
+bin/asciinema: opt/asciinema-$(ASCIINEMA_VERSION)
+	$(info ##### Generating Asciinema $(SHELL_CHECK_VERSION) binary #####)
 	$(call check_cmds,python3)
 	@mkdir -p $(@D)
 	@mkdir -p $${HOME}/.config/asciinema
 	echo "#!/usr/bin/env bash\nPYTHONPATH='$(SELF_DIR)/opt/asciinema-$(ASCIINEMA_VERSION):$${PYTHONPATH}' python3 -m asciinema \"\$$@\"" > $@
 	@chmod +x $@
 
-$(SELF_DIR)/opt/asciinema-$(ASCIINEMA_VERSION):
+opt/asciinema-$(ASCIINEMA_VERSION):
 	$(info ##### Downloading Asciinema $(SHELL_CHECK_VERSION))
 	$(call check_cmds,git)
 	git clone -b $(ASCIINEMA_VERSION) https://github.com/asciinema/asciinema.git $@
@@ -150,8 +199,8 @@ $(SELF_DIR)/opt/asciinema-$(ASCIINEMA_VERSION):
 .PHONY: clean
 clean:
 	rm -rf \
-		$(SELF_DIR)/.bundle/ \
-		$(SELF_DIR)/bin \
-		$(SELF_DIR)/opt/ \
-		$(SELF_DIR)/tmp/ \
-		$(SELF_DIR)/vendor/
+		.bundle/ \
+		bin \
+		opt/ \
+		tmp/ \
+		vendor/
