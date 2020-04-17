@@ -1,4 +1,10 @@
-SELF_DIR := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+SELF_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
+
+ifneq ($(words $(subst :, ,$(SELF_DIR))), 1)
+  $(error source directory cannot contain spaces or colons)
+else ifneq ($(CURDIR),$(SELF_DIR))
+  $(error Makefile need to be run from $(SELF_DIR))
+endif
 
 BASH_FILES := $(shell find $(SELF_DIR)/../bin $(SELF_DIR)/../lib $(SELF_DIR)/../plugins \( -name '*.sh' -o -name '*.bash' \) )
 
@@ -18,12 +24,31 @@ else
   RB_TOOL = unknown
 endif
 
+define check_cmds
+  $(eval
+  _EXECUTABLES = $(1)
+  ifndef _EXECUTABLES
+    $$(error Missing argument on 'check_cmds' call)
+  endif
+  $$(info Check required commands... ($$(_EXECUTABLES)))
+  K := $$(foreach _exec,$$(_EXECUTABLES),\
+    $$(if $$(shell which $$(_exec)),$$(info -- Ok -- Command '$$(_exec)' found in $$$$PATH),$$(eval _MISSING_EXEC ?= 1 )$$(info -- ERROR -- Missing '$$(_exec)' command)))
+  ifdef _MISSING_EXEC
+    $$(error Some required commands are not installed)
+  endif
+  )
+endef
+
+#######
+# ALL #
+#######
+
+.PHONY: all
+all: test-shellcheck test-tty
+
 ############
 # tests
 ############
-
-.PHONY: test
-test: test-shellcheck test-tty
 
 .PHONY: test-shellcheck
 test-shellcheck: $(SELF_DIR)/bin/shellcheck
@@ -110,10 +135,23 @@ $(SELF_DIR)/bin/asciinema: $(SELF_DIR)/opt/asciinema-$(ASCIINEMA_VERSION)
 	$(call check_cmds,python3)
 	@mkdir -p $(@D)
 	@mkdir -p $${HOME}/.config/asciinema
-	echo "#!/usr/bin/env bash\nPYTHONPATH='$(CURDIR)/$(SELF_DIR)/opt/asciinema-$(ASCIINEMA_VERSION):$${PYTHONPATH}' python3 -m asciinema \"\$$@\"" > $@
+	echo "#!/usr/bin/env bash\nPYTHONPATH='$(SELF_DIR)/opt/asciinema-$(ASCIINEMA_VERSION):$${PYTHONPATH}' python3 -m asciinema \"\$$@\"" > $@
 	@chmod +x $@
 
 $(SELF_DIR)/opt/asciinema-$(ASCIINEMA_VERSION):
 	$(info ##### Downloading Asciinema $(SHELL_CHECK_VERSION))
 	$(call check_cmds,git)
 	git clone -b $(ASCIINEMA_VERSION) https://github.com/asciinema/asciinema.git $@
+
+#########
+# Clean
+#########
+
+.PHONY: clean
+clean:
+	rm -rf \
+		$(SELF_DIR)/.bundle/ \
+		$(SELF_DIR)/bin \
+		$(SELF_DIR)/opt/ \
+		$(SELF_DIR)/tmp/ \
+		$(SELF_DIR)/vendor/

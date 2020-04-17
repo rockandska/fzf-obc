@@ -1,4 +1,10 @@
-.DEFAULT_GOAL:=test
+SELF_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
+
+ifneq ($(words $(subst :, ,$(SELF_DIR))), 1)
+  $(error source directory cannot contain spaces or colons)
+else ifneq ($(CURDIR),$(SELF_DIR))
+  $(error Makefile need to be run from $(SELF_DIR))
+endif
 
 TEST_PATH := test
 TEST_TMP_PATH := $(TEST_PATH)/tmp/tty
@@ -43,23 +49,16 @@ RESTORE_TIMESTAMP := @$(shell \
 		done; \
 	)
 
-define check_cmds
-  $(eval
-  _EXECUTABLES = $(1)
-  ifndef _EXECUTABLES
-    $$(error Missing argument on 'check_cmds' call)
-  endif
-  $$(info Check required commands... ($$(_EXECUTABLES)))
-  K := $$(foreach _exec,$$(_EXECUTABLES),\
-    $$(if $$(shell which $$(_exec)),$$(info -- Ok -- Command '$$(_exec)' found in $$$$PATH),$$(eval _MISSING_EXEC ?= 1 )$$(info -- ERROR -- Missing '$$(_exec)' command)))
-  ifdef _MISSING_EXEC
-    $$(error Some required commands are not installed)
-  endif
-  )
-endef
+.PHONY: all
+all: test
 
+.PHONY: test
+test:
+	$(MAKE) -C $(SELF_DIR)/test
 
-include test/Makefile
+clean:
+	$(MAKE) -C $(SELF_DIR)/test clean
+
 
 ############
 # docs
