@@ -1,6 +1,9 @@
-test/vendor
 test/.bundle
-test/tmp
 test/bin
+test/lib/python3.6/
 test/opt
+test/pyvenv.cfg
+test/share/
+test/tmp
+test/vendor
 mkmf.log

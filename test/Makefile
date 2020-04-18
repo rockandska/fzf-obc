@@ -11,7 +11,6 @@ export PATH := $(SELF_DIR)/bin:$(PATH)
 BASH_FILES := $(shell find $(SELF_DIR)/../bin $(SELF_DIR)/../lib $(SELF_DIR)/../plugins \( -name '*.sh' -o -name '*.bash' \) )
 
 SHELL_CHECK_VERSION := v0.7.0
-ASCIINEMA_VERSION := v2.0.2
 FZF_VERSION := 0.18.0
 RUBY_VERSION := $(shell cat $(SELF_DIR)/.ruby-version)
 
@@ -81,9 +80,10 @@ test-shellcheck: bin/shellcheck
 	shellcheck $(BASH_FILES)
 
 .PHONY: test-tty
-test-tty: vendor bin/asciinema bin/fzf bin/fzf-tmux ruby-env
+test-tty: vendor bin/fzf bin/fzf-tmux ruby-env python-env
 	$(info ##### Start tests with minitest and tmux #####)
-	$(call check_cmds,tmux python3 fzf fzf-tmux)
+	$(call check_cmds,tmux python3 fzf fzf-tmux asciinema)
+	$(call check_cmd_path,asciinema,$(SELF_DIR)/bin/asciinema)
 	$(call check_cmd_path,fzf,$(SELF_DIR)/bin/fzf)
 	$(call check_cmd_path,fzf-tmux,$(SELF_DIR)/bin/fzf-tmux)
 	ruby --version
@@ -140,6 +140,28 @@ else
 	$(error Neither 'rvm' or 'rbenv' was found in $$(PATH))
 endif
 
+##############
+# Python env #
+##############
+
+.PHONY: python-env
+python-env: bin/activate
+
+.PHONY: virtualenv
+virtualenv:
+ifeq (, $(shell command -v virtualenv 2> /dev/null))
+	$(info Virtualenv not installed, try to install it...)
+	pip3 install virtualenv
+endif
+
+bin/activate: requirements.txt | virtualenv
+	$(info ##### Generating Python env #####)
+	$(call check_cmds,python3 virtualenv)
+ifdef VIRTUAL_ENV
+	$(error VIRTUAL_ENV '$(VIRTUAL_ENV)' already set. Quit this VIRTUAL_ENV before running tests)
+endif
+	virtualenv -p $(shell which python3) $(SELF_DIR)
+	. $@ && pip install -Ur requirements.txt
 
 #####################
 # Test dependencies
@@ -178,20 +200,6 @@ opt/fzf-$(FZF_VERSION)/fzf-tmux:
 	@mkdir -p $(@D)
 	wget -qO - "https://raw.githubusercontent.com/junegunn/fzf/$(FZF_VERSION)/bin/fzf-tmux" > $@ && chmod +x $@
 
-.PHONY: bin/asciinema
-bin/asciinema: opt/asciinema-$(ASCIINEMA_VERSION)
-	$(info ##### Generating Asciinema $(SHELL_CHECK_VERSION) binary #####)
-	$(call check_cmds,python3)
-	@mkdir -p $(@D)
-	@mkdir -p $${HOME}/.config/asciinema
-	echo "#!/usr/bin/env bash\nPYTHONPATH='$(SELF_DIR)/opt/asciinema-$(ASCIINEMA_VERSION):$${PYTHONPATH}' python3 -m asciinema \"\$$@\"" > $@
-	@chmod +x $@
-
-opt/asciinema-$(ASCIINEMA_VERSION):
-	$(info ##### Downloading Asciinema $(SHELL_CHECK_VERSION))
-	$(call check_cmds,git)
-	git clone -b $(ASCIINEMA_VERSION) https://github.com/asciinema/asciinema.git $@
-
 #########
 # Clean
 #########
@@ -200,7 +208,10 @@ opt/asciinema-$(ASCIINEMA_VERSION):
 clean:
 	rm -rf \
 		.bundle/ \
-		bin \
+		bin/ \
+		lib/python*/ \
 		opt/ \
+		pyvenv.cfg \
+		share/ \
 		tmp/ \
 		vendor/
