@@ -1,0 +1,6 @@
+deb http://snapshot.debian.org/archive/debian/20200503T144457Z/ buster main
+deb-src http://snapshot.debian.org/archive/debian/20200401T154401Z buster main
+deb http://snapshot.debian.org/archive/debian/20200401T154401Z/ buster non-free
+deb-src http://snapshot.debian.org/archive/debian/20200401T154401Z buster non-free
+deb http://snapshot.debian.org/archive/debian/20200401T154401Z/ buster contrib
+deb-src http://snapshot.debian.org/archive/debian/20200401T154401Z buster contrib

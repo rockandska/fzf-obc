@@ -6,13 +6,21 @@ else ifneq ($(CURDIR),$(SELF_DIR))
   $(error Makefile need to be run from $(SELF_DIR))
 endif
 
+include $(SELF_DIR)/Docker/docker-images-list.mk
+
 export PATH := $(SELF_DIR)/bin:$(PATH)
 
 BASH_FILES := $(shell find $(SELF_DIR)/../bin $(SELF_DIR)/../lib $(SELF_DIR)/../plugins \( -name '*.sh' -o -name '*.bash' \) )
 
 SHELL_CHECK_VERSION := v0.7.0
-FZF_VERSION := 0.18.0
 RUBY_VERSION := $(shell cat $(SELF_DIR)/.ruby-version)
+ifndef FZF_VERSIONS_LIST
+	$(error FZF_VERSIONS_LIST not set)
+endif
+FZF_VERSION := $(firstword $(FZF_VERSIONS_LIST))
+ifndef DOCKER_IMAGES_LIST
+	$(error DOCKER_IMAGES_LIST not set)
+endif
 
 ifndef RUBY_VERSION
   $(error RUBY_VERSION is not set. Missing $(SELF_DIR)/.ruby-version file ?)
@@ -80,7 +88,10 @@ test-shellcheck: bin/shellcheck
 	shellcheck $(BASH_FILES)
 
 .PHONY: test-tty
-test-tty: vendor bin/fzf bin/fzf-tmux ruby-env python-env
+test-tty: test-tty-local test-tty-docker
+
+.PHONY: test-tty-local
+test-tty-local: vendor bin/fzf bin/fzf-tmux ruby-env python-env
 	$(info ##### Start tests with minitest and tmux #####)
 	$(call check_cmds,tmux python3 fzf fzf-tmux asciinema)
 	$(call check_cmd_path,asciinema,$(SELF_DIR)/bin/asciinema)
@@ -88,6 +99,16 @@ test-tty: vendor bin/fzf bin/fzf-tmux ruby-env python-env
 	$(call check_cmd_path,fzf-tmux,$(SELF_DIR)/bin/fzf-tmux)
 	ruby --version
 	BUNDLE_GEMFILE=Gemfile bundle exec ruby test-fzf-obc.rb
+
+.PHONY: test-tty-docker
+test-tty-docker: $(addprefix test-tty-docker-,$(DOCKER_IMAGES_LIST))
+
+.PHONY: test-tty-docker-%
+test-tty-docker-image-%: vendor ruby-env python-env
+	$(MAKE) --no-print-directory -C $(SELF_DIR)/Docker start-$*
+	$(shell echo "##### Start tests with minitest and tmux and docker (image: $*) #####")
+	ruby --version
+	DOCKER_CONTAINER=$* BUNDLE_GEMFILE=Gemfile bundle exec ruby test-fzf-obc.rb
 
 ############
 # Ruby env

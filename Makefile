@@ -54,7 +54,7 @@ all: test
 
 .PHONY: test
 test:
-	$(MAKE) -C $(SELF_DIR)/test
+	$(MAKE) --no-print-directory -C $(SELF_DIR)/test
 
 clean:
 	$(MAKE) -C $(SELF_DIR)/test clean
