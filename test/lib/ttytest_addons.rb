@@ -46,6 +46,20 @@ module TTYtest
         HEREDOC
       end
     end
+
+    def assert_matches_inline(expected)
+      expected_line = expected.gsub(/\s*\n/,'')
+      matched = true
+      actual_line = rows.join("")
+      if actual_line != expected_line
+        matched = false
+      end
+
+      if !matched
+        raise MatchError, "screen did not match expected content:\n--- expected :\n#{expected_line}\n+++ actual :\n#{actual_line}\n"
+      end
+    end
+
     METHODS_TO_ADD = public_instance_methods
   end
 

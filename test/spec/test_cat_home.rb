@@ -101,7 +101,7 @@ class FzfObcTest
         #{TAB}
         #{ENTER}
       EOF
-      @tty.assert_matches <<~TTY
+      @tty.assert_matches_inline <<~TTY
         $ cat #{temp_test_home_dir}/test\\ fzf-obc.test #{temp_test_home_dir[0..19]}
         #{temp_test_home_dir[20..-1]}/fzf-obc.test
       TTY

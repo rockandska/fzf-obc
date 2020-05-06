@@ -63,7 +63,7 @@ class FzfObcTest
         #{TAB}
         #{ENTER}
       EOF
-      @tty.assert_matches <<~TTY
+      @tty.assert_matches_inline <<~TTY
         $ cat #{temp_test_dir}/d1/xxx\\ xxx #{temp_test_dir}/d1\\ 0/xxx\\ xxx
       TTY
 
