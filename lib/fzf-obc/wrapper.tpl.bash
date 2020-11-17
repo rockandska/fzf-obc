@@ -6,7 +6,6 @@
 #####
 
 __fzf_obc_wrapper_::FUNC_NAME::() {
-
 	# Backup old globstar setting
 	trap 'eval "$previous_globstar_setting"' RETURN
 	local previous_globstar_setting

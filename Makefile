@@ -1,5 +1,4 @@
 SELF_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
-
 ifneq ($(words $(subst :, ,$(SELF_DIR))), 1)
   $(error source directory cannot contain spaces or colons)
 else ifneq ($(CURDIR),$(SELF_DIR))

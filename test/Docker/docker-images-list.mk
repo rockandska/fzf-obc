@@ -1,3 +1,6 @@
+DOCKER_IMAGE_PREFIX := rockandska/fzf-obc-test
+DOCKER_CONTAINER_PREFIX := fzf-obc-test
+
 DOCKERFILES_LIST := debian-10
 FZF_VERSIONS_LIST := 0.18.0
 

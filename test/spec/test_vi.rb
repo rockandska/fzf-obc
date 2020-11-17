@@ -61,7 +61,7 @@ class FzfObcTest
       ######################
       # Test with symlinks #
       ######################
-      File.symlink("#{BASE}/#{temp_test_dir}/test.conf", "#{BASE}/#{temp_test_dir}/link_test.conf")
+      File.symlink("#{temp_test_dir}/test.conf", "#{temp_test_dir}/link_test.conf")
       @tty.send_keys("vi #{temp_test_dir}/","#{TAB}", delay: 0.01)
       @tty.assert_matches(<<~EOF)
         $ vi #{temp_test_dir}/

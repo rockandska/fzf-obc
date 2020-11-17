@@ -19,8 +19,11 @@ class FzfObcTest
 
     @tty.send_keys("git c","#{TAB}")
     @tty.send_keys("mm","#{TAB}")
-    @tty.send_keys("--","#{TAB}","ssage","#{TAB}","'First commit'","#{ENTER}")
-    @tty.assert_row(0,"$ git commit --message='First commit'")
+    @tty.send_keys("--","#{TAB}","ssage","#{TAB}","'First commit' -q","#{ENTER}")
+    @tty.assert_matches(<<~EOF)
+      $ git commit --message='First commit' -q
+      $
+    EOF
 
     @tty.clear_screen()
 

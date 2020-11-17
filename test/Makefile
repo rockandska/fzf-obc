@@ -105,10 +105,10 @@ test-tty-docker: $(addprefix test-tty-docker-,$(DOCKER_IMAGES_LIST))
 
 .PHONY: test-tty-docker-%
 test-tty-docker-image-%: vendor ruby-env python-env
-	$(MAKE) --no-print-directory -C $(SELF_DIR)/Docker start-$*
 	$(shell echo "##### Start tests with minitest and tmux and docker (image: $*) #####")
 	ruby --version
-	DOCKER_CONTAINER=$* BUNDLE_GEMFILE=Gemfile bundle exec ruby test-fzf-obc.rb
+	$(MAKE) --no-print-directory -C $(SELF_DIR)/Docker image-$*
+	DOCKER_IMAGE="$(DOCKER_IMAGE_PREFIX):$*" BUNDLE_GEMFILE=Gemfile bundle exec ruby test-fzf-obc.rb
 
 ############
 # Ruby env
@@ -117,7 +117,7 @@ test-tty-docker-image-%: vendor ruby-env python-env
 Gemfile.lock: Gemfile .ruby-version | ruby-env
 	$(info ##### Updating Gemfile.lock #####)
 	$(call check_cmds,bundle)
-	@rm Gemfile.lock
+	-@rm Gemfile.lock
 	BUNDLE_GEMFILE=Gemfile bundle lock
 
 vendor: Gemfile.lock .ruby-version | ruby-env
