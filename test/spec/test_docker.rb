@@ -1,4 +1,4 @@
-class FzfObcTest
+class Software
   def test_docker
     @tty.send_keys("docker p","#{TAB}", delay: 0.01)
     @tty.assert_matches(<<~EOF)

@@ -1,73 +1,61 @@
-class FzfObcTest
+class Filedir
   def test_cat
-    for short_filedir in (0..1).reverse_each do
+    create_files_dirs(
+      subdirs: %w{d1 d1\ 0},
+      files: %w{
+        yyy
+        xxx
+        xxx\ xxx
+      }
+    )
 
-      create_files_dirs(
-        dest: "#{temp_test_dir}",
-        subdirs: %w{d1 d1\ 0},
-        files: %w{
-          yyy
-          xxx
-          xxx\ xxx
-        }
-      )
+    @tty.send_keys("cat #{@filedir_start}","#{TAB}", delay: 0.01)
+    @tty.assert_matches <<~TTY
+      $ cat #{@filedir_start}
+      >
+        5/5
+      > #{@fzf_start_dir}d1/
+        #{@fzf_start_dir}d1 0/
+        #{@fzf_start_dir}xxx
+        #{@fzf_start_dir}xxx xxx
+        #{@fzf_start_dir}yyy
+    TTY
+    @tty.send_keys('x',"#{DOWN}","#{TAB}")
+    @tty.assert_matches <<~TTY
+      $ cat #{@filedir_start}xxx\\ xxx
+    TTY
 
-      if short_filedir == 1
-        start_dir = ""
-      else
-        @tty.send_keys("FZF_OBC_SHORT_FILEDIR=0","#{ENTER}")
-        @tty.clear_screen()
-        start_dir = "#{temp_test_dir}/"
-      end
+    @tty.clear_screen()
 
-      @tty.send_keys("cat #{temp_test_dir}/","#{TAB}", delay: 0.01)
-      @tty.assert_matches <<~TTY
-        $ cat #{temp_test_dir}/
-        >
-          5/5
-        > #{start_dir}d1/
-          #{start_dir}d1 0/
-          #{start_dir}xxx
-          #{start_dir}xxx xxx
-          #{start_dir}yyy
-      TTY
-      @tty.send_keys('x',"#{DOWN}","#{TAB}")
-      @tty.assert_matches <<~TTY
-        $ cat #{temp_test_dir}/xxx\\ xxx
-      TTY
+    ################
+    # With globs
+    ################
+    @tty.send_keys("cat #{@filedir_start}**","#{TAB}", delay: 0.01)
+    @tty.assert_matches <<~TTY
+      $ cat #{@filedir_start}**
+      >
+        11/11
+      > #{@fzf_start_dir}d1/
+        #{@fzf_start_dir}d1/xxx
+        #{@fzf_start_dir}d1/xxx xxx
+        #{@fzf_start_dir}d1/yyy
+        #{@fzf_start_dir}d1 0/
+        #{@fzf_start_dir}d1 0/xxx
+        #{@fzf_start_dir}d1 0/xxx xxx
+        #{@fzf_start_dir}d1 0/yyy
+    TTY
+    @tty.send_keys(<<~EOF)
+      x
+      #{DOWN}
+      #{TAB}
+      #{DOWN}
+      #{TAB}
+      #{ENTER}
+    EOF
+    @tty.assert_matches_inline <<~TTY
+      $ cat #{@filedir_start}d1/xxx\\ xxx #{@filedir_start}d1\\ 0/xxx\\ xxx
+    TTY
 
-      @tty.clear_screen()
-
-      ################
-      # With globs
-      ################
-      @tty.send_keys("cat #{temp_test_dir}/**","#{TAB}", delay: 0.01)
-      @tty.assert_matches <<~TTY
-        $ cat #{temp_test_dir}/**
-        >
-          11/11
-        > #{start_dir}d1/
-          #{start_dir}d1/xxx
-          #{start_dir}d1/xxx xxx
-          #{start_dir}d1/yyy
-          #{start_dir}d1 0/
-          #{start_dir}d1 0/xxx
-          #{start_dir}d1 0/xxx xxx
-          #{start_dir}d1 0/yyy
-      TTY
-      @tty.send_keys(<<~EOF)
-        x
-        #{DOWN}
-        #{TAB}
-        #{DOWN}
-        #{TAB}
-        #{ENTER}
-      EOF
-      @tty.assert_matches_inline <<~TTY
-        $ cat #{temp_test_dir}/d1/xxx\\ xxx #{temp_test_dir}/d1\\ 0/xxx\\ xxx
-      TTY
-
-      @tty.clear_screen()
-    end
+    @tty.clear_screen()
   end
 end

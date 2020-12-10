@@ -73,47 +73,43 @@ if ENV['DOCKER_IMAGE']
   $container.start()
 end
 
-class FzfObcTest < Minitest::Test
+module Base
 
-  def create_rcfile
+  def create_rcfile(data)
     debug("Creating '#{@rcfile_name}'...")
     rcfile = File.open("#{@rcfile_name}", "w")
-    rcfile.puts <<~EOF
+    rcfile.puts "#{data}"
+    rcfile.close
+  end
+
+  def setup_vars
+    @test_dir = "#{TMP_DIR}/#{self.class.name}/#{self.name}"
+    @castfile_name = "#{TMP_DIR}/#{self.class.name}/#{self.name}.cast"
+    @method_name = self.name
+    @class_name = self.class.name
+    @rcfile_name = "#{TMP_DIR}/#{self.class.name}_#{self.name}.bashrc"
+    @rcfile_data = <<-HEREDOC
       export LS_COLORS="#{ENV['LS_COLORS']}"
       export PS1='$ '
       export PATH="#{ENV['PATH']}"
       export TERM="#{ENV['TERM']}"
       export HISTFILE=''
       export PROMPT_COMMAND=''
-      export FZF_OBC_HEIGHT='40%'
-      export FZF_OBC_OPTS="--select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'"
-      export FZF_OBC_GLOBS_OPTS="-m --select-1 --exit-0 --no-sort --no-mouse --bind 'ctrl-c:cancel'"
-      export HOME="#{TMP_DIR}"
+      export HOME="#{@test_dir}"
       export GIT_COMMITTER_NAME=test
       export GIT_AUTHOR_NAME=test
       export EMAIL=test@test.com
       source /etc/bash_completion
       source #{SRC_DIR}/bin/fzf-obc.bash
-      cd #{temp_test_dir}
-    EOF
-    rcfile.close
-  end
-
-  def temp_test_dir
-    "#{TMP_DIR}/#{self.name}"
-  end
-
-  def temp_test_home_dir
-    "#{TMP_DIR}/#{self.name}"
+      cd #{@test_dir}
+    HEREDOC
   end
 
   def setup
-    @test_dir = "#{TMP_DIR}/#{self.name}"
-    @rcfile_name = "#{TMP_DIR}/#{self.name}.bashrc"
-    @castfile_name = "#{TMP_DIR}/#{self.name}.cast"
+    setup_vars
     debug("Creating '#{@test_dir}'...")
     FileUtils.mkdir_p @test_dir
-    create_rcfile
+    create_rcfile(@rcfile_data)
     method_file = File.basename(self.method("#{self.name}").source_location[0],'.rb')
     assert_equal \
       method_file, \
@@ -159,13 +155,12 @@ class FzfObcTest < Minitest::Test
   end
 
   def create_files_dirs(
-    dest: "#{TMP_DIR}/#{self.name}",
+    dest: @test_dir,
     subdirs: %w{},
     files: %w{}
   )
     dest = File.expand_path(dest)
     FileUtils.mkdir_p "#{dest}"
-    FileUtils.rm_rf Dir.glob("#{dest}/*")
     for file in files
       FileUtils.touch "#{dest}/#{file}"
     end
@@ -177,6 +172,43 @@ class FzfObcTest < Minitest::Test
     end
   end
 
+end
+
+class Software < Minitest::Test
+  include Base
+end
+
+class Filedir < Minitest::Test
+  include Base
+  def setup_vars
+    super
+    @filedir_start = ""
+    @fzf_start_dir = ""
+  end
+end
+
+class FiledirHome < Filedir
+  def setup_vars
+    super
+    @filedir_start = "~/"
+  end
+end
+
+class FiledirAbsolute < Filedir
+  def setup_vars
+    super
+    @filedir_start = "#{@test_dir}/"
+  end
+end
+
+class FiledirHomeShortOff < FiledirHome
+  def setup_vars
+    super
+    @rcfile_data += <<-HEREDOC
+      export FZF_OBC_SHORT_FILEDIR=0
+    HEREDOC
+    @fzf_start_dir = "#{@filedir_start}"
+  end
 end
 
 Dir.chdir SRC_DIR
