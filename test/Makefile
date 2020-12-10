@@ -8,7 +8,7 @@ endif
 
 include $(SELF_DIR)/Docker/docker-images-list.mk
 
-export PATH := $(SELF_DIR)/bin:$(PATH)
+export PATH := $(SELF_DIR)/tmp/bin:$(PATH)
 
 BASH_FILES := $(shell find $(SELF_DIR)/../bin $(SELF_DIR)/../lib $(SELF_DIR)/../plugins \( -name '*.sh' -o -name '*.bash' \) )
 
@@ -81,34 +81,34 @@ all: test-shellcheck test-tty
 ############
 
 .PHONY: test-shellcheck
-test-shellcheck: bin/shellcheck
+test-shellcheck: tmp/bin/shellcheck
 	$(info ##### Start tests with shellcheck #####)
 	$(call check_cmds,shellcheck)
-	$(call check_cmd_path,shellcheck,$(SELF_DIR)/bin/shellcheck)
+	$(call check_cmd_path,shellcheck,$(SELF_DIR)/tmp/bin/shellcheck)
 	shellcheck $(BASH_FILES)
 
 .PHONY: test-tty
 test-tty: test-tty-local test-tty-docker
 
 .PHONY: test-tty-local
-test-tty-local: vendor bin/fzf bin/fzf-tmux ruby-env python-env
+test-tty-local: tmp/vendor tmp/bin/fzf tmp/bin/fzf-tmux ruby-env python-env
 	$(info ##### Start tests with minitest and tmux #####)
 	$(call check_cmds,tmux python3 fzf fzf-tmux asciinema)
-	$(call check_cmd_path,asciinema,$(SELF_DIR)/bin/asciinema)
-	$(call check_cmd_path,fzf,$(SELF_DIR)/bin/fzf)
-	$(call check_cmd_path,fzf-tmux,$(SELF_DIR)/bin/fzf-tmux)
+	$(call check_cmd_path,asciinema,$(SELF_DIR)/tmp/bin/asciinema)
+	$(call check_cmd_path,fzf,$(SELF_DIR)/tmp/bin/fzf)
+	$(call check_cmd_path,fzf-tmux,$(SELF_DIR)/tmp/bin/fzf-tmux)
 	ruby --version
-	BUNDLE_GEMFILE=Gemfile bundle exec ruby test-fzf-obc.rb
+	BUNDLE_GEMFILE=Gemfile BUNDLE_PATH=tmp/vendor bundle exec ruby test-fzf-obc.rb
 
 .PHONY: test-tty-docker
 test-tty-docker: $(addprefix test-tty-docker-,$(DOCKER_IMAGES_LIST))
 
 .PHONY: test-tty-docker-%
-test-tty-docker-image-%: vendor ruby-env python-env
+test-tty-docker-image-%: tmp/vendor ruby-env python-env
 	$(shell echo "##### Start tests with minitest and tmux and docker (image: $*) #####")
 	ruby --version
 	$(MAKE) --no-print-directory -C $(SELF_DIR)/Docker image-$*
-	DOCKER_IMAGE="$(DOCKER_IMAGE_PREFIX):$*" BUNDLE_GEMFILE=Gemfile bundle exec ruby test-fzf-obc.rb
+	DOCKER_IMAGE="$(DOCKER_IMAGE_PREFIX):$*" BUNDLE_GEMFILE=Gemfile BUNDLE_PATH=tmp/vendor bundle exec ruby test-fzf-obc.rb
 
 ############
 # Ruby env
@@ -120,10 +120,10 @@ Gemfile.lock: Gemfile .ruby-version | ruby-env
 	-@rm Gemfile.lock
 	BUNDLE_GEMFILE=Gemfile bundle lock
 
-vendor: Gemfile.lock .ruby-version | ruby-env
+tmp/vendor: Gemfile.lock .ruby-version | ruby-env
 	$(info ##### Downloading / Installing Ruby gems  #####)
 	$(call check_cmds,bundle)
-	BUNDLE_GEMFILE=Gemfile bundle install --path=vendor
+	BUNDLE_GEMFILE=Gemfile BUNDLE_PATH=tmp/vendor bundle install
 	@touch $@
 
 .PHONY: ruby-env
@@ -166,7 +166,7 @@ endif
 ##############
 
 .PHONY: python-env
-python-env: bin/activate
+python-env: tmp/bin/activate
 
 .PHONY: virtualenv
 virtualenv:
@@ -175,48 +175,48 @@ ifeq (, $(shell command -v virtualenv 2> /dev/null))
 	pip3 install virtualenv
 endif
 
-bin/activate: requirements.txt | virtualenv
+tmp/bin/activate: requirements.txt | virtualenv
 	$(info ##### Generating Python env #####)
 	$(call check_cmds,python3 virtualenv)
 ifdef VIRTUAL_ENV
 	$(error VIRTUAL_ENV '$(VIRTUAL_ENV)' already set. Quit this VIRTUAL_ENV before running tests)
 endif
-	virtualenv -p $(shell which python3) $(SELF_DIR)
+	virtualenv -p $(shell which python3) $(SELF_DIR)/tmp
 	. $@ && pip install -Ur requirements.txt
 
 #####################
 # Test dependencies
 #####################
 
-.PHONY: bin/shellcheck
-bin/shellcheck: opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck
+.PHONY: tmp/bin/shellcheck
+tmp/bin/shellcheck: tmp/opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck
 	@mkdir -p $(@D)
 	@ln -f -s $(SELF_DIR)/$< $@
 
-opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck:
+tmp/opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck:
 	$(info ##### Downloading Shellcheck $(SHELL_CHECK_VERSION))
 	$(call check_cmds,wget)
 	@mkdir -p $(@D)
-	wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-"$(SHELL_CHECK_VERSION)".linux.x86_64.tar.xz" | tar -xJv -C opt
+	wget -qO- "https://github.com/koalaman/shellcheck/releases/download/$(SHELL_CHECK_VERSION)/shellcheck-$(SHELL_CHECK_VERSION).linux.x86_64.tar.xz" | tar -xJv -C tmp/opt
 
-.PHONY: bin/fzf
-bin/fzf: opt/fzf-$(FZF_VERSION)/fzf
+.PHONY: tmp/bin/fzf
+tmp/bin/fzf: tmp/opt/fzf-$(FZF_VERSION)/fzf
 	$(info ##### Linking opt/fzf-$(FZF_VERSION)/fzf -> bin/fzf #####)
 	@mkdir -p $(@D)
 	@ln -f -s $(SELF_DIR)/$< $@
 
-opt/fzf-$(FZF_VERSION)/fzf:
+tmp/opt/fzf-$(FZF_VERSION)/fzf:
 	$(info ##### Downloading fzf $(FZF_VERSION))
 	@mkdir -p $(@D)
 	cd $(@D) ; wget -qO - "https://github.com/junegunn/fzf-bin/releases/download/$(FZF_VERSION)/fzf-$(FZF_VERSION)-linux_amd64.tgz" | tar -xzf -
 
-.PHONY: bin/fzf-tmux
-bin/fzf-tmux: opt/fzf-$(FZF_VERSION)/fzf-tmux
+.PHONY: tmp/bin/fzf-tmux
+tmp/bin/fzf-tmux: tmp/opt/fzf-$(FZF_VERSION)/fzf-tmux
 	$(info ##### Linking opt/fzf-$(FZF_VERSION)/fzf-tmux -> bin/fzf-tmux #####)
 	@mkdir -p $(@D)
 	@ln -f -s $(SELF_DIR)/$< $@
 
-opt/fzf-$(FZF_VERSION)/fzf-tmux:
+tmp/opt/fzf-$(FZF_VERSION)/fzf-tmux:
 	$(info ##### Downloading fzf-tmux $(FZF_VERSION))
 	@mkdir -p $(@D)
 	wget -qO - "https://raw.githubusercontent.com/junegunn/fzf/$(FZF_VERSION)/bin/fzf-tmux" > $@ && chmod +x $@
@@ -227,12 +227,4 @@ opt/fzf-$(FZF_VERSION)/fzf-tmux:
 
 .PHONY: clean
 clean:
-	rm -rf \
-		.bundle/ \
-		bin/ \
-		lib/python*/ \
-		opt/ \
-		pyvenv.cfg \
-		share/ \
-		tmp/ \
-		vendor/
+	rm -rf tmp/

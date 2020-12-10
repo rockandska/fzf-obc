@@ -130,7 +130,7 @@ module Base
       rec_cmd = "env -i HOME=#{ENV['HOME']} bash --rcfile #{@rcfile_name} --noprofile"
     end
     @tty = TTYtest.new_terminal(<<~HEREDOC,width: "#{TERMINAL_COLUMNS}", height: "#{TERMINAL_LINES}")
-      #{SRC_DIR}/test/bin/asciinema rec --quiet -t 'fzf-obc #{self.name}' -i '#{TTYtest.send_keys_delay}' -c '#{rec_cmd}' #{@castfile_name}
+      #{SRC_DIR}/test/tmp/bin/asciinema rec --quiet -t 'fzf-obc #{self.name}' -i '#{TTYtest.send_keys_delay}' -c '#{rec_cmd}' #{@castfile_name}
     HEREDOC
     debug("tmux session started with '#{rec_cmd}' command...")
 
