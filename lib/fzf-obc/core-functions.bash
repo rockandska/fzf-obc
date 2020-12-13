@@ -263,20 +263,22 @@ __fzf_obc_check_empty_compreply() {
 }
 
 __fzf_obc_move_hidden_files_last() {
+	# printf 'p2\x0yyy\x0.l1\x0xxx\x0.d1/' | LC_ALL=C sort -zVdf | sed -z -r -e '/^(.*\/\.|\.)/H;//!p;$!d;g;s/.//' | tr "\0" "\n'"
 	# shellcheck disable=SC2154
 	if ((current_filedir_colors));then
-		sed -z -r '/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])(.*\/\.|\.)/MH;//!p;$!d;x;//s/\x0//p;d'
+		sed -z -r '/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])(.*\/\.|\.)/H;//!p;$!d;g;s/.//;/^$/d;'
 	else
-		sed -z -r '/^(.*\/\.|\.)/MH;//!p;$!d;x;//s/\x0//p;d'
+		sed -z -r '/^(.*\/\.|\.)/H;//!p;$!d;g;s/.//;/^$/d;'
 	fi
 }
 
 __fzf_obc_move_hidden_files_first() {
+	#printf 'p2\x0yyy\x0.l1\x0xxx\x0.d1/' | LC_ALL=C sort -zrVdf | sed -z -r -e '/^(.*\/\.|\.)/!H;//p;$!d;g;s/.//' | tr "\0" "\n'"
 	# shellcheck disable=SC2154
 	if ((current_filedir_colors));then
-		sed -z -r	'/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])(.*\/\.|\.)/!H;//p;$!d;g;s/\x0//p;d'
+		sed -z -r '/^(\x1B\[([0-9]{1,}(;[0-9]{1,})?(;[0-9]{1,})?)?[mGK])(.*\/\.|\.)/!H;//p;$!d;g;s/.//;/^$/d;'
 	else
-		sed -z -r '/^(.*\/\.|\.)/!H;//p;$!d;g;s/\x0//p;d'
+		sed -z -r '/^(.*\/\.|\.)/!H;//p;$!d;g;s/.//;/^$/d;'
 	fi
 }
 
