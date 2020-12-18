@@ -27,7 +27,7 @@ require 'minitest/autorun'
 #                     instead of running them locally
 
 CURRENT_FILE = File.expand_path(__FILE__)
-SRC_DIR = File.expand_path('../../', __FILE__)
+SRC_DIR = File.expand_path('../../../', __FILE__)
 
 TERMINAL_COLUMNS=80
 TERMINAL_LINES=24
@@ -63,11 +63,15 @@ if ENV['DOCKER_IMAGE']
     'Cmd' => ['tail','-f','/dev/null'],
     'Volumes' => {
       TMP_DIR => { TMP_DIR => 'rw' },
-      SRC_DIR => { SRC_DIR => 'ro' }
+      SRC_DIR => { SRC_DIR => 'ro' },
+      '/etc/passwd' => { '/etc/passwd' => 'ro' },
+      '/etc/group' => { '/etc/group' => 'ro' }
     },
     'Binds' => [
       "#{TMP_DIR}:#{TMP_DIR}",
-      "#{SRC_DIR}:#{SRC_DIR}"
+      "#{SRC_DIR}:#{SRC_DIR}",
+      '/etc/passwd:/etc/passwd',
+      '/etc/group:/etc/group'
     ]
   )
   $container.start()
@@ -130,7 +134,7 @@ module Base
       rec_cmd = "env -i HOME=#{ENV['HOME']} bash --rcfile #{@rcfile_name} --noprofile"
     end
     @tty = TTYtest.new_terminal(<<~HEREDOC,width: "#{TERMINAL_COLUMNS}", height: "#{TERMINAL_LINES}")
-      #{SRC_DIR}/test/tmp/bin/asciinema rec --quiet -t 'fzf-obc #{self.name}' -i '#{TTYtest.send_keys_delay}' -c '#{rec_cmd}' #{@castfile_name}
+      #{SRC_DIR}/test/tmux/tmp/bin/asciinema rec --quiet -t 'fzf-obc #{self.name}' -i '#{TTYtest.send_keys_delay}' -c '#{rec_cmd}' #{@castfile_name}
     HEREDOC
     debug("tmux session started with '#{rec_cmd}' command...")
 
@@ -212,5 +216,5 @@ class FiledirHomeShortOff < FiledirHome
 end
 
 Dir.chdir SRC_DIR
-files = Dir.glob("test/spec/**/*.rb")
-files.each{|file| require_relative file.gsub(/^test\/|\.rb$/,'')}
+files = Dir.glob("test/tmux/spec/**/*.rb")
+files.each{|file| require_relative file.gsub(/^test\/tmux\/|\.rb$/,'')}

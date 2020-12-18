@@ -4,7 +4,7 @@ GEM
     docker-api (2.0.0)
       excon (>= 0.47.0)
       multi_json
-    excon (0.78.0)
+    excon (0.78.1)
     git (1.7.0)
       rchardet (~> 1.8)
     minitest (5.14.2)
