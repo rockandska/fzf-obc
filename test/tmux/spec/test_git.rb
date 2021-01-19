@@ -1,13 +1,12 @@
-class FzfObcTest
+class Software
   def test_git
     create_files_dirs(
-      dest: "#{temp_test_dir}",
       subdirs: %w{},
       files: %w{
         README.md
       }
     )
-    g = Git.init("#{temp_test_dir}")
+    g = Git.init(@test_dir)
     @tty.send_keys("git a", "#{TAB}", delay: 0.01)
     @tty.send_keys("dd", "#{TAB}",'.',"#{ENTER}")
     @tty.assert_matches(<<~EOF)
@@ -19,8 +18,11 @@ class FzfObcTest
 
     @tty.send_keys("git c","#{TAB}")
     @tty.send_keys("mm","#{TAB}")
-    @tty.send_keys("--","#{TAB}","ssage","#{TAB}","'First commit'","#{ENTER}")
-    @tty.assert_row(0,"$ git commit --message='First commit'")
+    @tty.send_keys("--","#{TAB}","ssage","#{TAB}","'First commit' -q","#{ENTER}")
+    @tty.assert_matches(<<~EOF)
+      $ git commit --message='First commit' -q
+      $
+    EOF
 
     @tty.clear_screen()
 

@@ -46,6 +46,20 @@ module TTYtest
         HEREDOC
       end
     end
+
+    def assert_matches_inline(expected)
+      expected_line = expected.gsub(/\s*\n/,'')
+      matched = true
+      actual_line = rows.join("")
+      if actual_line != expected_line
+        matched = false
+      end
+
+      if !matched
+        raise MatchError, "screen did not match expected content:\n--- expected :\n#{expected_line}\n+++ actual :\n#{actual_line}\n"
+      end
+    end
+
     METHODS_TO_ADD = public_instance_methods
   end
 
@@ -105,21 +119,24 @@ module TTYtest
 
 end
 
-module MakeMakefile::Logging
-  @logfile = File::NULL
-  @quiet = true
-end
-
-def check_cmds(cmds)
-  if cmds.is_a? String
-    cmds = cmds.split(',')
-  end
-  for bin in cmds do
-    if ! find_executable("#{bin}",path="#{BASE}/test/bin:#{ENV['PATH']}")
-      raise "=====> Missing executable '#{bin}' needed for tests <=====\n#{to_s}"
-      exit 1
+def which(cmd)
+  if $container
+    exe = $container.exec(['bash', '-c', "command -v #{cmd} 2> /dev/null"])
+    return exe[0] if exe[2] == 0
+  else
+    exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
+    ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+      exts.each do |ext|
+        exe = File.join(path, "#{cmd}#{ext}")
+        return exe if File.executable?(exe) && !File.directory?(exe)
+      end
     end
   end
-  puts "\nRequired binaries : OK\n\n"
+  nil
 end
 
+def debug(msg)
+  if TTYtest.debug
+    $stderr.puts "== DEBUG : " + msg
+  end
+end

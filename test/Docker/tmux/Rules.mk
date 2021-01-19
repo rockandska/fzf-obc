@@ -1,0 +1,53 @@
+# Standard things
+sp := $(sp).x
+dirstack_$(sp) := $(d)
+d	:= $(dir)
+
+# Vars
+TEST_DOCKER_TMUX_FZF_VERSIONS_LIST := 0.18.0
+TEST_DOCKER_TMUX_DIR := $(d)
+TEST_DOCKER_TMUX_ABS_DIR := $(MKFILE_DIR)/$(d)
+TEST_DOCKER_TMUX_IMAGE_NAME ?= fzf-obc-test
+TEST_DOCKER_TMUX_IMAGE_FULL_NAME ?= $(TEST_DOCKER_REGISTRY)$(TEST_DOCKER_REGISTRY_NAMESPACE)$(TEST_DOCKER_TMUX_IMAGE_NAME)
+TEST_DOCKER_TMUX_DOCKERFILES_LIST := $(notdir $(basename $(wildcard $(d)/*.dockerfile)))
+TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX := test-docker-tmux-build
+TEST_DOCKER_TMUX_IMAGES_LIST := $(foreach fzf,$(TEST_DOCKER_TMUX_FZF_VERSIONS_LIST),$(addsuffix -fzf-$(fzf),$(TEST_DOCKER_TMUX_DOCKERFILES_LIST)))
+TEST_DOCKER_TMUX_IMAGES_TARGETS := $(addprefix $(TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX)-,$(TEST_DOCKER_TMUX_IMAGES_LIST))
+TEST_DOCKER_TMUX_PUBLISH_TARGET_PREFIX := test-docker-tmux-publish
+TEST_DOCKER_TMUX_PUBLISH_TARGETS := $(addprefix $(TEST_DOCKER_TMUX_PUBLISH_TARGET_PREFIX)-,$(TEST_DOCKER_TMUX_IMAGES_LIST))
+
+#####
+# Targets
+#####
+
+# Build
+.PHONY: $(TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX)
+$(TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX): $(TEST_DOCKER_TMUX_IMAGES_TARGETS)
+
+.PHONY: $(TEST_DOCKER_TMUX_IMAGES_TARGETS)
+$(TEST_DOCKER_TMUX_IMAGES_TARGETS): $(TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX)-% :
+	$(info ##### Generating '$(TEST_DOCKER_TMUX_IMAGE_NAME):$(*)' docker image #####)
+	docker pull \
+		--quiet \
+		$(TEST_DOCKER_TMUX_IMAGE_FULL_NAME):$(*) || true
+	docker build \
+		--quiet \
+		-f $(TEST_DOCKER_TMUX_DIR)/$(subst -fzf-,,$(strip $(foreach dockerfile,$(TEST_DOCKER_TMUX_DOCKERFILES_LIST),$(findstring $(dockerfile)-fzf-,$(*))))).dockerfile \
+		--build-arg FZF_VERSION="$(subst -fzf-,,$(strip $(foreach fzf,$(TEST_DOCKER_TMUX_FZF_VERSIONS_LIST),$(findstring -fzf-$(fzf),$*))))" \
+		-t $(TEST_DOCKER_TMUX_IMAGE_NAME):$(subst $(TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX)-,,$@) \
+		$(TEST_DOCKER_TMUX_DIR)
+
+# Publish
+.PHONY: $(TEST_DOCKER_TMUX_PUBLISH_TARGET_PREFIX)
+$(TEST_DOCKER_TMUX_PUBLISH_TARGET_PREFIX): $(TEST_DOCKER_TMUX_PUBLISH_TARGETS)
+
+.PHONY: $(TEST_DOCKER_TMUX_PUBLISH_TARGETS)
+$(TEST_DOCKER_TMUX_PUBLISH_TARGETS): $(TEST_DOCKER_TMUX_PUBLISH_TARGET_PREFIX)-% :  test-docker-login $(TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX)-%
+	$(info ##### Publishing '$(TEST_DOCKER_TMUX_IMAGE_NAME):$(*)' on registry $(TEST_DOCKER_REGISTRY) #####)
+	docker image tag $(TEST_DOCKER_TMUX_IMAGE_NAME):$* $(TEST_DOCKER_TMUX_IMAGE_FULL_NAME):$*
+	docker push $(TEST_DOCKER_TMUX_IMAGE_FULL_NAME):$*
+
+
+# Standard things
+d := $(dirstack_$(sp))
+sp := $(basename $(sp))
