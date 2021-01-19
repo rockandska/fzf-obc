@@ -4,11 +4,13 @@
 
 **Closed issues:**
 
+- Everything on the left of the cursor is erased after selecting completion candidate [\#40](https://github.com/rockandska/fzf-obc/issues/40)
 - Dot files not sorted [\#37](https://github.com/rockandska/fzf-obc/issues/37)
 - Pathname completion opens fzf when not needed [\#36](https://github.com/rockandska/fzf-obc/issues/36)
 
 **Merged pull requests:**
 
+- Add tests under docker [\#43](https://github.com/rockandska/fzf-obc/pull/43) ([rockandska](https://github.com/rockandska))
 - Configuration loader for default/command/plugin refactored [\#39](https://github.com/rockandska/fzf-obc/pull/39) ([rockandska](https://github.com/rockandska))
 - Fix/36 [\#38](https://github.com/rockandska/fzf-obc/pull/38) ([rockandska](https://github.com/rockandska))
 
