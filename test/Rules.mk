@@ -14,6 +14,9 @@ include		$(dir)/Rules.mk
 dir	:= $(d)/tmux
 include		$(dir)/Rules.mk
 
+dir	:= $(d)/bats
+include		$(dir)/Rules.mk
+
 #####
 # Vars
 #####
@@ -31,13 +34,13 @@ export PATH := $(TEST_ABS_DIR)/tmp/bin:$(PATH)
 # Targets
 #####
 .PHONY: test
-test: test-shellcheck test-tmux
+test: test-shellcheck test-bats test-tmux
 
 .PHONY: test-shellcheck
 test-shellcheck: $(TEST_DIR)/tmp/bin/shellcheck
 	$(info ##### Start tests with shellcheck #####)
 	$(call check_cmd_path,shellcheck,$(TEST_ABS_DIR)/tmp/bin/shellcheck)
-	shellcheck $(TEST_BASH_FILES)
+	shellcheck -x -P $(MKFILE_DIR) $(TEST_BASH_FILES)
 
 #####################
 # Test dependencies

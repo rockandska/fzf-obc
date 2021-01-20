@@ -11,6 +11,8 @@ d := $(dir)
 dir	:= $(d)/tmux
 include		$(dir)/Rules.mk
 
+dir	:= $(d)/bats
+include		$(dir)/Rules.mk
 ######
 # Vars
 ######
