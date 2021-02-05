@@ -1,14 +1,20 @@
 ---
 sudo: required
 language: ruby
-dist: xenial
+dist: bionic
 services:
   - docker
 addons:
   apt:
     sources:
       - sourceline: "ppa:kimura-o/ppa-tmux"
+      - sourceline: "deb https://download.docker.com/linux/ubuntu bionic stable"
+        key_url: "https://download.docker.com/linux/ubuntu/gpg"
+    update: true
     packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
       - tmux
       - python3
 stages:

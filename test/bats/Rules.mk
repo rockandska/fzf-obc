@@ -31,7 +31,7 @@ $(TEST_BATS_DOCKER_TARGETS_PREFIX): $(TEST_BATS_DOCKER_TARGETS)
 .PHONY: $(TEST_BATS_DOCKER_TARGETS)
 $(TEST_BATS_DOCKER_TARGETS) : $(TEST_BATS_DOCKER_TARGETS_PREFIX)-% : $(TEST_DOCKER_BATS_IMAGES_TARGET_PREFIX)-%
 	$(info ##### Start tests with bats on docker (image: $(addprefix $(TEST_DOCKER_BATS_IMAGE_NAME):,$*)) #####)
-	docker run -ti --rm -v $(MKFILE_DIR):/${MKFILE_DIR}:ro $(addprefix $(TEST_DOCKER_TMUX_IMAGE_NAME):,$*) ${TEST_BATS_ABS_DIR}/spec/
+	docker run -ti --rm -e BATS_PROJECT_DIR="$(MKFILE_DIR)" -v $(MKFILE_DIR):/${MKFILE_DIR}:ro $(addprefix $(TEST_DOCKER_TMUX_IMAGE_NAME):,$*) -r ${TEST_BATS_ABS_DIR}/spec/
 
 #####
 # Standard things

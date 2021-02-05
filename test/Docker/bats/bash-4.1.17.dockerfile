@@ -34,7 +34,7 @@ ARG BASH_COMPLETION_SRC=/usr/local/src/bash-completion
   RUN /root/bats-core/install.sh "/usr/local"
   # Gnu tools
   RUN if [[ "${GNU:-}" == true ]];then \
-    apk add sed coreutils \
+    apk add sed coreutils findutils \
   ;fi
   # Clean
   RUN apk del completion-deps \
@@ -42,4 +42,6 @@ ARG BASH_COMPLETION_SRC=/usr/local/src/bash-completion
         && rm -rf /var/cache/apk/*
   # Setup
   RUN echo 'source /etc/profile' >> ~/.bashrc
-  ENTRYPOINT ["bash", "bats"]
+  COPY --from=tini /tini /tini
+  WORKDIR /code/
+  ENTRYPOINT ["/tini", "--", "bash", "bats"]
