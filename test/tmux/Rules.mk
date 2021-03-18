@@ -9,12 +9,12 @@ d := $(dir)
 # Vars
 #####
 TEST_TMUX_DIR := $(d)
-TEST_TMUX_ABS_DIR := $(MKFILE_DIR)$(d)
+TEST_TMUX_ABS_DIR := $(MKFILE_DIR)/$(d)
 
 TEST_TMUX_FZF_VERSION := $(firstword $(TEST_DOCKER_TMUX_FZF_VERSIONS_LIST))
 
-TEST_TMUX_DOCKER_TARGETS_PREFIX := test-tmux-docker
-TEST_TMUX_DOCKER_TARGETS := $(addprefix $(TEST_TMUX_DOCKER_TARGETS_PREFIX)-,$(TEST_DOCKER_TMUX_IMAGES_LIST))
+TEST_TMUX_TARGETS_PREFIX := test-tmux-docker
+TEST_TMUX_TARGETS := $(addprefix $(TEST_TMUX_TARGETS_PREFIX)-,$(TEST_DOCKER_TMUX_IMAGES_LIST))
 TEST_TMUX_RUBY_VERSION := $(shell cat $(TEST_TMUX_DIR)/.ruby-version)
 
 CLEAN := $(CLEAN) $(TEST_TMUX_DIR)/tmp
@@ -42,25 +42,13 @@ endif
 #####
 
 .PHONY: test-tmux
-test-tmux: test-tmux-local $(TEST_TMUX_DOCKER_TARGETS_PREFIX)
+test-tmux: $(TEST_TMUX_TARGETS_PREFIX)
 
-.PHONY: test-tmux-local
-test-tmux-local: $(TEST_TMUX_DIR)/tmp/bin/fzf $(TEST_TMUX_DIR)/tmp/bin/fzf-tmux ruby-env python-env
-	$(info ##### Start tests with minitest and tmux on localhost #####)
-	$(call check_cmds,tmux)
-	$(call check_cmd_path,asciinema,$(TEST_TMUX_ABS_DIR)/tmp/bin/asciinema)
-	$(call check_cmd_path,fzf,$(TEST_TMUX_ABS_DIR)/tmp/bin/fzf)
-	$(call check_cmd_path,fzf-tmux,$(TEST_TMUX_ABS_DIR)/tmp/bin/fzf-tmux)
-	ruby --version
-	BUNDLE_GEMFILE=$(TEST_TMUX_DIR)/Gemfile \
-		BUNDLE_PATH=tmp/vendor \
-		bundle exec ruby $(TEST_TMUX_DIR)/test-fzf-obc.rb
+.PHONY: $(TEST_TMUX_TARGETS_PREFIX)
+$(TEST_TMUX_TARGETS_PREFIX): $(TEST_TMUX_TARGETS)
 
-.PHONY: $(TEST_TMUX_DOCKER_TARGETS_PREFIX)
-$(TEST_TMUX_DOCKER_TARGETS_PREFIX): $(TEST_TMUX_DOCKER_TARGETS)
-
-.PHONY: $(TEST_TMUX_DOCKER_TARGETS)
-$(TEST_TMUX_DOCKER_TARGETS) : $(TEST_TMUX_DOCKER_TARGETS_PREFIX)-% : $(TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX)-% ruby-env python-env
+.PHONY: $(TEST_TMUX_TARGETS)
+$(TEST_TMUX_TARGETS) : $(TEST_TMUX_TARGETS_PREFIX)-% : $(MKFILE_DIR)/.github/workflows/pull_request.yml $(TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX)-% ruby-env python-env
 	$(info ##### Start tests with minitest and tmux on docker (image: $(addprefix $(TEST_DOCKER_TMUX_IMAGE_NAME):,$*)) #####)
 	$(call check_cmd_path,asciinema,$(TEST_TMUX_ABS_DIR)/tmp/bin/asciinema)
 	ruby --version
@@ -129,6 +117,7 @@ $(TEST_TMUX_DIR)/tmp/rvm.mk.env: $(TEST_TMUX_DIR)/.ruby-version
 $(TEST_TMUX_DIR)/tmp/unknown.mk.env: $(TEST_TMUX_DIR)/.ruby-version
 	$(info ##### Neither 'rvm' or 'rbenv' was found in $$(PATH) #####)
 	$(info ##### /!\ Try with local ruby ##### )
+	mkdir -p $(@D)
 	touch $@
 
 ##############

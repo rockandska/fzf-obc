@@ -20,10 +20,13 @@ include		$(dir)/Rules.mk
 #####
 # Vars
 #####
+
 TEST_DIR := $(d)
-TEST_ABS_DIR := $(MKFILE_DIR)$(d)
+TEST_ABS_DIR := $(MKFILE_DIR)/$(d)
+TEST_TARGETS := test-shellcheck $(TEST_BATS_TARGETS) $(TEST_TMUX_TARGETS)
 
 SHELL_CHECK_VERSION := v0.7.0
+
 TEST_BASH_FILES := $(strip $(call rwildcard,.,*.sh *.bash))
 
 CLEAN := $(CLEAN) $(TEST_DIR)/tmp
@@ -33,11 +36,8 @@ export PATH := $(TEST_ABS_DIR)/tmp/bin:$(PATH)
 #####
 # Targets
 #####
-.PHONY: test
-test: test-shellcheck test-bats test-tmux
-
 .PHONY: test-shellcheck
-test-shellcheck: $(TEST_DIR)/tmp/bin/shellcheck
+test-shellcheck: $(TEST_DIR)/tmp/bin/shellcheck .github/workflows/pull_request.yml
 	$(info ##### Start tests with shellcheck #####)
 	$(call check_cmd_path,shellcheck,$(TEST_ABS_DIR)/tmp/bin/shellcheck)
 	shellcheck -x -P $(MKFILE_DIR) $(TEST_BASH_FILES)
@@ -63,3 +63,4 @@ $(TEST_DIR)/tmp/opt/shellcheck-$(SHELL_CHECK_VERSION)/shellcheck:
 #####
 d		:= $(dirstack_$(sp))
 sp		:= $(basename $(sp))
+

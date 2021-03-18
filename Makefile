@@ -1,12 +1,16 @@
+.ONESHELL:
+.DELETE_ON_ERROR:
 SHELL := bash
-.SHELLFLAGS := -eu -o pipefail -c
+.SHELLFLAGS := -eu -o pipefail -c $(if $(V),-x)
+_SPACE = $(eval) $(eval)
+_COMMA := ,
 
 #####
 # vars
 #####
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-MKFILE_DIR := $(dir $(MKFILE_PATH))
+MKFILE_DIR := $(realpath $(dir $(MKFILE_PATH)))
 
 #####
 # Functions
@@ -36,11 +40,27 @@ define check_cmd_path
 endef
 
 #####
+# Includes
+#####
+
+dir	:= test
+include		$(dir)/Rules.mk
+
+#####
 # Targets
 #####
 
+# invoking make V=1 will print everything
+$(V).SILENT:
+
+.PHONY: .FORCE
+.FORCE:
+
 .PHONY: all
 all: test
+
+.PHONY: test
+test: $(MKFILE_DIR)/.github/workflows/pull_request.yml $(TEST_TARGETS)
 
 .PHONY:		clean
 clean:
@@ -48,13 +68,6 @@ clean:
 
 .SECONDARY:	$(CLEAN)
 
-# invoking make V=1 will print everything
-$(V).SILENT:
-
-#####
-# Includes
-#####
-
-dir	:= test
-include		$(dir)/Rules.mk
-
+$(MKFILE_DIR)/.github/workflows/pull_request.yml: .FORCE
+	printf '%s\n' '### Updating GHA pull_request workflow ###'
+	docker run --rm -v "$(MKFILE_DIR):$(MKFILE_DIR)" mikefarah/yq:4.9.6 -i eval '.jobs.Tests.strategy.matrix.target = [ "$(subst $(_SPACE),"$(_SPACE)$(_COMMA)$(_SPACE)",$(strip $(TEST_TARGETS)))" ]' $@

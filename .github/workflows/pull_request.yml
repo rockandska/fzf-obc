@@ -1,0 +1,40 @@
+name: Tests
+on:
+  pull_request:
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+env:
+# Avoid noisy outputs like "tput: No value for ERM and no -T specified"
+  TERM: xterm-256color
+jobs:
+  Tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - test-shellcheck
+          - test-bats-docker-bash-4.4.23-gnu-true
+          - test-bats-docker-bash-3.2.57-gnu-true
+          - test-bats-docker-bash-4.1.17-gnu-true
+          - test-bats-docker-bash-4.4.23-gnu-false
+          - test-bats-docker-bash-3.2.57-gnu-false
+          - test-bats-docker-bash-4.1.17-gnu-false
+          - test-tmux-docker-ubuntu-16-fzf-0.18.0
+          - test-tmux-docker-debian-10-fzf-0.18.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Ruby
+        if: contains(matrix.target, 'tmux')
+        uses: ruby/setup-ruby@v1
+        with:
+          working-directory: test/tmux/
+          bundler-cache: true
+      - name: Install Tmux
+        if: contains(matrix.target, 'tmux')
+        run: |
+          sudo apt-get install tmux
+      - name: make ${{matrix.target}}
+        shell: 'script -qfec "bash {0}"'
+        run: make ${{matrix.target}}
