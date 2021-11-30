@@ -1,25 +1,16 @@
 ######
-# Standard things
+# Include header
 ######
 sp := $(sp).x
 dirstack_$(sp) := $(d)
 d := $(dir)
 
-#####
-# Vars
-#####
-TEST_TMUX_DIR := $(d)
-TEST_TMUX_ABS_DIR := $(MKFILE_DIR)/$(d)
+# includes
 
-TEST_TMUX_FZF_VERSION := $(firstword $(TEST_DOCKER_TMUX_FZF_VERSIONS_LIST))
+dir	:= $(d)/docker
+include		$(dir)/Rules.mk
 
-TEST_TMUX_TARGETS_PREFIX := test-tmux-docker
-TEST_TMUX_TARGETS := $(addprefix $(TEST_TMUX_TARGETS_PREFIX)-,$(TEST_DOCKER_TMUX_IMAGES_LIST))
-TEST_TMUX_RUBY_VERSION := $(shell cat $(TEST_TMUX_DIR)/.ruby-version)
-
-CLEAN := $(CLEAN) $(TEST_TMUX_DIR)/tmp
-
-export PATH := $(TEST_TMUX_ABS_DIR)/tmp/bin:$(PATH)
+# checks
 
 ifneq (, $(shell command -v rvm 2> /dev/null))
   TEST_TMUX_RB_TOOL = rvm
@@ -48,11 +39,11 @@ test-tmux: $(TEST_TMUX_TARGETS_PREFIX)
 $(TEST_TMUX_TARGETS_PREFIX): $(TEST_TMUX_TARGETS)
 
 .PHONY: $(TEST_TMUX_TARGETS)
-$(TEST_TMUX_TARGETS) : $(TEST_TMUX_TARGETS_PREFIX)-% : $(MKFILE_DIR)/.github/workflows/pull_request.yml $(TEST_DOCKER_TMUX_IMAGES_TARGET_PREFIX)-% ruby-env python-env
-	$(info ##### Start tests with minitest and tmux on docker (image: $(addprefix $(TEST_DOCKER_TMUX_IMAGE_NAME):,$*)) #####)
-	$(call check_cmd_path,asciinema,$(TEST_TMUX_ABS_DIR)/tmp/bin/asciinema)
+$(TEST_TMUX_TARGETS) : $(TEST_TMUX_TARGETS_PREFIX)-% : $(MKFILE_DIR)/.github/workflows/pull_request.yml $(TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX)-% ruby-env python-env
+	$(info ##### Start tests with minitest and tmux on docker (image: $(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*)) #####)
+	$(call check_cmd_path,asciinema,$(TEST_TMUX_DIR)/tmp/bin/asciinema)
 	ruby --version
-	DOCKER_IMAGE=$(addprefix $(TEST_DOCKER_TMUX_IMAGE_NAME):,$*) \
+	DOCKER_IMAGE=$(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*) \
 		BUNDLE_GEMFILE=$(TEST_TMUX_DIR)/Gemfile \
 		BUNDLE_PATH=tmp/vendor \
 		bundle exec ruby $(TEST_TMUX_DIR)/test-fzf-obc.rb
@@ -169,7 +160,7 @@ $(TEST_TMUX_DIR)/tmp/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf-tmux:
 	wget -qO - "https://raw.githubusercontent.com/junegunn/fzf/$(TEST_TMUX_FZF_VERSION)/bin/fzf-tmux" > $@ && chmod +x $@
 
 #####
-# Standard things
+# Include footer
 #####
 d		:= $(dirstack_$(sp))
 sp		:= $(basename $(sp))
