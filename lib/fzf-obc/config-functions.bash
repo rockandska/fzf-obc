@@ -5,6 +5,7 @@ __fzf_obc_load_user_functions() {
 	IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH:-}"
 	__fzf_obc_debug 'Loading user functions....'
 	for path in "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc"	"${fzf_obc_path_array[@]:-}";do
+		[[ -d "${path}" ]] || continue
 		__fzf_obc_debug "Looking in '${path}' for .sh/.bash files..."
 		while IFS= read -r -d '' file;do
 			[[ -e "${file}" && ! -d "${file}" ]] || continue
@@ -186,7 +187,7 @@ __fzf_obc_print_ini_config() {
 			ini_config+=$(__fzf_obc_print_cfg2ini "${dir}")
 			ini_config+=$'\n'
 		else
-			__fzf_obc_debug "Found 'fzf-obc.icni' in '${dir}'"
+			__fzf_obc_debug "Found 'fzf-obc.ini' in '${dir}'"
 			ini_config+=$(<"${dir}/fzf-obc.ini")
 			ini_config+=$'\n'
 		fi
@@ -209,6 +210,7 @@ __fzf_obc_print_ini_config() {
 }
 
 __fzf_obc_print_cfg_func() {
+	__fzf_obc_debug 'Generating __fzf_obc_cfg_get function....'
 	# will print a function definition containing all configuration case
 	# present in the directories defined as parameter
 	if [ "${#@}" -eq 0 ];then
