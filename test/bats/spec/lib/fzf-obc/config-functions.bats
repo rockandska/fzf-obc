@@ -297,12 +297,11 @@ create_cfg_files4tests() {
 	[ "$expected_var" == "ini:plugins:kill:process" ]
 }
 
-@test "__fzf_obc_load_user_functions" {
+@test "__fzf_obc_load_functions" {
 	local HOME="${BATS_TEST_TMPDIR}"
 	mkdir -p "${HOME}/.config/fzf-obc"
 	mkdir -p "${HOME}/user_funcs"
 	mkdir -p "${HOME}/user_funcs1"
-	local FZF_OBC_PATH="${HOME}/user_funcs:${HOME}/user_funcs1"
 	cat <<-EOF > "${HOME}/.config/fzf-obc/test.sh"
 		xdg_test() {
 			echo test
@@ -318,7 +317,7 @@ create_cfg_files4tests() {
 			echo test
 		}
 	EOF
-	run __fzf_obc_load_user_functions
+	run __fzf_obc_load_functions "${HOME}/.config/fzf-obc" "${HOME}/user_funcs" "${HOME}/user_funcs1"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
 	declare -f xdg_test

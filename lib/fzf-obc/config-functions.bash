@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 
-__fzf_obc_load_user_functions() {
-	local fzf_obc_path_array path file
-	IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH:-}"
-	__fzf_obc_debug 'Loading user functions....'
-	for path in "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc"	"${fzf_obc_path_array[@]:-}";do
-		[[ -d "${path}" ]] || continue
-		__fzf_obc_debug "Looking in '${path}' for .sh/.bash files..."
+__fzf_obc_load_functions() {
+	if [ "${#@}" -eq 0 ];then
+		1>&2 echo 'At least one directory where to search functions files is required'
+		return 1
+	fi
+	__fzf_obc_debug 'Loading functions....' 'Directories used:' "$@"
+	local dir file
+	for dir in "$@";do
+		[[ -d "${dir}" ]] || continue
+		__fzf_obc_debug "Looking in '${dir}' for .sh/.bash files..."
 		while IFS= read -r -d '' file;do
-			[[ -e "${file}" && ! -d "${file}" ]] || continue
+			[[ -f "${file}" ]] || continue
 			__fzf_obc_debug "Sourcing '${file}'..."
 			# shellcheck disable=SC1090
 			source "${file}"
-		done < <(find "${path}" -type f \( -name '*.sh' -o -name '*.bash' \) -print0 2>/dev/null)
+		done < <(find "${dir}" -type f \( -name '*.sh' -o -name '*.bash' \) -print0 2>/dev/null)
 	done
 }
 
@@ -136,7 +139,7 @@ __fzf_obc_print_cfg2ini() {
 	fi
 	local file
 	for file in "${start_dir}"/*.cfg "${start_dir}"/plugins/default.cfg	"${start_dir}"/plugins/*/*.cfg;do
-		[ -f "${file}" ] || continue
+		[ -f "${file}" ] || { __fzf_obc_debug "$file not found" ; continue; }
 		__fzf_obc_debug "Found configuration file: $file"
 		local short_file="${file##${start_dir}/}"
 		# Plugins config
@@ -210,13 +213,13 @@ __fzf_obc_print_ini_config() {
 }
 
 __fzf_obc_print_cfg_func() {
-	__fzf_obc_debug 'Generating __fzf_obc_cfg_get function....'
 	# will print a function definition containing all configuration case
 	# present in the directories defined as parameter
 	if [ "${#@}" -eq 0 ];then
 		1>&2 echo 'At least one directory where to search configuration is required'
 		return 1
 	fi
+	__fzf_obc_debug 'Generating __fzf_obc_cfg_get function....' 'Directories used:' "$@"
 	printf '%s\n' '__fzf_obc_cfg_get() {'
 	cat <<- 'EOF'
 		# __fzf_obc_cfg_get [trigger] [option] [cmd] [plugin]

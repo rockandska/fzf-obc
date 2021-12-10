@@ -5,21 +5,24 @@ bind '"\e[0n": redraw-current-line'
 
 fzf-obc() {
 	local fzf_obc_path
-	fzf_obc_path=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
+	fzf_obc_path=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && cd .. && pwd )
 
-	local lib
-	while IFS= read -r -d '' lib;do
-		[[ -e "${lib}" && ! -d "${lib}" ]] || continue
-		# shellcheck source=/dev/null
-		source "${lib}"
-	done < <( {
-		find "${fzf_obc_path}/../lib/fzf-obc/" -type f \( -name '*.sh' -o	-name '*.bash' \) -print0 2>/dev/null;
-		find "${fzf_obc_path}/../plugins/" -type f \( -name '*.sh' -o -name '*.bash' \) -print0 2>/dev/null;
-	} )
+	local fzf_obc_path_array
+	IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH:-}"
+	fzf_obc_path_array=("${fzf_obc_path}/lib/fzf-obc"	"${fzf_obc_path}/plugins"	"${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc" "${fzf_obc_path_array[@]}")
+
+	# shellcheck disable=SC1090
+	source "${fzf_obc_path}/lib/fzf-obc/config-functions.bash"
+	# shellcheck disable=SC1090
+	source "${fzf_obc_path}/lib/fzf-obc/util-functions.bash"
+
+	__fzf_obc_load_functions "${fzf_obc_path_array[@]}"
+
+	# shellcheck disable=SC1090
+	source <(__fzf_obc_print_cfg_func "${fzf_obc_path_array[@]}")
 
 	complete -p fzf &> /dev/null || complete -F _longopt fzf
 
-	__fzf_obc_load_user_functions
 	__fzf_obc_update_complete
 	__fzf_obc_add_all_traps
 
