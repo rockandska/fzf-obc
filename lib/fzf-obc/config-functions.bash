@@ -3,9 +3,12 @@
 __fzf_obc_load_user_functions() {
 	local fzf_obc_path_array path file
 	IFS=':' read -r -a fzf_obc_path_array <<< "${FZF_OBC_PATH:-}"
+	__fzf_obc_debug 'Loading user functions....'
 	for path in "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc"	"${fzf_obc_path_array[@]:-}";do
+		__fzf_obc_debug "Looking in '${path}' for .sh/.bash files..."
 		while IFS= read -r -d '' file;do
 			[[ -e "${file}" && ! -d "${file}" ]] || continue
+			__fzf_obc_debug "Sourcing '${file}'..."
 			# shellcheck disable=SC1090
 			source "${file}"
 		done < <(find "${path}" -type f \( -name '*.sh' -o -name '*.bash' \) -print0 2>/dev/null)
