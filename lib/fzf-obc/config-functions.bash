@@ -19,92 +19,6 @@ __fzf_obc_load_functions() {
 	done
 }
 
-__fzf_obc_load_plugin_config() {
-	: "${fzf_obc_path:?Missing fzf_obc_path in ${FUNCNAME[0]}}"
-
-	local plugin="${1:-}"
-	if [[ -z "${plugin}" ]];then
-		plugin="default"
-	else
-		plugin="${current_cmd_name:-}/${plugin}"
-	fi
-
-	# shellcheck disable=SC1090
-	source <(
-		for path in "${fzf_obc_path}" "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc";do
-			if [[ -r "${path}/plugins/${plugin}.cfg" ]];then
-				# shellcheck disable=SC1090
-				source "${path}/plugins/${plugin}.cfg"
-			fi
-		done
-
-		__fzf_obc_set_enable_opts
-
-		if((${current_enable:-}));then
-			# shellcheck disable=SC2034
-			current_plugin="${plugin}"
-			# shellcheck disable=SC2154
-			declare -p "${fzf_obc_options_arr[@]}" "current_enable" "current_plugin" 2> /dev/null \
-				| sed -r 's/^declare -[a-zA-Z-]+ ([^=]+)=(.*)/\1=\2;/'
-		else
-			# Keep only [trigger]_enable/current_enable vars if disable
-			# shellcheck disable=SC2154
-			declare -p "current_enable" 2>	/dev/null \
-				| sed -r 's/^declare -[a-zA-Z-]+ ([^=]+)=(.*)/\1=\2;/'
-		fi
-	)
-}
-
-__fzf_obc_load_config() {
-	local option_type="fzf_trigger"
-	local trigger_size=-1
-	local trigger_type
-	local option
-	local option_value
-
-	local config="${1:-default}"
-	# shellcheck disable=SC1090
-	source <(
-		if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${config}.cfg" ]];then
-			# shellcheck disable=SC1090
-			source "${XDG_CONFIG_HOME:-$HOME/.config}/fzf-obc/${config}.cfg"
-		fi
-
-		__fzf_obc_set_trigger_opts
-
-		# shellcheck disable=SC2154
-		for trigger_type in "${trigger_type_arr[@]}";do
-			option="${trigger_type}_${option_type}"
-			if [[ -n "${!option}" ]];then
-				printf -v option_value '^(.*)%q$' "${!option}"
-			else
-				option_value="^(.*)$"
-			fi
-			if [[ "${cur}" =~ ${option_value} ]];then
-				if [[ "${#option_value}" -gt "${trigger_size}" ]];then
-					trigger_size="${#option_value}"
-					# shellcheck disable=SC2034
-					current_cur="${BASH_REMATCH[1]}"
-					# shellcheck disable=SC2034
-					current_trigger_type="${trigger_type}"
-				fi
-			fi
-		done
-
-		__fzf_obc_set_enable_opts
-
-		if((${current_enable:-}));then
-			# shellcheck disable=SC2154
-			declare -p "${fzf_obc_options_arr[@]}" "current_enable" "current_trigger_type"	"current_cur" 2> /dev/null \
-				| sed -r 's/^declare -[a-zA-Z-]+ ([^=]+)=(.*)/\1=\2;/'
-		else
-			# Keep only current_enable vars if disable
-			declare -p "current_enable" 2> /dev/null \
-				| sed -r 's/^declare -[a-zA-Z-]+ ([^=]+)=(.*)/\1=\2;/'
-		fi
-	)
-}
-
 __fzf_obc_print_cfg2ini() {
 	# Load old config format from 1 directory and convert it to ini style
 	# $1 : directory config to print
@@ -320,7 +234,13 @@ __fzf_obc_print_cfg_func() {
 		esac
 
 		if [ -n "${!option2display+x}" ];then
-			printf -v "${return_var}" '%s' "${!option2display:-}"
+			local is_enable="${trigger}_enable"
+			local is_enable_env=$( echo "FZF_OBC_${trigger}_enable" | tr a-z A-Z)
+			if ((${!is_enable_env:-${!is_enable}}));then
+				printf -v "${return_var}" '%s' "${!option2display:-}"
+			else
+				__fzf_obc_debug "fzf-obc is disable. let the variable '${return_var}'	untouched"
+			fi
 		else
 			__fzf_obc_error "Unknown option '${option2display}'"
 			return 1

@@ -227,6 +227,7 @@ create_cfg_files4tests() {
 @test "__fzf_obc_cfg_get" {
 	local expected_var
 	create_cfg_files4tests
+	local FZF_OBC_STD_ENABLE=1
 	run source /dev/stdin <<<"$(__fzf_obc_print_cfg_func "${BATS_TEST_TMPDIR}/.config/fzf-obc" "${BATS_TEST_TMPDIR}/.config1/fzf-obc")"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
@@ -295,6 +296,12 @@ create_cfg_files4tests() {
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
 	[ "$expected_var" == "ini:plugins:kill:process" ]
+	unset FZF_OBC_STD_ENABLE
+	expected_var=
+	run __fzf_obc_cfg_get expected_var std fzf_trigger "kill" "process"
+	[ "$status" -eq 0 ]
+	[ "$output" == "" ]
+	[ "$expected_var" == "" ]
 }
 
 @test "__fzf_obc_load_functions" {
@@ -331,6 +338,9 @@ create_cfg_files4tests() {
 	mkdir -p "${HOME}/.config/fzf-obc"
 	cat <<-EOF > "${HOME}/.config/fzf-obc/fzf-obc.ini"
 		[DEFAULT]
+		std_enable=1
+		mlt_enable=1
+		rec_enable=1
 		std_fzf_trigger=''
 		mlt_fzf_trigger='*'
 		rec_fzf_trigger='**'
