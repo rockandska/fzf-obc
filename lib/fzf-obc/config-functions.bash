@@ -126,6 +126,47 @@ __fzf_obc_print_ini_config() {
 	done
 }
 
+__fzf_obc_print_options_declaration() {
+	# Print a sourcable declaration of fzf-obc variables
+	# optionnal prefix could be supplied
+	local trigger_type_arr=(
+		"std"
+		"mlt"
+		"rec"
+	)
+	if [[ -n "${1:-}" ]];then
+		trigger_type_arr=("$1")
+	fi
+
+	# Declare all options type
+	local options_type_arr=(
+		"enable"
+		"fzf_trigger"
+		"fzf_multi"
+		"fzf_opts"
+		"fzf_binds"
+		"fzf_size"
+		"fzf_position"
+		"fzf_tmux"
+		"fzf_colors"
+		"sort_opts"
+		"filedir_short"
+		"filedir_colors"
+		"filedir_hidden_first"
+		"filedir_maxdepth"
+		"filedir_exclude_path"
+	)
+
+	# loop to declare all variables as local
+	# local [trigger_type]_[options_type]
+	local x y
+	for x in "${trigger_type_arr[@]}";do
+		for y in "${options_type_arr[@]}";do
+			printf 'local %s_%s=\n' "${x}" "${y}"
+		done
+	done
+}
+
 __fzf_obc_print_cfg_func() {
 	# will print a function definition containing all configuration case
 	# present in the directories defined as parameter
@@ -134,10 +175,15 @@ __fzf_obc_print_cfg_func() {
 		return 1
 	fi
 	__fzf_obc_debug 'Generating __fzf_obc_cfg_get function....' 'Directories used:' "$@"
-	printf '%s\n' '__fzf_obc_cfg_get() {'
+	# Transforming ini file in bash case style
+	# shellcheck disable=SC2016
+	local case_config
+	case_config=$(sed -n -r -e '/^\s*\[.*\]\s*$/{s/\[//;s/\]/\)/;:a' -e	's/\[/;;\n/;s/\]/\)/' -e '$!N;$!ba' -e '}' -e '${s/$/\n;;/}' -e 'p'	<(__fzf_obc_print_ini_config "$@"))
+	# Create function to get only one parameter
 	cat <<- 'EOF'
-		# __fzf_obc_cfg_get [trigger] [option] [cmd] [plugin]
-		# __fzf_obc_cfg_get std fzf_trigger kill process
+		__fzf_obc_cfg_get() {
+		# __fzf_obc_cfg_get RETURN_VAR trigger option [cmd] [plugin]
+		# __fzf_obc_cfg_get output_var std fzf_trigger kill process
 		local return_var="${1:-}"
 		local trigger="${2:-}"
 		local option="${3:-}"
@@ -160,43 +206,9 @@ __fzf_obc_print_cfg_func() {
 			__fzf_obc_error "Missing 'option' parameter"
 			return 1
 		fi
-
-		# Declare local variables by trigger type
-		# Standard, Multi selection, Recursive
-		local trigger_type_arr=(
-			"std"
-			"mlt"
-			"rec"
-		)
-
-		# Declare all options type
-		local options_type_arr=(
-			"enable"
-			"fzf_trigger"
-			"fzf_multi"
-			"fzf_opts"
-			"fzf_binds"
-			"fzf_size"
-			"fzf_position"
-			"fzf_tmux"
-			"fzf_colors"
-			"sort_opts"
-			"filedir_short"
-			"filedir_colors"
-			"filedir_hidden_first"
-			"filedir_maxdepth"
-			"filedir_exclude_path"
-		)
-
-		# loop to declare all variables as local
-		# local [trigger_type]_[options_type]
-		local x y
-		for x in "${trigger_type_arr[@]}";do
-			for y in "${options_type_arr[@]}";do
-				eval "local ${x}_${y}="
-			done
-		done
-
+	EOF
+	__fzf_obc_print_options_declaration
+	cat <<- 'EOF'
 		# Define loading order (lower first)
 		local cfg2test
 		cfg2test=("DEFAULT")
@@ -210,9 +222,7 @@ __fzf_obc_print_cfg_func() {
 		for cfg_level in "${cfg2test[@]}";do
 			case "${cfg_level}" in
 	EOF
-	# Transforming ini file in bash case style
-	# shellcheck disable=SC2016
-	sed -n -r -e '/^\s*\[.*\]\s*$/{s/\[//;s/\]/\)/;:a' -e 's/\[/;;\n/;s/\]/\)/' -e '$!N;$!ba' -e '}' -e '${s/$/\n;;/}' -e 'p' <(__fzf_obc_print_ini_config "$@")
+	echo "$case_config"
 	cat <<- 'EOF'
 			esac
 		done
