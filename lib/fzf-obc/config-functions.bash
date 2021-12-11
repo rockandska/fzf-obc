@@ -328,3 +328,53 @@ __fzf_obc_print_cfg_func() {
 	}
 	EOF
 }
+
+__fzf_obc_detect_trigger() {
+	# called by __fzf_obc_trap__get_comp_words_by_ref
+	local trigger_type=(std mlt rec)
+	local trigger
+	local trigger_value
+	local trigger_regex
+	local trigger_size=-1
+	local current_trigger_value
+	for trigger in "${trigger_type[@]}";do
+		__fzf_obc_cfg_get trigger_value "${trigger}" "fzf_trigger"
+		if [[ -n "${trigger_value}" ]];then
+			__fzf_obc_debug "Trigger '${trigger}' value is '${trigger_value}'"
+			printf -v trigger_regex '^(.*)%q$' "${trigger_value}"
+		else
+			__fzf_obc_debug "Trigger '${trigger}' value is ''"
+			trigger_regex="^(.*)$"
+		fi
+		if [[ "${cur}" =~ ${trigger_regex} ]];then
+			__fzf_obc_debug "Found trigger '${trigger}'"
+			if [[ "${#trigger_value}" -gt "${trigger_size}" ]];then
+				__fzf_obc_debug "Trigger length is longer than the previous one. Set current_trigger_type to '${trigger}'"
+				trigger_size="${#trigger_value}"
+				current_trigger_value="${trigger_value}"
+				# shellcheck disable=SC2034
+				current_cur="${BASH_REMATCH[1]}"
+				# shellcheck disable=SC2034
+				current_trigger_type="${trigger}"
+			else
+				__fzf_obc_debug "Trigger length is shorter than the previous one"
+			fi
+		fi
+	done
+	# shellcheck disable=SC2154
+	__fzf_obc_debug "Original values :" "cur :" "${cur}" "prev :" "${prev}" "words :" "${words[@]}" "cword :" "${cword}"
+	# shellcheck disable=SC2034
+	cur="${current_cur:-${cur:-}}"
+	# Escape trigger value
+	printf -v current_trigger_value '%q' "${current_trigger_value:-}"
+	# Remove trigger value from the current word in words
+	# shellcheck disable=SC2034
+	words[${cword}]=${words[${cword}]%${current_trigger_value}}
+	# shellcheck disable=SC2034
+	current_prev="${prev:-}"
+	# shellcheck disable=SC2034
+	current_words=("${words[@]}")
+	# shellcheck disable=SC2034
+	current_cword="${cword:-}"
+	__fzf_obc_debug "Updated values :" "cur :" "${cur}" "prev :" "${prev}" "words :" "${words[@]}" "cword :" "${cword}"
+}

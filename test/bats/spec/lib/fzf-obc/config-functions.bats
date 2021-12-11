@@ -324,3 +324,33 @@ create_cfg_files4tests() {
 	declare -f user_funcs1_test
 	declare -f user_funcs1_test
 }
+
+@test "__fzf_obc_detect_trigger" {
+	local HOME="${BATS_TEST_TMPDIR}"
+	local expected_value
+	mkdir -p "${HOME}/.config/fzf-obc"
+	cat <<-EOF > "${HOME}/.config/fzf-obc/fzf-obc.ini"
+		[DEFAULT]
+		std_fzf_trigger=''
+		mlt_fzf_trigger='*'
+		rec_fzf_trigger='**'
+	EOF
+	run source /dev/stdin <<<"$(__fzf_obc_print_cfg_func "${HOME}/.config/fzf-obc")"
+	[ "$status" -eq 0 ]
+	[ "$output" == "" ]
+	run __fzf_obc_cfg_get expected_value mlt fzf_trigger
+	[ "$status" -eq 0 ]
+	[ "$output" == "" ]
+	[ "${expected_value}" == "*" ]
+	local cur="/tmp*"
+	local words=("ls" "/tmp*" "/etc*")
+	local cword="1"
+	local prev
+	local current_cur current_words current_cword current_prev current_trigger_type
+	run __fzf_obc_detect_trigger
+	[ "$status" -eq 0 ]
+	[ "$output" == "" ]
+	[ "$cur" == "/tmp" ]
+	[ "${words[1]}" == "/tmp" ]
+	[ "${words[2]}" == "/etc*" ]
+}
