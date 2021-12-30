@@ -225,7 +225,6 @@ create_cfg_files4tests() {
 }
 
 @test "__fzf_obc_cfg_get" {
-	local expected_var
 	create_cfg_files4tests
 	local FZF_OBC_STD_ENABLE=1
 	run source /dev/stdin <<<"$(__fzf_obc_print_cfg_func "${BATS_TEST_TMPDIR}/.config/fzf-obc" "${BATS_TEST_TMPDIR}/.config1/fzf-obc")"
@@ -233,10 +232,10 @@ create_cfg_files4tests() {
 	[ "$output" == "" ]
 	run __fzf_obc_cfg_get
 	[ "$status" -eq 1 ]
-	[ "$bats_stderr" == "ERROR __fzf_obc_cfg_get: __fzf_obc_cfg_get RETURN_VAR TRIGGER OPTION [cmd] [plugin]" ]
+	[ "$bats_stderr" == "ERROR __fzf_obc_cfg_get: __fzf_obc_cfg_get RETURN_VAR_PREFIX TRIGGER OPTION [cmd] [plugin]" ]
 	run __fzf_obc_cfg_get ""
 	[ "$status" -eq 1 ]
-	[ "$bats_stderr" == "ERROR __fzf_obc_cfg_get: Missing 'return_var' parameter" ]
+	[ "$bats_stderr" == "ERROR __fzf_obc_cfg_get: Missing 'return_var_prefix' parameter" ]
 	run __fzf_obc_cfg_get a_var ""
 	[ "$status" -eq 1 ]
 	[ "$bats_stderr" == "ERROR __fzf_obc_cfg_get: Missing 'trigger' parameter" ]
@@ -246,34 +245,36 @@ create_cfg_files4tests() {
 	run __fzf_obc_cfg_get a_var "a" "test"
 	[ "$status" -eq 1 ]
 	[ "$bats_stderr" == "ERROR __fzf_obc_cfg_get: Unknown option 'a_test'" ]
-	run __fzf_obc_cfg_get expected_var std fzf_trigger
+	local current_std_fzf_trigger
+	run __fzf_obc_cfg_get current std fzf_trigger
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "default1" ]
-	run __fzf_obc_cfg_get expected_var std fzf_trigger "unknown"
+	[ "$current_fzf_trigger" == "default1" ]
+	run __fzf_obc_cfg_get current std fzf_trigger "unknown"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "default1" ]
-	run __fzf_obc_cfg_get expected_var std fzf_trigger "unknown" "none"
+	[ "$current_fzf_trigger" == "default1" ]
+	run __fzf_obc_cfg_get current std fzf_trigger "unknown" "none"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "plugins:default1" ]
-	run __fzf_obc_cfg_get expected_var std fzf_trigger "kill"
+	[ "$current_fzf_trigger" == "plugins:default1" ]
+	run __fzf_obc_cfg_get current std fzf_trigger "kill"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "kill1" ]
-	run __fzf_obc_cfg_get expected_var std fzf_trigger "kill" "none"
+	[ "$current_fzf_trigger" == "kill1" ]
+	run __fzf_obc_cfg_get current std fzf_trigger "kill" "none"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "plugins:kill:default1" ]
-	run __fzf_obc_cfg_get expected_var std fzf_trigger "kill" "process"
+	[ "$current_fzf_trigger" == "plugins:kill:default1" ]
+	run __fzf_obc_cfg_get current std fzf_trigger "kill" "process"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "plugins:kill:process1" ]
-	FZF_OBC_STD_FZF_TMUX=3 run __fzf_obc_cfg_get expected_var std fzf_tmux
+	[ "$current_fzf_trigger" == "plugins:kill:process1" ]
+	FZF_OBC_STD_FZF_TMUX=3 run __fzf_obc_cfg_get current std fzf_tmux
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "3" ]
+	[ "$current_fzf_tmux" == "3" ]
+	unset current_fzf_tmux
 	# add an ini file, cfg files should not be read anymore
 	cat <<- 'EOF' > "${BATS_TEST_TMPDIR}/.config/fzf-obc/fzf-obc.ini"
 		[DEFAULT]
@@ -288,20 +289,20 @@ create_cfg_files4tests() {
 	run source /dev/stdin <<<"$(__fzf_obc_print_cfg_func "${BATS_TEST_TMPDIR}/.config1/fzf-obc" "${BATS_TEST_TMPDIR}/.config/fzf-obc")"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	run __fzf_obc_cfg_get expected_var std fzf_trigger
+	run __fzf_obc_cfg_get current std fzf_trigger
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "ini:default" ]
-	run __fzf_obc_cfg_get expected_var std fzf_trigger "kill" "process"
+	[ "$current_fzf_trigger" == "ini:default" ]
+	run __fzf_obc_cfg_get current std fzf_trigger "kill" "process"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "ini:plugins:kill:process" ]
+	[ "$current_fzf_trigger" == "ini:plugins:kill:process" ]
 	unset FZF_OBC_STD_ENABLE
-	expected_var=
-	run __fzf_obc_cfg_get expected_var std fzf_trigger "kill" "process"
+	unset current_fzf_trigger
+	run __fzf_obc_cfg_get current std fzf_trigger "kill" "process"
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
-	[ "$expected_var" == "" ]
+	[ "${current_fzf_trigger:-}" == "" ]
 }
 
 @test "__fzf_obc_load_functions" {

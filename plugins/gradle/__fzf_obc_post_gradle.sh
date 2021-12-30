@@ -9,7 +9,8 @@ __fzf_obc_post_gradle() {
 			#################################################
 			# Remove help comments from the display results #
 			#################################################
-			__fzf_obc_load_plugin_config remove_comments
+			current_plugin=remove_comments
+			__fzf_obc_cfg_get current "${current_trigger_type}" "--all"	"${current_cmd_name}" "${current_plugin}"
 			return 0
 	esac
 }

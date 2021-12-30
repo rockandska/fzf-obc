@@ -99,14 +99,18 @@ __fzf_obc_print_ini_config() {
 	local ini_config
 	local dir
 	for dir in "$@";do
-		if ! [ -f "${dir}/fzf-obc.ini" ];then
-			__fzf_obc_debug "'fzf-obc.ini' not found in '${dir}', try to found old config format...."
-			ini_config+=$(__fzf_obc_print_cfg2ini "${dir}")
-			ini_config+=$'\n'
+		if [ -d "${dir}" ];then
+			if ! [ -f "${dir}/fzf-obc.ini" ];then
+				__fzf_obc_debug "'fzf-obc.ini' not found in '${dir}', try to found old config format...."
+				ini_config+=$(__fzf_obc_print_cfg2ini "${dir}")
+				ini_config+=$'\n'
+			else
+				__fzf_obc_debug "Found 'fzf-obc.ini' in '${dir}'"
+				ini_config+=$(<"${dir}/fzf-obc.ini")
+				ini_config+=$'\n'
+			fi
 		else
-			__fzf_obc_debug "Found 'fzf-obc.ini' in '${dir}'"
-			ini_config+=$(<"${dir}/fzf-obc.ini")
-			ini_config+=$'\n'
+				__fzf_obc_debug "'${dir}' does not exists, ignoring...."
 		fi
 	done
 
@@ -134,9 +138,6 @@ __fzf_obc_print_options_declaration() {
 		"mlt"
 		"rec"
 	)
-	if [[ -n "${1:-}" ]];then
-		trigger_type_arr=("$1")
-	fi
 
 	# Declare all options type
 	local options_type_arr=(
@@ -156,6 +157,14 @@ __fzf_obc_print_options_declaration() {
 		"filedir_maxdepth"
 		"filedir_exclude_path"
 	)
+
+	if [[ -n "${1:-}" ]];then
+		trigger_type_arr=("$1")
+	fi
+
+	if [[ -n "${2:-}" ]];then
+		declare -p options_type_arr
+	fi
 
 	# loop to declare all variables as local
 	# local [trigger_type]_[options_type]
@@ -182,20 +191,22 @@ __fzf_obc_print_cfg_func() {
 	# Create function to get only one parameter
 	cat <<- 'EOF'
 		__fzf_obc_cfg_get() {
-		# __fzf_obc_cfg_get RETURN_VAR trigger option [cmd] [plugin]
-		# __fzf_obc_cfg_get output_var std fzf_trigger kill process
-		local return_var="${1:-}"
+		# __fzf_obc_cfg_get RETURN_VAR_PREFIX trigger option [cmd] [plugin]
+		# __fzf_obc_cfg_get current std fzf_trigger kill process
+		# ---> current_fzf_trigger will be set
+		local IFS=$' \t\n'
+		local return_var_prefix="${1:-}"
 		local trigger="${2:-}"
 		local option="${3:-}"
 		local cmd="${4:-}"
 		local plugin="${5:-}"
 
 		if [ "${#@}" -eq 0 ];then
-			__fzf_obc_error "__fzf_obc_cfg_get RETURN_VAR TRIGGER OPTION [cmd] [plugin]"
+			__fzf_obc_error "__fzf_obc_cfg_get RETURN_VAR_PREFIX TRIGGER OPTION [cmd] [plugin]"
 			return 1
 		fi
-		if [ -z "${return_var}" ];then
-			__fzf_obc_error "Missing 'return_var' parameter"
+		if [ -z "${return_var_prefix}" ];then
+			__fzf_obc_error "Missing 'return_var_prefix' parameter"
 			return 1
 		fi
 		if [ -z "${trigger}" ];then
@@ -207,7 +218,7 @@ __fzf_obc_print_cfg_func() {
 			return 1
 		fi
 	EOF
-	__fzf_obc_print_options_declaration
+	__fzf_obc_print_options_declaration "" "1"
 	cat <<- 'EOF'
 		# Define loading order (lower first)
 		local cfg2test
@@ -227,34 +238,47 @@ __fzf_obc_print_cfg_func() {
 			esac
 		done
 
-		local option2display="${trigger}_${option}"
-
-		# Try FZF_OBC[trigger_option] env
-		local env_var
-		env_var="$( echo "FZF_OBC_${option2display}" | tr a-z A-Z)"
-		if [[ -n "${!env_var+x}" ]];then
-			eval "${option2display}=\"${!env_var}\""
-		fi
-
-		# specific case
-		case "${option2display:-}" in
-			${trigger}_filedir_colors)
-				[[ -n "${LS_COLORS:-}" ]] || eval "${trigger}_filedir_colors=0"
-				;;
-		esac
-
-		if [ -n "${!option2display+x}" ];then
-			local is_enable="${trigger}_enable"
-			local is_enable_env=$( echo "FZF_OBC_${trigger}_enable" | tr a-z A-Z)
-			if ((${!is_enable_env:-${!is_enable}}));then
-				printf -v "${return_var}" '%s' "${!option2display:-}"
-			else
-				__fzf_obc_debug "fzf-obc is disable. let the variable '${return_var}'	untouched"
-			fi
+		local option2get
+		if [[ "${option}" != "--all" ]];then
+			option2get=("${option}")
 		else
-			__fzf_obc_error "Unknown option '${option2display}'"
-			return 1
+			option2get=()
+			for option in "${options_type_arr[@]}";do
+				option2get+=("${option}")
+			done
 		fi
+
+		local option2env
+		option2env=($(echo "${option2get[@]/#/FZF_OBC_${trigger}_}" | tr a-z A-Z))
+
+		local is_enable="${trigger}_enable"
+		local is_enable_env=$( echo "FZF_OBC_${trigger}_enable" | tr a-z A-Z)
+
+		local i
+		for i in "${!option2get[@]}";do
+			option="${trigger}_${option2get[$i]}"
+			if [[ -n "${!option2env[$i]+x}" ]];then
+				eval "${option}=\"${!option2env[$i]}\""
+			fi
+
+			# specific case
+			case "${option}" in
+				${trigger}_filedir_colors)
+					[[ -n "${LS_COLORS:-}" ]] || eval "${option}=0"
+					;;
+			esac
+
+			if [ -n "${!option+x}" ];then
+				if ((${!is_enable_env:-${!is_enable}}));then
+					printf -v "${return_var_prefix}_${option2get[$i]}" '%s' "${!option:-}"
+				else
+					__fzf_obc_debug "fzf-obc is disable. let the variable '${return_var_prefix}_${option2get[$i]}'	untouched"
+				fi
+			else
+				__fzf_obc_error "Unknown option '${option}'"
+				return 1
+			fi
+		done
 	}
 	EOF
 }
@@ -263,25 +287,25 @@ __fzf_obc_detect_trigger() {
 	# called by __fzf_obc_trap__get_comp_words_by_ref
 	local trigger_type=(std mlt rec)
 	local trigger
-	local trigger_value
 	local trigger_regex
 	local trigger_size=-1
 	local current_trigger_value
+	local value_fzf_trigger
 	for trigger in "${trigger_type[@]}";do
-		__fzf_obc_cfg_get trigger_value "${trigger}" "fzf_trigger"
-		if [[ -n "${trigger_value}" ]];then
-			__fzf_obc_debug "Trigger '${trigger}' value is '${trigger_value}'"
-			printf -v trigger_regex '^(.*)%q$' "${trigger_value}"
+		__fzf_obc_cfg_get value "${trigger}" "fzf_trigger"
+		if [[ -n "${value_fzf_trigger}" ]];then
+			__fzf_obc_debug "Trigger '${trigger}' value is '${value_fzf_trigger}'"
+			printf -v trigger_regex '^(.*)%q$' "${value_fzf_trigger}"
 		else
 			__fzf_obc_debug "Trigger '${trigger}' value is ''"
 			trigger_regex="^(.*)$"
 		fi
 		if [[ "${cur}" =~ ${trigger_regex} ]];then
 			__fzf_obc_debug "Found trigger '${trigger}'"
-			if [[ "${#trigger_value}" -gt "${trigger_size}" ]];then
+			if [[ "${#value_fzf_trigger}" -gt "${trigger_size}" ]];then
 				__fzf_obc_debug "Trigger length is longer than the previous one. Set current_trigger_type to '${trigger}'"
-				trigger_size="${#trigger_value}"
-				current_trigger_value="${trigger_value}"
+				trigger_size="${#value_fzf_trigger}"
+				current_trigger_value="${value_fzf_trigger}"
 				# shellcheck disable=SC2034
 				current_cur="${BASH_REMATCH[1]}"
 				# shellcheck disable=SC2034
@@ -289,17 +313,21 @@ __fzf_obc_detect_trigger() {
 			else
 				__fzf_obc_debug "Trigger length is shorter than the previous one"
 			fi
+		else
+			__fzf_obc_debug "Trigger '${trigger}' not found"
 		fi
 	done
 	# shellcheck disable=SC2154
 	__fzf_obc_debug "Original values :" "cur :" "${cur}" "prev :" "${prev}" "words :" "${words[@]}" "cword :" "${cword}"
 	# shellcheck disable=SC2034
 	cur="${current_cur:-${cur:-}}"
-	# Escape trigger value
-	printf -v current_trigger_value '%q' "${current_trigger_value:-}"
-	# Remove trigger value from the current word in words
-	# shellcheck disable=SC2034
-	words[${cword}]=${words[${cword}]%${current_trigger_value}}
+	if [[ "${cword}" -ge 0 ]];then
+		# Escape trigger value
+		printf -v current_trigger_value '%q' "${current_trigger_value:-}"
+		# Remove trigger value from the current word in words
+		# shellcheck disable=SC2034
+		words[${cword}]=${words[${cword}]%${current_trigger_value}}
+	fi
 	# shellcheck disable=SC2034
 	current_prev="${prev:-}"
 	# shellcheck disable=SC2034

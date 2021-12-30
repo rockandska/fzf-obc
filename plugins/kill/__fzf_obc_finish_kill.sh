@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 __fzf_obc_finish_kill() {
-	if [[ "${current_plugin:-}" == "kill/process" ]];then
+	if [[ "${current_plugin:-}" == "process" ]];then
 		##########################
 		# Processes fuzzy finder #
 		##########################

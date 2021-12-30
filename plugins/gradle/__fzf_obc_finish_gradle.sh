@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 __fzf_obc_finish_gradle() {
-	if [[ "${current_plugin:-}" == "gradle/remove_comments" ]];then
+	if [[ "${current_plugin:-}" == "remove_comments" ]];then
 		#################################################
 		# Remove help comments from the display results #
 		#################################################

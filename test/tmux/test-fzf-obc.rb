@@ -209,7 +209,8 @@ class FiledirHomeShortOff < FiledirHome
   def setup_vars
     super
     @rcfile_data += <<-HEREDOC
-      export FZF_OBC_SHORT_FILEDIR=0
+      export FZF_OBC_STD_FILEDIR_SHORT=0
+      export FZF_OBC_REC_FILEDIR_SHORT=0
     HEREDOC
     @fzf_start_dir = "#{@filedir_start}"
   end

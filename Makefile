@@ -10,6 +10,7 @@ _COMMA := ,
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(realpath $(dir $(MKFILE_PATH)))
+TARGET_EXTRA_ARGS ?=
 
 # Softwares
 SHELL_CHECK_VERSION := v0.7.0
