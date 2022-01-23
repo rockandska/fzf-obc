@@ -5,25 +5,10 @@ d	:= $(dir)
 
 # Targets
 .PHONY: $(TEST_SHELLCHECK_TARGETS)
-$(TEST_SHELLCHECK_TARGETS): $(GITHUB_WORKFLOWS_TARGETS) $(TEST_SHELLCHECK_DIR)/tmp/bin/shellcheck
+$(TEST_SHELLCHECK_TARGETS): $(GITHUB_WORKFLOWS_TARGETS) $(TEST_SHELLCHECK_DIR)/tmp/bin/shellcheck bin/fzf-obc
 	$(info ##### Start tests with shellcheck #####)
 	$(call check_cmd_path,shellcheck,$(TEST_SHELLCHECK_DIR)/tmp/bin/shellcheck)
-	while IFS= read -r -d $$'' file; do
-		case "$$file" in
-			*/*.sh|*/*.bash) : ;;
-			*/tmp/*|*/docs/*) continue ;;
-			*)
-				if [[ $$(file -b --mime-type "$$file") == text/x-shellscript ]];then
-					:
-				elif IFS= LC_ALL=C read -r shebang < "$$file" && [[ "$$shebang" =~ .*(/| )(bash|sh) ]];then
-					:
-				else
-					continue
-				fi
-				;;
-		esac
-		shellcheck -s bash -x -P $(MKFILE_DIR) $$file
-	done < <(find $(MKFILE_DIR) \( -path $(MKFILE_DIR)/.git -prune \) -o \( -type f -print0 \))
+	shellcheck -s bash bin/fzf-obc
 
 #####################
 # Test dependencies

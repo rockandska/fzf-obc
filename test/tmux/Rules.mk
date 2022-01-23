@@ -39,7 +39,7 @@ test-tmux: $(TEST_TMUX_TARGETS_PREFIX)
 $(TEST_TMUX_TARGETS_PREFIX): $(TEST_TMUX_TARGETS)
 
 .PHONY: $(TEST_TMUX_TARGETS)
-$(TEST_TMUX_TARGETS) : $(TEST_TMUX_TARGETS_PREFIX)-% : $(MKFILE_DIR)/.github/workflows/pull_request.yml $(TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX)-% ruby-env python-env
+$(TEST_TMUX_TARGETS) : $(TEST_TMUX_TARGETS_PREFIX)-% : $(GITHUB_WORKFLOWS_TARGETS) bin/fzf-obc $(TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX)-% ruby-env python-env
 	$(info ##### Start tests with minitest and tmux on docker (image: $(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*)) #####)
 	$(call check_cmd_path,asciinema,$(TEST_TMUX_DIR)/tmp/bin/asciinema)
 	ruby --version

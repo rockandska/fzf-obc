@@ -7,32 +7,36 @@ _COMMA := ,
 #####
 # vars
 #####
+PROGRAM := bin/fzf-obc
+PREFIX ?= $(HOME)/.local
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(realpath $(dir $(MKFILE_PATH)))
 TARGET_EXTRA_ARGS ?=
+
+SRC_FILES = $(shell find src/ -name '*.sh' -o -name '*.bash' | sort -r)
 
 # Softwares
 SHELL_CHECK_VERSION := v0.7.0
 BATS_VERSION := v1.5.0
 FZF_VERSIONS := 0.18.0
 
-# test
-TEST_DIR := test
-TEST_TARGETS_PREFIX := test
-TEST_TARGETS = $(GITHUB_WORKFLOWS_TARGETS) $(TEST_SHELLCHECK_TARGETS) $(TEST_BATS_TARGETS) $(TEST_TMUX_TARGETS)
-CLEAN := $(CLEAN) $(TEST_DIR)/tmp
-
 # .github/workflows
 GITHUB_WORKFLOWS_DIR := .github/workflows
 GITHUB_WORKFLOWS_TARGETS_PREFIX := github-workflows
 GITHUB_WORKFLOWS_TARGETS := $(wildcard $(GITHUB_WORKFLOWS_DIR)/*.yml)
 
+# test
+TEST_DIR := test
+TEST_TARGETS_PREFIX := test
+TEST_TARGETS = $(GITHUB_WORKFLOWS_TARGETS) $(TEST_SHELLCHECK_TARGETS) $(TEST_BATS_TARGETS) $(TEST_TMUX_TARGETS)
+DIST_CLEAN := $(DIST_CLEAN) $(TEST_DIR)/tmp
+
 # test/bats
 TEST_BATS_DIR := test/bats
 TEST_BATS_TARGETS_PREFIX := test-bats
 TEST_BATS_TARGETS = $(addprefix $(TEST_BATS_TARGETS_PREFIX)-,$(TEST_BATS_DOCKER_IMAGES_LIST))
-CLEAN := $(CLEAN) $(TEST_BATS_DIR)/tmp
+DIST_CLEAN := $(DIST_CLEAN) $(TEST_BATS_DIR)/tmp
 
 # test/tmux
 TEST_TMUX_DIR := test/tmux
@@ -40,7 +44,7 @@ TEST_TMUX_TARGETS_PREFIX := test-tmux
 TEST_TMUX_TARGETS = $(addprefix $(TEST_TMUX_TARGETS_PREFIX)-,$(TEST_TMUX_DOCKER_IMAGES_LIST))
 TEST_TMUX_FZF_VERSION := $(firstword $(FZF_VERSIONS))
 TEST_TMUX_RUBY_VERSION := $(shell cat $(TEST_TMUX_DIR)/.ruby-version)
-CLEAN := $(CLEAN) $(TEST_TMUX_DIR)/tmp
+DIST_CLEAN := $(DIST_CLEAN) $(TEST_TMUX_DIR)/tmp
 
 # test/bats/docker
 TEST_BATS_DOCKER_DIR := test/bats/docker
@@ -63,7 +67,7 @@ TEST_TMUX_DOCKER_IMAGES_TARGETS = $(addprefix $(TEST_TMUX_DOCKER_IMAGES_TARGET_P
 TEST_SHELLCHECK_DIR := test/shellcheck
 TEST_SHELLCHECK_TARGETS_PREFIX := test-shellcheck
 TEST_SHELLCHECK_TARGETS := test-shellcheck
-CLEAN := $(CLEAN) $(TEST_SHELLCHECK_DIR)/tmp
+DIST_CLEAN := $(DIST_CLEAN) $(TEST_SHELLCHECK_DIR)/tmp
 
 # PATH
 export PATH := $(TEST_DIR)/tmp/bin:$(PATH)

@@ -32,6 +32,8 @@ assert_env_clean() {
 		"_.*"
 		exclude_paths
 		path
+		COLUMNS
+		LINES
 	)
 	local regex
 	regex='^(declare -- .. )?('
