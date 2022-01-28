@@ -46,9 +46,20 @@ $(TEST_BATS_TARGETS_PREFIX)-check-specs:
 	done
 
 .PHONY: $(TEST_BATS_TARGETS)
+$(TEST_BATS_TARGETS) : CURRENT_DIR := $(d)
 $(TEST_BATS_TARGETS) : $(TEST_BATS_TARGETS_PREFIX)-% : $(TEST_BATS_TARGETS_PREFIX)-check-specs bin/fzf-obc $(GITHUB_WORKFLOWS_TARGETS) $(TEST_BATS_DOCKER_IMAGES_TARGET_PREFIX)-%
 	$(info ##### Start tests with bats on docker (image: $(addprefix $(TEST_BATS_DOCKER_IMAGE_NAME):,$*)) #####)
-	docker run -i --rm -e BATS_PROJECT_DIR="$(MKFILE_DIR)" -v $(MKFILE_DIR):/${MKFILE_DIR}:ro $(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*) -r $(MKFILE_DIR)/${TEST_BATS_DIR}/spec/ $(TARGET_EXTRA_ARGS)
+	mkdir -p $(MKFILE_DIR)/$(CURRENT_DIR)/tmp
+	docker run -ti --rm \
+		-e BATS_PROJECT_DIR="$(MKFILE_DIR)" \
+		-v /etc/passwd:/etc/passwd:ro \
+		-v /etc/group:/etc/group:ro \
+		-u "$$(id -u $$(whoami)):$$(id -g $$(whoami))" \
+		-v $(MKFILE_DIR):${MKFILE_DIR}:ro \
+		-v ${MKFILE_DIR}/$(CURRENT_DIR)/tmp:/tmp \
+		$(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*) \
+		-r $(MKFILE_DIR)/${TEST_BATS_DIR}/spec/ \
+		$(TARGET_EXTRA_ARGS)
 
 #####
 # Standard things

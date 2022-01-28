@@ -8,6 +8,29 @@ fi
 
 set -Eeuo pipefail
 
+create_cfg_files4tests() {
+	local i
+	mkdir -p "${BATS_TEST_TMPDIR}/.config/fzf-obc/plugins/subplugins"
+	cat <<- EOF > "${BATS_TEST_TMPDIR}/.config/fzf-obc/fzf-obc.ini"
+		[git]
+		std_fzf_trigger="level1"
+
+		[ls]
+		sort_opts=(level1 level1)
+	EOF
+	cat <<- EOF > "${BATS_TEST_TMPDIR}/.config/fzf-obc/plugins/fzf-obc.ini"
+		[git]
+		std_fzf_trigger="level2"
+
+		[DEFAULT:plugins]
+		std_fzf_trigger='level2'
+	EOF
+	cat <<- EOF > "${BATS_TEST_TMPDIR}/.config/fzf-obc/plugins/subplugins/fzf-obc.ini"
+		[DEFAULT:plugins]
+		std_fzf_trigger='level3'
+	EOF
+}
+
 register_env() {
 	printf -v "${1:-BATS_PREVIOUS_ENV}" '%s\n' "$(compgen -v | sort | while read -r var; do printf "%s=%q\n" "$var" "${!var:-}"; done)"
 }
