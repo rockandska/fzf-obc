@@ -1,12 +1,88 @@
+.ONESHELL:
 SHELL := bash
-.SHELLFLAGS := -eu -o pipefail -c
+.SHELLFLAGS := -eu -o pipefail -c $(if $(V),-x)
+_SPACE = $(eval) $(eval)
+_COMMA := ,
 
 #####
 # vars
 #####
+PROGRAM := bin/fzf-obc
+PREFIX ?= $(HOME)/.local
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-MKFILE_DIR := $(dir $(MKFILE_PATH))
+MKFILE_DIR := $(realpath $(dir $(MKFILE_PATH)))
+TARGET_EXTRA_ARGS ?=
+
+SRC_FILES = $(shell find src/ -name '*.sh' -o -name '*.bash' | sort -r)
+
+# Softwares
+SHELL_CHECK_VERSION := v0.7.0
+BATS_VERSION := v1.5.0
+FZF_VERSIONS := 0.18.0
+
+# .github/workflows
+GITHUB_WORKFLOWS_DIR := .github/workflows
+GITHUB_WORKFLOWS_TARGETS_PREFIX := github-workflows
+GITHUB_WORKFLOWS_TARGETS := $(wildcard $(GITHUB_WORKFLOWS_DIR)/*.yml)
+
+# test
+TEST_DIR := test
+TEST_TARGETS_PREFIX := test
+TEST_TARGETS = $(GITHUB_WORKFLOWS_TARGETS) $(TEST_SHELLCHECK_TARGETS) $(TEST_BATS_TARGETS) $(TEST_TMUX_TARGETS)
+DIST_CLEAN := $(DIST_CLEAN) $(TEST_DIR)/tmp
+
+# test/bats
+TEST_BATS_DIR := test/bats
+TEST_BATS_TARGETS_PREFIX := test-bats
+TEST_BATS_TARGETS = $(addprefix $(TEST_BATS_TARGETS_PREFIX)-,$(TEST_BATS_DOCKER_IMAGES_LIST))
+DIST_CLEAN := $(DIST_CLEAN) $(TEST_BATS_DIR)/tmp
+
+# test/tmux
+TEST_TMUX_DIR := test/tmux
+TEST_TMUX_TARGETS_PREFIX := test-tmux
+TEST_TMUX_TARGETS = $(addprefix $(TEST_TMUX_TARGETS_PREFIX)-,$(TEST_TMUX_DOCKER_IMAGES_LIST))
+TEST_TMUX_FZF_VERSION := $(firstword $(FZF_VERSIONS))
+TEST_TMUX_RUBY_VERSION := $(shell cat $(TEST_TMUX_DIR)/.ruby-version)
+DIST_CLEAN := $(DIST_CLEAN) $(TEST_TMUX_DIR)/tmp
+
+# test/bats/docker
+TEST_BATS_DOCKER_DIR := test/bats/docker
+TEST_BATS_DOCKER_GNU_LIST := true false
+TEST_BATS_DOCKER_IMAGE_NAME := fzf-obc-test
+TEST_BATS_DOCKER_DOCKERFILES_LIST = $(notdir $(basename $(wildcard $(TEST_BATS_DOCKER_DIR)/*.dockerfile)))
+TEST_BATS_DOCKER_IMAGES_TARGET_PREFIX := test-bats-docker-build
+TEST_BATS_DOCKER_IMAGES_LIST = $(foreach gnu,$(TEST_BATS_DOCKER_GNU_LIST),$(addsuffix -gnu-$(gnu),$(TEST_BATS_DOCKER_DOCKERFILES_LIST)))
+TEST_BATS_DOCKER_IMAGES_TARGETS = $(addprefix $(TEST_BATS_DOCKER_IMAGES_TARGET_PREFIX)-,$(TEST_BATS_DOCKER_IMAGES_LIST))
+
+# test/tmux/docker
+TEST_TMUX_DOCKER_DIR := test/tmux/docker
+TEST_TMUX_DOCKER_IMAGE_NAME := fzf-obc-test
+TEST_TMUX_DOCKER_DOCKERFILES_LIST = $(notdir $(basename $(wildcard $(TEST_TMUX_DOCKER_DIR)/*.dockerfile)))
+TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX := test-tmux-docker-build
+TEST_TMUX_DOCKER_IMAGES_LIST = $(foreach fzf,$(FZF_VERSIONS),$(addsuffix -fzf-$(fzf),$(TEST_TMUX_DOCKER_DOCKERFILES_LIST)))
+TEST_TMUX_DOCKER_IMAGES_TARGETS = $(addprefix $(TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX)-,$(TEST_TMUX_DOCKER_IMAGES_LIST))
+
+# test/shellcheck
+TEST_SHELLCHECK_DIR := test/shellcheck
+TEST_SHELLCHECK_TARGETS_PREFIX := test-shellcheck
+TEST_SHELLCHECK_TARGETS := test-shellcheck
+DIST_CLEAN := $(DIST_CLEAN) $(TEST_SHELLCHECK_DIR)/tmp
+
+# PATH
+export PATH := $(TEST_DIR)/tmp/bin:$(PATH)
+export PATH := $(TEST_BATS_DIR)/tmp/bin:$(PATH)
+export PATH := $(TEST_TMUX_DIR)/tmp/bin:$(PATH)
+export PATH := $(TEST_SHELLCHECK_DIR)/tmp/bin:$(PATH)
+
+#####
+# Test targets
+#""""
+$(if $(strip $(TEST_TARGETS)),,$(error TEST_TARGETS empty))
+$(if $(strip $(GITHUB_WORKFLOWS_TARGETS)),,$(error GITHUB_WORKFLOWS_TARGETS empty))
+$(if $(strip $(TEST_BATS_TARGETS)),,$(error TEST_BATS_TARGETS empty))
+$(if $(strip $(TEST_TMUX_TARGETS)),,$(error TEST_TMUX_TARGETS empty))
+$(if $(strip $(TEST_SHELLCHECK_TARGETS)),,$(error TEST_SHELLCHECK_TARGETS empty))
 
 #####
 # Functions
@@ -36,25 +112,14 @@ define check_cmd_path
 endef
 
 #####
-# Targets
-#####
-
-.PHONY: all
-all: test
-
-.PHONY:		clean
-clean:
-	rm -rf $(CLEAN)
-
-.SECONDARY:	$(CLEAN)
-
-# invoking make V=1 will print everything
-$(V).SILENT:
-
-#####
 # Includes
 #####
+
+dir	:= .
+include		$(dir)/Rules.mk
 
 dir	:= test
 include		$(dir)/Rules.mk
 
+dir	:= .github/workflows
+include		$(dir)/Rules.mk

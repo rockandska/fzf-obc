@@ -16,11 +16,10 @@ class Filedir
       $ insmod #{@filedir_start}
       >
         3/3
-      > #{@fzf_start_dir}d1/
-        #{@fzf_start_dir}test.ko.gz
+      > #{@fzf_start_dir}d1
         #{@fzf_start_dir}test 1.ko.gz
+        #{@fzf_start_dir}test.ko.gz
     EOF
-    @tty.send_keys("#{DOWN}")
     @tty.send_keys("#{DOWN}")
     @tty.send_keys("#{TAB}")
     @tty.assert_matches_inline("$ insmod #{@filedir_start}test\\ 1.ko.gz")
