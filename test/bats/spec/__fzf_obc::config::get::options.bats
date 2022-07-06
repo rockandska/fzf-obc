@@ -15,6 +15,19 @@ teardown() {
 	fi
 }
 
-@test "__fzf_obc::config::print::default_config" {
-	true
+@test "__fzf_obc::config::get::options should print options type" {
+	local var
+	run __fzf_obc::config::get::options var
+	[ "$status" -eq 0 ]
+	diff <(printf '%s\n' "${var[@]}") <(cat <<-EOF
+		enable
+		fzf_trigger
+		fzf_multi
+		fzf_opts
+		fzf_binds
+		fzf_height
+		fzf_colors
+		sort_opts
+	EOF
+	)
 }

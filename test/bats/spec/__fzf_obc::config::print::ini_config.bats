@@ -40,30 +40,22 @@ teardown() {
 	std_fzf_binds=('--bind' 'tab:accept')
 	mlt_fzf_binds=('--bind' 'tab:toggle+down;shift-tab:toggle+up')
 	if ((rec_fzf_multi));then
-	rec_fzf_binds=("${mlt_fzf_binds[@]}")
+	rec_fzf_binds=("${mlt_fzf_binds[@]:-}")
 	else
-	rec_fzf_binds=("${std_fzf_binds[@]}")
+	rec_fzf_binds=("${std_fzf_binds[@]:-}")
 	fi
 
-	std_fzf_size=('40%')
-	mlt_fzf_size=("${std_fzf_size[@]}")
-	rec_fzf_size=("${std_fzf_size[@]}")
+	std_fzf_height=('--height' '40%')
+	mlt_fzf_height=("${std_fzf_height[@]:-}")
+	rec_fzf_height=("${std_fzf_height[@]:-}")
 
-	std_fzf_position=('d')
-	mlt_fzf_position=("${std_fzf_position[@]}")
-	rec_fzf_position=("${std_fzf_position[@]}")
+	std_fzf_colors=('--color' 'border:15')
+	mlt_fzf_colors=("${std_fzf_colors[@]:-}")
+	rec_fzf_colors=("${std_fzf_colors[@]:-}")
 
-	std_fzf_tmux='1'
-	mlt_fzf_tmux=("${std_fzf_tmux[@]}")
-	rec_fzf_tmux=("${std_fzf_tmux[@]}")
-
-	std_fzf_colors=('border:15')
-	mlt_fzf_colors=("${std_fzf_colors[@]}")
-	rec_fzf_colors=("${std_fzf_colors[@]}")
-
-	std_sort_opts=('-V' '-d' '-f')
-	mlt_sort_opts=("${std_sort_opts[@]}")
-	rec_sort_opts=("${std_sort_opts[@]}")
+	std_sort_opts=()
+	mlt_sort_opts=("${std_sort_opts[@]:-}")
+	rec_sort_opts=("${std_sort_opts[@]:-}")
 	[DEFAULT:plugins]
 	std_fzf_trigger='level2'
 	std_fzf_trigger='level3'

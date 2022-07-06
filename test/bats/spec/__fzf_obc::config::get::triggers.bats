@@ -15,10 +15,11 @@ teardown() {
 	fi
 }
 
-@test "__fzf_obc::config::print::triggers should print triggers type" {
-	run __fzf_obc::config::print::triggers
+@test "__fzf_obc::config::get::triggers should print triggers type" {
+	local var
+	run __fzf_obc::config::get::triggers var
 	[ "$status" -eq 0 ]
-	diff <(echo "$output") <(cat <<-EOF
+	diff <(printf '%s\n' "${var[@]}") <(cat <<-EOF
 		std
 		mlt
 		rec

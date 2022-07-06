@@ -17,9 +17,11 @@ jobs:
           - test-shellcheck
           - test-bats-bash-4.4.23-gnu-true
           - test-bats-bash-3.2.57-gnu-true
+          - test-bats-bash-4.3.48-gnu-true
           - test-bats-bash-4.1.17-gnu-true
           - test-bats-bash-4.4.23-gnu-false
           - test-bats-bash-3.2.57-gnu-false
+          - test-bats-bash-4.3.48-gnu-false
           - test-bats-bash-4.1.17-gnu-false
           - test-tmux-ubuntu-16-fzf-0.18.0
           - test-tmux-debian-10-fzf-0.18.0

@@ -3,6 +3,7 @@ fzf-obc() {
 	# To redraw line after fzf closes (printf '\e[5n')
 	bind '"\e[0n": redraw-current-line' &> /dev/null || true
 	__fzf_obc::log::debug "Start fzf-obc"
+	__fzf_obc::config::get::create .
 	__fzf_obc::complete::update
 	__fzf_obc::trap::add::all
 }

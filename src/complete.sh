@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 __fzf_obc::complete::wrapper::FUNC_NAME() {
 	__fzf_obc::log::debug "COMP_TYPE :" "${COMP_TYPE}"
+
+	# Backup old globstar setting
+	trap 'eval "$previous_globstar_setting"' RETURN
+	local previous_globstar_setting
+	previous_globstar_setting="$(shopt -p globstar)"
+	shopt -u globstar
+
 	# shellcheck disable=SC2034
 	{
-	local current_cmd_name="${1}"
+	local current_cmd="${1}"
 	local current_func_name="FUNC_NAME"
+	local current_trigger # set by __fzf_obc::trigger::detect
 	}
 
 	local complete_status=0
@@ -15,7 +23,9 @@ __fzf_obc::complete::wrapper::FUNC_NAME() {
 	if [[ "${FZF_OBC_DISABLED:-0}" -eq 0 ]];then
 		__fzf_obc::log::debug "fzf-obc is enabled"
 		# completion is done, displaying it with fzf
+		#if [ ${COMP_TYPE:-0} -eq 63 ];then
 		__fzf_obc::completion::show
+		#fi
 		# Some completion function update the complete definition on first load
 		# So, check if complete definition is up to date
 		__fzf_obc::complete::update

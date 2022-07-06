@@ -47,6 +47,8 @@ __fzf_obc::trap::function::_get_comp_words_by_ref() {
 	# current_words
 	# current_cword
 
+	__fzf_obc::trigger::detect
+
 	# shellcheck disable=SC2034
 	{
 	current_cur="${cur:-}"

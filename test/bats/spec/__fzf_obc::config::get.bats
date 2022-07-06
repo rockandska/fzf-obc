@@ -37,15 +37,6 @@ teardown() {
 	[ "${current_fzf_trigger}" == '0' ]
 }
 
-@test "__fzf_obc::config::get should return env VAR value if set" {
-	run __fzf_obc::config::get::create "${BATS_TEST_TMPDIR}"
-	[ "$status" -eq 0 ]
-	[ "$output" == "" ]
-	local current_fzf_trigger
-	FZF_OBC_MLT_FZF_TRIGGER='ENV' __fzf_obc::config::get current mlt fzf_trigger
-	[ "${current_fzf_trigger}" == 'ENV' ]
-}
-
 @test "__fzf_obc::config::get should return option value specific to command" {
 	cat > "${BATS_TEST_TMPDIR}/fzf-obc.ini" <<-EOF
 	[git]
