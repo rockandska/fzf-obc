@@ -1,0 +1,3 @@
+selenium
+# need to be adpated depending on chrome version installed
+chromedriver_binary==107.0.5304.62.0

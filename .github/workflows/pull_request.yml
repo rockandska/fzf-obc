@@ -1,6 +1,5 @@
 name: Tests
-on:
-  pull_request:
+on: [push, pull_request]
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -28,12 +27,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Install Ruby
+      - name: Install Python
         if: contains(matrix.target, 'tmux')
-        uses: ruby/setup-ruby@v1
+        uses: actions/setup-python@v4
         with:
-          working-directory: test/tmux/
-          bundler-cache: true
+          python-version-file: 'test/tmux/.python-version'
       - name: Install Tmux
         if: contains(matrix.target, 'tmux')
         run: |

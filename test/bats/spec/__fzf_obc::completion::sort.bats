@@ -17,36 +17,12 @@ teardown() {
 
 @test __fzf_obc::completion::sort default {
 	local COMPREPLY=(bob BOB .git bob .git)
-	local current_trigger='std'
-	run __fzf_obc::completion::sort
-	1>&2 echo "$output"
+	run __fzf_obc::completion::sort < <(printf '%s\n' "${COMPREPLY[@]}")
 	[ "$status" -eq 0 ]
-	[ "$output" == "" ]
-	diff <(printf '%s\n' "${COMPREPLY[@]}") <(cat <<-EOF
+	diff <(printf '%s\n' "${output}") <(cat <<-EOF
 	.git
 	BOB
 	bob
 	EOF
 	)
-}
-
-@test __fzf_obc::completion::sort should reflect sort_opts in config file {
-	COMPREPLY=(bob BOB .git bob .git)
-	local current_trigger='std'
-	local current_cmd='ls'
-	cat > "${BATS_TEST_TMPDIR}/fzf-obc.ini" <<-EOF
-	[ls]
-	std_sort_opts=('-V' '-d' '-f')
-	EOF
-	__fzf_obc::config::get::create "${BATS_TEST_TMPDIR}"
-	run __fzf_obc::completion::sort
-	[ "$status" -eq 0 ]
-	[ "$output" == "" ]
-	diff <(printf '%s\n' "${COMPREPLY[@]}") <(cat <<-EOF
-	BOB
-	bob
-	.git
-	EOF
-	)
-	unset COMPREPLY
 }

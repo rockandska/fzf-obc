@@ -12,18 +12,6 @@ include		$(dir)/Rules.mk
 
 # checks
 
-ifneq (, $(shell command -v rvm 2> /dev/null))
-  TEST_TMUX_RB_TOOL = rvm
-else ifneq (, $(shell command -v rbenv 2> /dev/null))
-  TEST_TMUX_RB_TOOL = rbenv
-else
-  TEST_TMUX_RB_TOOL = unknown
-endif
-
-ifndef TEST_TMUX_RUBY_VERSION
-  $(error TEST_TMUX_RUBY_VERSION is not set. Missing $(TEST_TMUX_DIR)/.ruby-version file ?)
-endif
-
 ifndef TEST_TMUX_FZF_VERSION
   $(error TEST_TMUX_FZF_VERSION not set)
 endif
@@ -32,129 +20,75 @@ endif
 # Targets
 #####
 
-.PHONY: test-tmux
-test-tmux: $(TEST_TMUX_TARGETS_PREFIX)
-
 .PHONY: $(TEST_TMUX_TARGETS_PREFIX)
 $(TEST_TMUX_TARGETS_PREFIX): $(TEST_TMUX_TARGETS)
 
 .PHONY: $(TEST_TMUX_TARGETS)
-$(TEST_TMUX_TARGETS) : $(TEST_TMUX_TARGETS_PREFIX)-% : $(GITHUB_WORKFLOWS_TARGETS) bin/fzf-obc $(TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX)-% ruby-env python-env
-	$(info ##### Start tests with minitest and tmux on docker (image: $(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*)) #####)
-	$(call check_cmd_path,asciinema,$(TEST_TMUX_DIR)/tmp/bin/asciinema)
-	ruby --version
-	DOCKER_IMAGE=$(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*) \
-		BUNDLE_GEMFILE=$(TEST_TMUX_DIR)/Gemfile \
-		BUNDLE_PATH=tmp/vendor \
-		bundle exec ruby $(TEST_TMUX_DIR)/test-fzf-obc.rb
+$(TEST_TMUX_TARGETS): $(TEST_TMUX_TARGETS_PREFIX)-% : $(GITHUB_WORKFLOWS_TARGETS) $(PROGRAM) $(TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX)-% python-env
+	DOCKER_IMAGE=$(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*)
+	echo "##### Start tests with pytest and tmux on docker (image: $${DOCKER_IMAGE}) #####"
+	DOCKER_IMAGE="$${DOCKER_IMAGE}" $(TMP_DIR)/bin/pytest $(if $(V),-o log_cli=true) $(TARGET_EXTRA_ARGS) $(TEST_TMUX_DIR)/tests
 
-############
-# Ruby env
-############
-
-.SECONDARY: $(TEST_TMUX_DIR)/Gemfile.lock
-$(TEST_TMUX_DIR)/Gemfile.lock: $(TEST_TMUX_DIR)/Gemfile
-	$(info ##### Updating Gemfile.lock #####)
-	$(call check_cmds,bundle)
-	ruby --version
-	BUNDLE_GEMFILE=$(@D)/Gemfile bundle lock
-	touch $@
-
-.SECONDARY: $(TEST_TMUX_DIR)/tmp/vendor
-$(TEST_TMUX_DIR)/tmp/vendor: $(TEST_TMUX_DIR)/Gemfile.lock
-	$(info ##### Downloading / Installing Ruby gems #####)
-	$(call check_cmds,bundle)
-	ruby --version
-	BUNDLE_GEMFILE=$(@D)/../Gemfile BUNDLE_PATH=tmp/vendor bundle install --quiet
-	touch $@
-
-.PHONY: ruby-env
-.SECONDARY: ruby-env
-ruby-env: $(TEST_TMUX_DIR)/tmp/$(TEST_TMUX_RB_TOOL).mk.env
-	$(info ##### Loading Ruby $(TEST_TMUX_RB_TOOL) env file #####)
-	$(eval include $<)
-	$(MAKE) $(TEST_TMUX_DIR)/tmp/vendor -s --no-print-directory
-
-.SECONDARY: $(TEST_TMUX_DIR)/tmp/rbenv.mk.env
-$(TEST_TMUX_DIR)/tmp/rbenv.mk.env: $(TEST_TMUX_DIR)/.ruby-version
-	$(info ##### Generating Ruby rbenv env file ##### )
-	mkdir -p $(@D)
-	rbenv versions | grep -E '\s+$(TEST_TMUX_RUBY_VERSION)( |$$)' 1> /dev/null \
-		&& echo "-- OK -- Ruby '$(TEST_TMUX_RUBY_VERSION)' is installed" \
-		|| { \
-				echo "Ruby '$(TEST_TMUX_RUBY_VERSION)' not installed" ; \
-				echo "Installing Ruby '$(TEST_TMUX_RUBY_VERSION)' with rbenv..." ; \
-				rbenv install $(TEST_TMUX_RUBY_VERSION); \
-			}
-	echo 'export PATH := $(shell rbenv root)/shims:$$(PATH)' > $@
-	echo 'export RBENV_VERSION = $(TEST_TMUX_RUBY_VERSION)' >> $@
-
-.SECONDARY: $(TEST_TMUX_DIR)/tmp/rvm.mk.env
-$(TEST_TMUX_DIR)/tmp/rvm.mk.env: $(TEST_TMUX_DIR)/.ruby-version
-	$(info ##### Generating Ruby rvm env file ##### )
-	mkdir -p $(@D)
-	rvm list | grep -E '\s+(ruby-)?$(TEST_TMUX_RUBY_VERSION) ?' 1> /dev/null \
-		&& echo "-- OK -- Ruby '$(TEST_TMUX_RUBY_VERSION)' is installed" \
-		|| { \
-				echo "Ruby '$(TEST_TMUX_RUBY_VERSION)' not installed" ; \
-		    echo "Installing Ruby '$(TEST_TMUX_RUBY_VERSION)' with rvm..." ; \
-		    rvm install $(TEST_TMUX_RUBY_VERSION); \
-		  }
-	rvm $(TEST_TMUX_RUBY_VERSION) do rvm env \
-		| sed "s/\"//g;s/unset /undefine /;s/'//g;s/=/ := /;s/\$$PATH/\$${PATH}/" \
-		> $@
-
-.SECONDARY: $(TEST_TMUX_DIR)/tmp/unknown.mk.env
-$(TEST_TMUX_DIR)/tmp/unknown.mk.env: $(TEST_TMUX_DIR)/.ruby-version
-	$(info ##### Neither 'rvm' or 'rbenv' was found in $$(PATH) #####)
-	$(info ##### /!\ Try with local ruby ##### )
-	mkdir -p $(@D)
-	touch $@
 
 ##############
 # Python env #
 ##############
 .PHONY: python-env
 .SECONDARY: python-env
-python-env: $(TEST_TMUX_DIR)/tmp/bin/activate
+python-env: $(TMP_DIR)/bin/activate
 
-.SECONDARY: $(TEST_TMUX_DIR)/tmp/bin/activate
-$(TEST_TMUX_DIR)/tmp/bin/activate: $(TEST_TMUX_DIR)/requirements.txt
-	$(info ##### Generating Python env #####)
-	$(call check_cmds,python3 pip3)
-ifeq (, $(shell command -v virtualenv 2> /dev/null))
-	$(info ##### Virtualenv not installed, try to install it...)
-	pip3 install --quiet --quiet virtualenv
-endif
-ifdef VIRTUAL_ENV
-	$(error VIRTUAL_ENV '$(VIRTUAL_ENV)' already set. Quit this VIRTUAL_ENV before running tests)
-endif
-	virtualenv --quiet -p $(shell command -v python3) $(@D)/../
+.SECONDARY: $(TMP_DIR)/bin/activate
+$(TMP_DIR)/bin/activate: $(TEST_TMUX_DIR)/requirements.txt $(TMP_DIR)/pyenv.done
+	echo "##### Generating Python env #####"
+	if ! cmdsexists 'virtualenv';then
+		echo "##### Virtualenv not installed, try to install it..."
+		pip3 install --quiet --quiet virtualenv
+	fi
+	if [ -n "${VIRTUAL_ENV:-}" ];then
+		1>&2 echo "VIRTUAL_ENV '${VIRTUAL_ENV:-}' already set. Quit this VIRTUAL_ENV before running tests)"
+		exit 1
+	fi
+	virtualenv --quiet -p python3 $(@D)/../
 	VIRTUAL_ENV_DISABLE_PROMPT=true . $@ && pip install --quiet --quiet -Ur $<
+	mkdir -p $(@D)
 	touch $@
+
+$(TMP_DIR)/pyenv.done: $(TEST_TMUX_DIR)/.python-version
+	echo "##### Check presence of pyenv #####"
+	if cmdsexists 'pyenv';then
+		echo "##### Install python version(s) #####"
+		eval "$$(pyenv init -)"
+		pyenv install -s "$$(cat $(TEST_TMUX_DIR)/.python-version)"
+		echo "##### Use version installed #####"
+		export PYENV_VERSION="$$(cat $(TEST_TMUX_DIR)/.python-version)"
+		python --version
+		cmdsexists 'python' "$$(pyenv root)/shims"
+		mkdir -p $(@D)
+		touch $@
+	fi
 
 #####################
 # Test dependencies
 #####################
 
-.INTERMEDIATE: $(TEST_TMUX_DIR)/tmp/bin/fzf
-$(TEST_TMUX_DIR)/tmp/bin/fzf: $(TEST_TMUX_DIR)/tmp/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf
+.INTERMEDIATE: $(TMP_DIR)/bin/fzf
+$(TMP_DIR)/bin/fzf: $(TMP_DIR)/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf
 	mkdir -p $(@D)
 	ln -r -f -s $< $@
 
-.SECONDARY: $(TEST_TMUX_DIR)/tmp/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf
-$(TEST_TMUX_DIR)/tmp/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf:
+.SECONDARY: $(TMP_DIR)/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf
+$(TMP_DIR)/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf:
 	$(info ##### Downloading fzf $(TEST_TMUX_FZF_VERSION))
 	mkdir -p $(@D)
 	wget -qO - "https://github.com/junegunn/fzf-bin/releases/download/$(TEST_TMUX_FZF_VERSION)/fzf-$(TEST_TMUX_FZF_VERSION)-linux_amd64.tgz" | tar -xz -C $(@D)
 
-.INTERMEDIATE: $(TEST_TMUX_DIR)/tmp/bin/fzf-tmux
-$(TEST_TMUX_DIR)/tmp/bin/fzf-tmux: $(TEST_TMUX_DIR)/tmp/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf-tmux
+.INTERMEDIATE: $(TMP_DIR)/bin/fzf-tmux
+$(TMP_DIR)/bin/fzf-tmux: $(TMP_DIR)/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf-tmux
 	mkdir -p $(@D)
 	ln -r -f -s $< $@
 
-.SECONDARY: $(TEST_TMUX_DIR)/tmp/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf-tmux
-$(TEST_TMUX_DIR)/tmp/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf-tmux:
+.SECONDARY: $(TMP_DIR)/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf-tmux
+$(TMP_DIR)/opt/fzf-$(TEST_TMUX_FZF_VERSION)/fzf-tmux:
 	$(info ##### Downloading fzf-tmux $(TEST_TMUX_FZF_VERSION))
 	mkdir -p $(@D)
 	wget -qO - "https://raw.githubusercontent.com/junegunn/fzf/$(TEST_TMUX_FZF_VERSION)/bin/fzf-tmux" > $@ && chmod +x $@

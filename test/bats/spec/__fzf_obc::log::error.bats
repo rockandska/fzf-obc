@@ -16,8 +16,10 @@ teardown() {
 }
 
 @test "__fzf_obc::log::error should print correctly" {
+	export FZF_OBC_LOG_PATH="/dev/stderr"
 	run __fzf_obc::log::error message
 	[ "$status" -eq 1 ]
-	[[ "$output" == ????'-'??'-'??' '??':'??':'??' - ERROR -     |    |    |    | run_helper - message' ]]
-	[[ "$bats_stderr" == ????'-'??'-'??' '??':'??':'??' - ERROR -     |    |    |    | run_helper - message' ]]
+	[[ "$output" == ????'-'??'-'??' '??':'??':'??' - ERROR -     |    |    |    | run_helper - "message"' ]]
+	[[ "$bats_stderr" == ????'-'??'-'??' '??':'??':'??' - ERROR -     |    |    |    | run_helper - "message"' ]]
+	unset FZF_OBC_LOG_PATH
 }
