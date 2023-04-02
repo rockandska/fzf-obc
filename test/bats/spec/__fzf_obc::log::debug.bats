@@ -24,7 +24,7 @@ teardown() {
 @test "__fzf_obc::log::debug should print if FZF_OBC_DEBUG is set" {
 	export FZF_OBC_LOG_PATH="/dev/stderr"
 	FZF_OBC_DEBUG=1 run __fzf_obc::log::debug message
-	[[ "$output" == ????'-'??'-'??' '??':'??':'??' - DEBUG -     |    |    |    | run_helper - "message"' ]]
-	[[ "$bats_stderr" == ????'-'??'-'??' '??':'??':'??' - DEBUG -     |    |    |    | run_helper - "message"' ]]
+	[[ "$output" == ????'-'??'-'??' '??':'??':'??' - DEBUG -     |    |    |    | run_helper - message' ]]
+	[[ "$bats_stderr" == ????'-'??'-'??' '??':'??':'??' - DEBUG -     |    |    |    | run_helper - message' ]]
 	unset FZF_OBC_LOG_PATH
 }

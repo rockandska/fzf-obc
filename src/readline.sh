@@ -13,24 +13,30 @@ __fzf_obc::readline::completion_ignore_case() {
 __fzf_obc::readline::update() {
 	# Update COMP_CWORD / COMP_LINE / COMP_POINT / COMP_WORDS
 	# based on what was choosed in COMPREPLY
-	# and the eventual common prefix
 	# COMPREPLY=('abc', 'abcd', 'abcde')
 	if [[ "${#COMPREPLY[@]}" -gt 1 ]];then
 		__fzf_obc::log::error "COMPREPLY > 1"
 	fi
 	local compreply="${COMPREPLY[0]}"
+	__fzf_obc::log::debug::var compreply
+
+	############
+	# Cleaning #
+	############
+
 	# remove trailing space
 	# example: git add space to COMPREPLY
 	compreply="${compreply%"${compreply##*[![:space:]]}"}"
 	# remove trailing /
 	# example! make add / for targets in COMPREPLY
 	compreply="${compreply%/}"
+
 	local tmp_comp_line="${COMP_LINE}"
 	local trigger_start_pos=${COMP_POINT}
 	local comp_line_size="${#COMP_LINE}"
 	local cword="${COMP_WORDS[$COMP_CWORD]}"
 	local cword_size="${#cword}"
-	if  [[ "$cword_size" -eq 1 ]] && [[ "$cword" == ":" ]];then
+	if  [[ "$cword_size" -eq 1 ]] && [[ "${COMP_WORDBREAKS}" == *"$cword"* ]];then
 		((COMP_CWORD++))
 	fi
 

@@ -7,8 +7,8 @@ d := $(dir)
 
 # Inlucdes
 
-dir	:= $(d)/docker
-include		$(dir)/Rules.mk
+#dir	:= $(d)/docker
+#include		$(dir)/Rules.mk
 
 #####
 # Targets
@@ -47,8 +47,8 @@ $(TEST_BATS_TARGETS_PREFIX)-check-specs:
 
 .PHONY: $(TEST_BATS_TARGETS)
 $(TEST_BATS_TARGETS) : CURRENT_DIR := $(d)
-$(TEST_BATS_TARGETS) : $(TEST_BATS_TARGETS_PREFIX)-% : $(TEST_BATS_TARGETS_PREFIX)-check-specs bin/fzf-obc $(GITHUB_WORKFLOWS_TARGETS) $(TEST_BATS_DOCKER_IMAGES_TARGET_PREFIX)-% $(PROGRAM)
-	$(info ##### Start tests with bats on docker (image: $(addprefix $(TEST_BATS_DOCKER_IMAGE_NAME):,$*)) #####)
+$(TEST_BATS_TARGETS) : $(TEST_BATS_TARGETS_PREFIX)-% : $(TEST_BATS_TARGETS_PREFIX)-check-specs bin/fzf-obc $(GITHUB_WORKFLOWS_TARGETS) $(TEST_DOCKER_IMAGES_TARGET_PREFIX)-% $(PROGRAM)
+	$(info ##### Start tests with bats on docker (image: $(addprefix $(TEST_DOCKER_IMAGE_NAME):,$*)) #####)
 	mkdir -p $(TMP_DIR)
 	docker run -ti --rm \
 		-e BATS_PROJECT_DIR="$(MKFILE_DIR)" \
@@ -57,7 +57,8 @@ $(TEST_BATS_TARGETS) : $(TEST_BATS_TARGETS_PREFIX)-% : $(TEST_BATS_TARGETS_PREFI
 		-u "$$(id -u $$(whoami)):$$(id -g $$(whoami))" \
 		-v $(MKFILE_DIR):$(MKFILE_DIR):ro \
 		-v $(TMP_DIR):/tmp \
-		$(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*) \
+		$(addprefix $(TEST_DOCKER_IMAGE_NAME):,$*) \
+		bats \
 		--print-output-on-failure \
 		-r $(MKFILE_DIR)/${TEST_BATS_DIR}/spec/ \
 		$(TARGET_EXTRA_ARGS)

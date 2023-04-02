@@ -1,4 +1,5 @@
 import pytest
+import re
 from inspect import cleandoc
 from textwrap import dedent
 
@@ -14,6 +15,8 @@ def tree():
     }
 
 def test_make_dir(tmux, test_cfg, helpers, tmp_path):
+    if re.match(r'.*3\.2.*', test_cfg['docker_image']):
+        pytest.skip("No target completion with bash 3.2")
     # Make change its completion based on COMP_TYPE
     # check this behavior
     helpers.dict2tree(tmp_path, tree())
@@ -28,7 +31,6 @@ def test_make_dir(tmux, test_cfg, helpers, tmp_path):
         test/test:
         \techo 'test/test' > $@
         """))
-    tmux.config.session.window_command=test_cfg['cmd']
     assert tmux.screen() == '$'
     tmux.send_keys("make ", enter=False)
     assert tmux.screen() == '$ make'

@@ -6,25 +6,57 @@ import logging
 
 from pathlib import Path
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def helpers():
     return Helpers()
 
 @pytest.fixture()
-def test_cfg(test_container, bashrc, tmp_path):
-    cfg = {}
-    if 'DOCKER_IMAGE' in os.environ:
-        cfg['cmd'] = f'\
-            docker exec -ti -w "{tmp_path}"\
+def tmux_session_config(test_session_cfg, tmp_path, bashrc, test_container):
+    cfg ={}
+    if test_session_cfg['docker']:
+        cfg['window_command'] = f'\
+            docker exec -ti -w "{tmp_path}" \
             {test_container.name} bash --rcfile {bashrc} --noprofile \
             '
     else:
-        cfg['cmd'] = f'env -i PS1= PATH="$PATH" bash --rcfile {bashrc} --noprofile'
+        cfg['window_command'] = f'env -i PS1= PATH="$PATH" bash --rcfile {bashrc} --noprofile'
+    return cfg
+
+@pytest.fixture(scope='session')
+def test_session_cfg():
+    cfg = {}
+    if 'DOCKER_IMAGE' in os.environ:
+        cfg['docker'] = True
+        cfg['docker_image'] = os.environ['DOCKER_IMAGE']
+    else:
+        cfg['docker'] = False
+        cfg['docker_image'] = None
+    cfg['project_dir'] = getGitRoot()
     return cfg
 
 @pytest.fixture()
-def bashrc(tmp_path):
+def test_cfg(test_session_cfg):
+    cfg = test_session_cfg.copy()
+    return cfg
+
+@pytest.fixture(params=[
+    {
+        'readline':
+            {
+                'completion-ignore-case': 'off' }
+            },
+    {
+        'readline':
+            {
+                'completion-ignore-case': 'on'
+            },
+    }
+])
+def bashrc(test_cfg, tmp_path, request):
+    test_cfg.update(request.param)
+
     data = f"""
+    source /etc/profile
     if [ "`id -u`" -eq 0 ]; then
         PS1='# '
     else
@@ -32,10 +64,14 @@ def bashrc(tmp_path):
     fi
     HOME={tmp_path}
     TERM="{os.environ.get('TERM','dumb')}"
-    source /etc/bash_completion
-    source {getGitRoot()}/bin/fzf-obc
+    source /usr/share/bash-completion/completions/*
+    source {test_cfg['project_dir']}/bin/fzf-obc
     cd "$HOME"
     """
+
+    for k in test_cfg['readline'].keys():
+        data += f"bind 'set {k} {test_cfg['readline'][k]}'"
+
     file = f'{tmp_path}/.bashrc'
     with open(file, 'w') as f:
         f.write(data)
@@ -43,15 +79,14 @@ def bashrc(tmp_path):
     return file
 
 @pytest.fixture(scope='session')
-def test_container(request, tmp_path_factory):
-    if 'DOCKER_IMAGE' in os.environ:
-        project_root = getGitRoot()
+def test_container(test_session_cfg, request, tmp_path_factory):
+    if test_session_cfg['docker']:
+        project_root = test_session_cfg['project_dir']
         tmp_dir = tmp_path_factory.getbasetemp()
         bin_path = f"{project_root}/bin/fzf-obc"
         client = docker.from_env()
         container = client.containers.run(
-            os.environ['DOCKER_IMAGE'],
-            'bash -c "tail -f /dev/null"',
+            test_session_cfg['docker_image'],
             tty=True,
             stdin_open=True,
             remove=True,

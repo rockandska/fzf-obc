@@ -7,8 +7,8 @@ d := $(dir)
 
 # includes
 
-dir	:= $(d)/docker
-include		$(dir)/Rules.mk
+#dir	:= $(d)/docker
+#include		$(dir)/Rules.mk
 
 # checks
 
@@ -24,10 +24,10 @@ endif
 $(TEST_TMUX_TARGETS_PREFIX): $(TEST_TMUX_TARGETS)
 
 .PHONY: $(TEST_TMUX_TARGETS)
-$(TEST_TMUX_TARGETS): $(TEST_TMUX_TARGETS_PREFIX)-% : $(GITHUB_WORKFLOWS_TARGETS) $(PROGRAM) $(TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX)-% python-env
-	DOCKER_IMAGE=$(addprefix $(TEST_TMUX_DOCKER_IMAGE_NAME):,$*)
+$(TEST_TMUX_TARGETS): $(TEST_TMUX_TARGETS_PREFIX)-% : $(GITHUB_WORKFLOWS_TARGETS) $(PROGRAM) $(TEST_DOCKER_IMAGES_TARGET_PREFIX)-% python-env
+	DOCKER_IMAGE=$(addprefix $(TEST_DOCKER_IMAGE_NAME):,$*)
 	echo "##### Start tests with pytest and tmux on docker (image: $${DOCKER_IMAGE}) #####"
-	DOCKER_IMAGE="$${DOCKER_IMAGE}" $(TMP_DIR)/bin/pytest $(if $(V),-o log_cli=true) $(TARGET_EXTRA_ARGS) $(TEST_TMUX_DIR)/tests
+	DOCKER_IMAGE="$${DOCKER_IMAGE}" $(TMP_DIR)/bin/pytest $(if $(DEBUG), --tmux-debug) $(if $(V),-o log_cli=true -vv) $(TARGET_EXTRA_ARGS) $(TEST_TMUX_DIR)/tests
 
 
 ##############

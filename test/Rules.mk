@@ -9,6 +9,9 @@ d := $(dir)
 # Include
 ######
 
+dir	:= $(d)/docker
+include		$(dir)/Rules.mk
+
 dir	:= $(d)/tmux
 include		$(dir)/Rules.mk
 
