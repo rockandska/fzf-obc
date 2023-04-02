@@ -8,7 +8,7 @@ env:
   TERM: xterm-256color
 jobs:
   Tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
@@ -22,14 +22,20 @@ jobs:
           - test-bats-bash-3.2.57-gnu-false
           - test-bats-bash-4.3.48-gnu-false
           - test-bats-bash-4.1.17-gnu-false
-          - test-tmux-ubuntu-16-fzf-0.18.0
-          - test-tmux-debian-10-fzf-0.18.0
+          - test-tmux-bash-4.4.23-gnu-true
+          - test-tmux-bash-3.2.57-gnu-true
+          - test-tmux-bash-4.3.48-gnu-true
+          - test-tmux-bash-4.1.17-gnu-true
+          - test-tmux-bash-4.4.23-gnu-false
+          - test-tmux-bash-3.2.57-gnu-false
+          - test-tmux-bash-4.3.48-gnu-false
+          - test-tmux-bash-4.1.17-gnu-false
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python
         if: contains(matrix.target, 'tmux')
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5.6.0
         with:
           python-version-file: 'test/tmux/.python-version'
       - name: Install Tmux

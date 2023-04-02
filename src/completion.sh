@@ -13,16 +13,26 @@ __fzf_obc::completion::show() {
 	else
 		__fzf_obc::log::debug 'COMPREPLY is not empty'
 		if __fzf_obc::completion::longestprefix;then
-			compopt -o nospace +o filenames 2> /dev/null || true
-			# Ring the bell
-			tput bel
+			bind '"\e[0n": abort'
+			printf '\e[5n'
 		else
-			IFS=$'\n' read -r -d '' -a COMPREPLY < <(__fzf_obc::completion::fzf; printf '\0')
-			if [[ "${#COMPREPLY[@]}" -ge 1 ]];then
-				local BACKUP_COMPREPLY=("${COMPREPLY[@]}")
+			local curpos
+			__fzf_obc::tools::get_cursor_pos curpos
+			tput cud1
+			local USER_CHOICE
+			IFS=$'\n' read -r -d '' -a USER_CHOICE < <(__fzf_obc::completion::fzf; printf '\0')
+			tput cuu1
+			if [[ "${#USER_CHOICE[@]}" -ge 1 ]];then
+				local BACKUP_COMPREPLY=("${USER_CHOICE[@]}")
+				local shortest
+				if __fzf_obc::completion::findshortest "${USER_CHOICE[0]}" "COMPREPLY" shortest;then
+					COMPREPLY=("${shortest}")
+				fi
 				# Update COMPREPLY COMP_CWORD COMP_LINE COMP_POINT COMP_WORDS with
 				# actual choice to call the completion a 2nd time
 				__fzf_obc::readline::update
+				# Get actual completion script
+				_output_var="current_func_name" __fzf_obc::complete::script "${current_cmd}"
 				# 2nd call to completion script
 				"${current_func_name}" "${current_func_args[@]}" || complete_status="$?"
 				__fzf_obc::log::debug::var "COMPREPLY"
@@ -33,20 +43,24 @@ __fzf_obc::completion::show() {
 					COMPREPLY=("${BACKUP_COMPREPLY[@]}")
 					#__fzf_obc::completion::show
 				elif [[ "${BACKUP_COMPREPLY[0]}" =~ ([$COMP_WORDBREAKS]) ]] && [[ "${BACKUP_COMPREPLY[0]}" != "${COMPREPLY[0]}"* ]];then
-					__fzf_obc::log::debug "New compreply doesn't contain old COMPREPLY"
+					__fzf_obc::log::debug::var COMPREPLY BACKUP_COMPREPLY
+					__fzf_obc::log::debug <<-DEBUG
+						A COMP_WORDBREAKS was in the previous COMPREPLY
+						but the new COMPREPLY doesn't include the previous one.
+						Readd the part before COMP_WORDBREAKS in the new COMPREPLY.
+					DEBUG
 					# bash:3.2.5 -> 3.2.57 (docker run bash:3.2.5<TAB>)
 					# Readd the part before the COMP_WORDBREAK found
-					COMPREPLY=("${BACKUP_COMPREPLY[0]%${BACKUP_COMPREPLY[0]##*${BASH_REMATCH[1]}}}${COMPREPLY[0]}")
+					#COMPREPLY=("${BACKUP_COMPREPLY[0]%${BACKUP_COMPREPLY[0]##*${BASH_REMATCH[1]}}}${COMPREPLY[0]}")
+					COMPREPLY=("${BACKUP_COMPREPLY[@]}")
 				fi
 			fi
+			tput cuf "${curpos[1]}"
 		fi
 		if [[ "${#COMPREPLY[@]}" -eq 0 ]];then
 			__fzf_obc::log::debug 'COMPREPLY is empty'
-			compopt -o nospace +o filenames
+			compopt -o nospace +o filenames 2> /dev/null || true
 		fi
-		# redraw line
-		bind '"\e[0n": redraw-current-line'
-		printf '\e[5n'
 	fi
 }
 
@@ -107,7 +121,7 @@ __fzf_obc::completion::longestprefix() {
 			}
 			for (i=1; i<=sw_leng; i++) { # find longest common prefix
 				hits = 0
-				for (j=1; j<n; j++) {
+				for (j=1; j<=n; j++) {
 					if (insensitive == "1") {
 						s1 = tolower(substr(arr[j],i,1))
 						s2 = tolower(substr(arr[j+1],i,1))
@@ -145,14 +159,16 @@ __fzf_obc::completion::longestprefix() {
 }
 
 # shellcheck disable=SC2120
-__fzf_obc::completion::compreplyprefix() {
+__fzf_obc::completion::findshortest() {
 	# Find common prefix in COMPREPLY
 	# based on the user choice
 	local IFS=$'\n'
 	local _prefix
 	local _choice="${1-}"
-	local _var="${2-}"
+	local _input="${2:-}"
+	local _output_var="${3-}"
 	local _insensitive=0
+	local _tmp="${_input}[@]"
 	if __fzf_obc::readline::completion_ignore_case;then
 		_insensitive=1
 	else
@@ -167,9 +183,9 @@ __fzf_obc::completion::compreplyprefix() {
 			line[++i] = $0
 		}
 		END {
-			printf(lcp(line,i,insensitive))
+			printf(lcp(line,i,choice,insensitive))
 		}
-		function lcp(arr,n,insensitive,hits,i,j,lcp_leng,sw_leng,sw,s1,s2) {
+		function lcp(arr,n,choice,insensitive,hits,i,j,lcp_leng,sw_leng,sw,s1,s2) {
 			if (n == 0) { # null string
 				return("")
 			}
@@ -180,13 +196,16 @@ __fzf_obc::completion::compreplyprefix() {
 			sw = choice
 			for (i=1; i<=sw_leng; i++) { # find longest common prefix
 				hits = 0
-				for (j=1; j<n; j++) {
+				for (j=1; j<=n; j++) {
+					if (arr[j] == choice) {
+						continue
+					}
 					if (insensitive == "1") {
-						s1 = tolower(substr(arr[j],i,1))
-						s2 = tolower(substr(choice,i,1))
+						s1 = tolower(substr(arr[j],0,i))
+						s2 = tolower(substr(choice,0,i))
 					} else {
-						s1 = substr(arr[j],i,1)
-						s2 = substr(choice,i,1)
+						s1 = substr(arr[j],0,i)
+						s2 = substr(choice,0,i)
 					}
 					if ( s1 == s2 ) {
 						hits++
@@ -202,15 +221,21 @@ __fzf_obc::completion::compreplyprefix() {
 					lcp_leng++
 				}
 			}
-			return(substr(sw,1,lcp_leng))
+			return(substr(sw,1,lcp_leng+1))
 		}
 	EOF
-	_prefix=$(command awk -v choice="${_choice}" -v insensitive="$_insensitive" -f <(echo "$_awk_script") <(__fzf_obc::completion::sort <(printf -- '%s\n' "${COMPREPLY[@]}")))
+	_prefix=$(
+		command awk \
+			-v choice="${_choice}" \
+			-v insensitive="$_insensitive" \
+			-f <(echo "$_awk_script") \
+			<(__fzf_obc::completion::sort <(printf -- '%s\n' "${!_tmp}"))
+	)
 
 	if [[ "${_prefix:-}" != "" ]];then
-		__fzf_obc::log::debug "Found compreply prefix '${_prefix}'"
-		if [[ -n "${_var}" ]];then
-			printf -v "${_var}" -- '%s' "${_prefix}"
+		__fzf_obc::log::debug "Found short prefix '${_prefix}' based on '${_choice}'"
+		if [[ -n "${_output_var}" ]];then
+			printf -v "${_output_var}" -- '%s' "${_prefix}"
 		fi
 		return 0
 	fi

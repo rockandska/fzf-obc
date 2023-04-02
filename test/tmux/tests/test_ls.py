@@ -14,7 +14,6 @@ def tree():
 
 def test_ls_basic(tmux, test_cfg, helpers, tmp_path):
     helpers.dict2tree(tmp_path, tree())
-    tmux.config.session.window_command=test_cfg['cmd']
     assert tmux.screen() == '$'
     tmux.send_keys("ls ", enter=False)
     assert tmux.screen() == '$ ls'
@@ -35,7 +34,6 @@ def test_ls_basic(tmux, test_cfg, helpers, tmp_path):
 
 def test_ls_space(tmux, test_cfg, helpers, tmp_path):
     helpers.dict2tree(tmp_path, tree())
-    tmux.config.session.window_command=test_cfg['cmd']
     assert tmux.screen() == '$'
     tmux.send_keys("ls ", enter=False)
     assert tmux.screen() == '$ ls'
@@ -58,7 +56,6 @@ def test_ls_space(tmux, test_cfg, helpers, tmp_path):
 
 def test_ls_prefix(tmux, test_cfg, helpers, tmp_path):
     helpers.dict2tree(tmp_path, tree())
-    tmux.config.session.window_command=test_cfg['cmd']
     assert tmux.screen() == '$'
     tmux.send_keys("ls d", enter=False)
     assert tmux.screen() == '$ ls d'
@@ -68,12 +65,13 @@ def test_ls_prefix(tmux, test_cfg, helpers, tmp_path):
     expected=r"""
     $ ls dir
     >
-      5/5
+      4/4
     > dir
       dir 2
       dir1
       dir3
     """
+    assert tmux.screen() == cleandoc(expected)
     tmux.send_keys("Down", enter=False)
     tmux.send_keys("Down", enter=False)
     tmux.send_keys("Down", enter=False)
@@ -82,7 +80,6 @@ def test_ls_prefix(tmux, test_cfg, helpers, tmp_path):
 
 def test_ls_prefix_middle(tmux, test_cfg, helpers, tmp_path):
     helpers.dict2tree(tmp_path, tree())
-    tmux.config.session.window_command=test_cfg['cmd']
     assert tmux.screen() == '$'
     tmux.send_keys("ls dm", enter=False)
     assert tmux.screen() == '$ ls dm'

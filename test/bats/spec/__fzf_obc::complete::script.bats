@@ -15,11 +15,12 @@ teardown() {
 	fi
 }
 
-@test "__fzf_obc::log should print correctly" {
-	export FZF_OBC_LOG_PATH="/dev/stderr"
-	run __fzf_obc::log TEST message
-	[ "$status" -eq 0 ]
-	[[ "$output" == ????'-'??'-'??' '??':'??':'??' - TEST -     |    |    | run - message' ]]
-	[[ "$bats_stderr" == ????'-'??'-'??' '??':'??':'??' - TEST -     |    |    | run - message' ]]
-	unset FZF_OBC_LOG_PATH
+@test "__fzf_obc::complete::script should return correct script" {
+	complete -F _longopt ls
+	__fzf_obc::complete::update
+	[ "$?" -eq 0 ]
+	local cmd _output_var
+	_output_var="cmd" __fzf_obc::complete::script "ls"
+	[ "$?" -eq 0 ]
+	[ "${cmd}" == "_longopt" ]
 }

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 __fzf_obc::complete::wrapper::FUNC_NAME() {
-	__fzf_obc::log::debug "COMP_TYPE :" "${COMP_TYPE}"
+	__fzf_obc::log::debug::var COMP_TYPE
 
 	# Backup old globstar setting
 	trap 'eval "$previous_globstar_setting"' RETURN
 	local previous_globstar_setting
-	previous_globstar_setting="$(shopt -p globstar)"
-	shopt -u globstar
+	previous_globstar_setting="$(shopt -p globstar 2> /dev/null)"
+	shopt -u globstar 2> /dev/null
 
 	# shellcheck disable=SC2034
 	{
@@ -20,9 +20,10 @@ __fzf_obc::complete::wrapper::FUNC_NAME() {
 	local complete_status=0
 
 	if [[ "${FZF_OBC_DISABLED:-0}" -eq 0 ]];then
-		__fzf_obc::log::debug \
-			"fzf-obc is enabled" \
-			"check if a trigger is found"
+		__fzf_obc::log::debug <<-DEBUG
+			fzf-obc is enabled
+			check if a trigger is found
+		DEBUG
 
 		if [[ "$COMP_CWORD" -gt "0" ]];then
 			__fzf_obc::trigger::detect
@@ -41,9 +42,7 @@ __fzf_obc::complete::wrapper::FUNC_NAME() {
 		COMP_POINT="$COMP_POINT_BACKUP"
 		COMP_WORDS=("${COMP_WORDS_BACKUP[@]}")
 
-		__fzf_obc::log::debug \
-			"${current_func_name} returned status :" \
-			"$complete_status"
+		__fzf_obc::log::debug "${current_func_name} returned status : $complete_status"
 
 		if [[ -n "${current_trigger:-}" ]];then
 			# completion is done, displaying it with fzf
@@ -55,9 +54,7 @@ __fzf_obc::complete::wrapper::FUNC_NAME() {
 	else
 		__fzf_obc::log::debug "fzf-obc is disabled"
 		"${current_func_name}" "$@" || complete_status="$?"
-		__fzf_obc::log::debug \
-			"${current_func_name} returned status :" \
-			"$complete_status"
+		__fzf_obc::log::debug "${current_func_name} returned status : $complete_status"
 	fi
 
 	return ${complete_status:-0}
@@ -83,4 +80,17 @@ __fzf_obc::complete::update() {
 		$tmp
 		COMPLETE_DEF
 	done < <(complete | grep -Eo -- '-F ([^ ]+)( |$)' | grep -v -- "-F ${wrapper_prefix}" | sed -r -- 's/(-F | $)//g' | sort -u || true)
+}
+
+__fzf_obc::complete::script() {
+	local _cmd="${1:-}"
+	local _tmp
+	local _wrapper_prefix="__fzf_obc::complete::wrapper::"
+	_tmp="$(complete -p "${_cmd}" | sed -r "s/.*-F //;s/${_wrapper_prefix}//;s/ .*//")"
+	if [ -n "${_output_var:-}" ];then
+		printf -v "${_output_var}" '%s' "${_tmp}"
+	else
+		echo "${_tmp}"
+	fi
+	return 0
 }

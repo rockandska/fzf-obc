@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 fzf-obc() {
-	__fzf_obc::log::debug "Start fzf-obc"
+	__fzf_obc::log::debug "Starting fzf-obc"
 	__fzf_obc::complete::update
 }
 

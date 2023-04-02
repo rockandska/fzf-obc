@@ -1,7 +1,7 @@
 .ONESHELL:
 .DELETE_ON_ERROR:
 SHELL := bash
-.SHELLFLAGS := -Eeu -o pipefail -c $(if $(V),-x)
+.SHELLFLAGS := -Eeu -o pipefail -c $(if $(DEBUG),-x)
 export BASH_ENV = Makefile.inc
 _SPACE = $(eval) $(eval)
 _COMMA := ,
@@ -39,31 +39,22 @@ TEST_TARGETS = $(GITHUB_WORKFLOWS_TARGETS) $(TEST_SHELLCHECK_TARGETS) $(TEST_BAT
 # test/bats
 TEST_BATS_DIR := test/bats
 TEST_BATS_TARGETS_PREFIX := test-bats
-TEST_BATS_TARGETS = $(addprefix $(TEST_BATS_TARGETS_PREFIX)-,$(TEST_BATS_DOCKER_IMAGES_LIST))
+TEST_BATS_TARGETS = $(addprefix $(TEST_BATS_TARGETS_PREFIX)-,$(TEST_DOCKER_IMAGES_LIST))
 
 # test/tmux
 TEST_TMUX_DIR := test/tmux
 TEST_TMUX_TARGETS_PREFIX := test-tmux
-TEST_TMUX_TARGETS = $(addprefix $(TEST_TMUX_TARGETS_PREFIX)-,$(TEST_TMUX_DOCKER_IMAGES_LIST))
+TEST_TMUX_TARGETS = $(addprefix $(TEST_TMUX_TARGETS_PREFIX)-,$(TEST_DOCKER_IMAGES_LIST))
 TEST_TMUX_FZF_VERSION := $(firstword $(FZF_VERSIONS))
-TEST_TMUX_RUBY_VERSION := $(shell cat $(TEST_TMUX_DIR)/.ruby-version)
 
-# test/bats/docker
-TEST_BATS_DOCKER_DIR := test/bats/docker
-TEST_BATS_DOCKER_GNU_LIST := true false
-TEST_BATS_DOCKER_IMAGE_NAME := fzf-obc-test
-TEST_BATS_DOCKER_DOCKERFILES_LIST = $(notdir $(basename $(wildcard $(TEST_BATS_DOCKER_DIR)/*.dockerfile)))
-TEST_BATS_DOCKER_IMAGES_TARGET_PREFIX := test-bats-docker-build
-TEST_BATS_DOCKER_IMAGES_LIST = $(foreach gnu,$(TEST_BATS_DOCKER_GNU_LIST),$(addsuffix -gnu-$(gnu),$(TEST_BATS_DOCKER_DOCKERFILES_LIST)))
-TEST_BATS_DOCKER_IMAGES_TARGETS = $(addprefix $(TEST_BATS_DOCKER_IMAGES_TARGET_PREFIX)-,$(TEST_BATS_DOCKER_IMAGES_LIST))
-
-# test/tmux/docker
-TEST_TMUX_DOCKER_DIR := test/tmux/docker
-TEST_TMUX_DOCKER_IMAGE_NAME := fzf-obc-test
-TEST_TMUX_DOCKER_DOCKERFILES_LIST = $(notdir $(basename $(wildcard $(TEST_TMUX_DOCKER_DIR)/*.dockerfile)))
-TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX := test-tmux-docker-build
-TEST_TMUX_DOCKER_IMAGES_LIST = $(foreach fzf,$(FZF_VERSIONS),$(addsuffix -fzf-$(fzf),$(TEST_TMUX_DOCKER_DOCKERFILES_LIST)))
-TEST_TMUX_DOCKER_IMAGES_TARGETS = $(addprefix $(TEST_TMUX_DOCKER_IMAGES_TARGET_PREFIX)-,$(TEST_TMUX_DOCKER_IMAGES_LIST))
+# test/docker
+TEST_DOCKER_DIR := test/docker
+TEST_DOCKER_GNU_LIST := true false
+TEST_DOCKER_IMAGE_NAME := fzf-obc-test
+TEST_DOCKER_DOCKERFILES_LIST = $(notdir $(basename $(wildcard $(TEST_DOCKER_DIR)/*.dockerfile)))
+TEST_DOCKER_IMAGES_TARGET_PREFIX := test-docker-build
+TEST_DOCKER_IMAGES_LIST = $(foreach gnu,$(TEST_DOCKER_GNU_LIST),$(addsuffix -gnu-$(gnu),$(TEST_DOCKER_DOCKERFILES_LIST)))
+TEST_DOCKER_IMAGES_TARGETS = $(addprefix $(TEST_DOCKER_IMAGES_TARGET_PREFIX)-,$(TEST_DOCKER_IMAGES_LIST))
 
 # test/shellcheck
 TEST_SHELLCHECK_DIR := test/shellcheck
