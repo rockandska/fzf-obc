@@ -1,6 +1,6 @@
 # Change Log
 
-## [**Next release**](https://github.com/rockandska/fzf-obc/tree/HEAD)
+## [1.3.1](https://github.com/rockandska/fzf-obc/tree/1.3.1)
 
 **Closed issues:**
 

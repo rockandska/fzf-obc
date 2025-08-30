@@ -7,6 +7,8 @@
 A bash completion script intend to add [fzf](https://github.com/junegunn/fzf) over all known bash completion functions on your system with minimal modifications on original completion scripts.  
 It is a replacement to the completion script natively provided by [fzf](https://github.com/junegunn/fzf) who replace original completion functions with its own (and create some behavior originally well implemented into original completion scripts).
 
+**/!\ There will be no further updates for version 1.X.X for the time being and we will attempt to completely rewrite fzf-obc. Branches other than `master` should be considered `WIP`**
+
 ## Functionalities
 
 - Fully customizable
