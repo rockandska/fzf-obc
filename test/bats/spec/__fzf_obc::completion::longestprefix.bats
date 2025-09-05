@@ -26,12 +26,12 @@ teardown() {
 	fi
 	local current_cword_trigger_start_pos=0
 	local prefix
-	local COMPREPLY=(abcd abc ab)
+	local COMPREPLY=("test/bats/spec/__fzf_obc::log::debug.bats" "test/bats/spec/fzf-obc.bats" "test/bats/spec/__fzf_obc::log::debug::var.bats")
 	run __fzf_obc::completion::longestprefix prefix
 	[ "$status" -eq 0 ]
 	[ "$output" == "" ]
 	[ "${#COMPREPLY[@]}" -eq 3 ]
-	[ "${prefix}" == "ab" ]
+	[ "${prefix}" == "test/bats/spec/" ]
 }
 
 @test "__fzf_obc::completion::longestprefix should set correct prefix when ignore_case is on" {

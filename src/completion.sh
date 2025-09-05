@@ -23,6 +23,8 @@ __fzf_obc::completion::show() {
 			IFS=$'\n' read -r -d '' -a USER_CHOICE < <(__fzf_obc::completion::fzf; printf '\0')
 			tput cuu1
 			if [[ "${#USER_CHOICE[@]}" -ge 1 ]];then
+				__fzf_obc::log::debug 'User choice'
+				__fzf_obc::log::debug::var "COMPREPLY"
 				local BACKUP_COMPREPLY=("${USER_CHOICE[@]}")
 				local shortest
 				if __fzf_obc::completion::findshortest "${USER_CHOICE[0]}" "COMPREPLY" shortest;then
@@ -34,6 +36,7 @@ __fzf_obc::completion::show() {
 				# Get actual completion script
 				_output_var="current_func_name" __fzf_obc::complete::script "${current_cmd}"
 				# 2nd call to completion script
+				__fzf_obc::log::debug 'Second call to completion function'
 				"${current_func_name}" "${current_func_args[@]}" || complete_status="$?"
 				__fzf_obc::log::debug::var "COMPREPLY"
 				IFS=$'\n' read -r -d '' -a COMPREPLY < <(__fzf_obc::completion::sort <(printf -- '%s\n' "${COMPREPLY[@]}"))
@@ -121,13 +124,13 @@ __fzf_obc::completion::longestprefix() {
 			}
 			for (i=1; i<=sw_leng; i++) { # find longest common prefix
 				hits = 0
-				for (j=1; j<=n; j++) {
+				for (j=1; j<n; j++) {
 					if (insensitive == "1") {
-						s1 = tolower(substr(arr[j],i,1))
-						s2 = tolower(substr(arr[j+1],i,1))
+						s1 = tolower(substr(arr[j],1,i))
+						s2 = tolower(substr(arr[j+1],1,i))
 					} else {
-						s1 = substr(arr[j],i,1)
-						s2 = substr(arr[j+1],i,1)
+						s1 = substr(arr[j],1,i)
+						s2 = substr(arr[j+1],1,i)
 					}
 					if ( s1 == s2 ) {
 						hits++
@@ -150,6 +153,7 @@ __fzf_obc::completion::longestprefix() {
 
 	if [[ "${_prefix:${current_cword_trigger_start_pos}}" != "" ]];then
 		__fzf_obc::log::debug "Found prefix '${_prefix}'"
+		__fzf_obc::log::debug::var _prefix
 		if [[ -n "${_var}" ]];then
 			printf -v "${_var}" -- '%s' "${_prefix}"
 		fi
@@ -234,6 +238,7 @@ __fzf_obc::completion::findshortest() {
 
 	if [[ "${_prefix:-}" != "" ]];then
 		__fzf_obc::log::debug "Found short prefix '${_prefix}' based on '${_choice}'"
+		__fzf_obc::log::debug::var _prefix
 		if [[ -n "${_output_var}" ]];then
 			printf -v "${_output_var}" -- '%s' "${_prefix}"
 		fi
