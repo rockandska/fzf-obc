@@ -11,15 +11,15 @@ def helpers():
     return Helpers()
 
 @pytest.fixture()
-def tmux_session_config(test_session_cfg, tmp_path, bashrc, test_container):
+def tmux_session_config(test_cfg, test_container):
     cfg ={}
-    if test_session_cfg['docker']:
+    if test_cfg['docker']:
         cfg['window_command'] = f'\
-            docker exec -ti -w "{tmp_path}" \
-            {test_container.name} bash --rcfile {bashrc} --noprofile \
+            docker exec -ti -w "{test_cfg["tmpdir"]}" \
+            {test_container.name} bash --rcfile {test_cfg["bashrc"]} --noprofile \
             '
     else:
-        cfg['window_command'] = f'env -i PS1= PATH="$PATH" bash --rcfile {bashrc} --noprofile'
+        cfg['window_command'] = f'env -i PS1= PATH="$PATH" bash --rcfile {test_cfg["bashrc"]} --noprofile'
     return cfg
 
 @pytest.fixture(scope='session')
@@ -35,8 +35,10 @@ def test_session_cfg():
     return cfg
 
 @pytest.fixture()
-def test_cfg(test_session_cfg):
-    cfg = test_session_cfg.copy()
+def test_cfg(test_session_cfg, bashrc):
+    cfg = {}
+    cfg.update(test_session_cfg)
+    cfg.update(bashrc)
     return cfg
 
 @pytest.fixture(params=[
@@ -52,9 +54,8 @@ def test_cfg(test_session_cfg):
             },
     }
 ])
-def bashrc(test_cfg, tmp_path, request):
-    test_cfg.update(request.param)
-
+def bashrc(test_session_cfg, tmp_path, request):
+    cfg = {}
     data = f"""
     source /etc/profile
     if [ "`id -u`" -eq 0 ]; then
@@ -62,21 +63,25 @@ def bashrc(test_cfg, tmp_path, request):
     else
         PS1='$ '
     fi
-    HOME={tmp_path}
-    TERM="{os.environ.get('TERM','dumb')}"
+    export HOME={tmp_path}
+    export TERM="{os.environ.get('TERM','dumb')}"
+    export PATH="$HOME/.local/bin:$PATH"
     source /usr/share/bash-completion/completions/*
-    source {test_cfg['project_dir']}/bin/fzf-obc
+    source {test_session_cfg['project_dir']}/bin/fzf-obc
     cd "$HOME"
     """
 
-    for k in test_cfg['readline'].keys():
-        data += f"bind 'set {k} {test_cfg['readline'][k]}'"
+    cfg['params'] = request.param
+    cfg['bashrc'] = f'{tmp_path}/.bashrc'
+    cfg['tmpdir'] = tmp_path
 
-    file = f'{tmp_path}/.bashrc'
-    with open(file, 'w') as f:
+    for k in cfg['params']['readline'].keys():
+        data += f"bind 'set {k} {cfg['params']['readline'][k]}'"
+
+    with open(cfg['bashrc'], 'w') as f:
         f.write(data)
 
-    return file
+    return cfg
 
 @pytest.fixture(scope='session')
 def test_container(test_session_cfg, request, tmp_path_factory):

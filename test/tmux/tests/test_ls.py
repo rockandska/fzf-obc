@@ -4,7 +4,7 @@ from inspect import cleandoc
 def tree():
     return {
         'dir': 'file',
-        'dir1': 'file1',
+        'dir1': ['file1', 'File2'],
         'dir 2': ['file 2', 'file2'],
         'dir3': {
             'dir4': 'file3',
@@ -12,8 +12,8 @@ def tree():
             }
     }
 
-def test_ls_basic(tmux, test_cfg, helpers, tmp_path):
-    helpers.dict2tree(tmp_path, tree())
+def test_ls_basic(tmux, test_cfg, helpers):
+    helpers.dict2tree(test_cfg['tmpdir'], tree())
     assert tmux.screen() == '$'
     tmux.send_keys("ls ", enter=False)
     assert tmux.screen() == '$ ls'
@@ -29,11 +29,30 @@ def test_ls_basic(tmux, test_cfg, helpers, tmp_path):
       dir3
     """
     assert tmux.screen() == cleandoc(expected)
+    tmux.send_keys("Down", enter=False)
+    tmux.send_keys("Down", enter=False)
+    tmux.send_keys("Down", enter=False)
     tmux.send_keys("Tab", enter=False)
-    assert tmux.screen() == '$ ls .bashrc'
+    assert tmux.screen() == '$ ls dir1/'
+    # Testing ignore-case
+    tmux.send_keys("F", enter=False)
+    tmux.send_keys("Tab", enter=False)
+    if test_cfg['params']['readline']['completion-ignore-case'] == 'off':
+        assert tmux.screen() == '$ ls dir1/File2'
+    elif test_cfg['params']['readline']['completion-ignore-case'] == 'on':
+        assert tmux.screen() == '$ ls dir1/File'
+        tmux.send_keys("Tab", enter=False)
+        expected=r"""
+        $ ls dir1/File
+        >
+          2/2
+        > dir1/File2
+          dir1/file1
+        """
+        assert tmux.screen() == cleandoc(expected)
 
-def test_ls_space(tmux, test_cfg, helpers, tmp_path):
-    helpers.dict2tree(tmp_path, tree())
+def test_ls_space(tmux, test_cfg, helpers):
+    helpers.dict2tree(test_cfg['tmpdir'], tree())
     assert tmux.screen() == '$'
     tmux.send_keys("ls ", enter=False)
     assert tmux.screen() == '$ ls'
@@ -54,8 +73,8 @@ def test_ls_space(tmux, test_cfg, helpers, tmp_path):
     tmux.send_keys("Tab", enter=False)
     assert tmux.screen() == r'$ ls dir\ 2/'
 
-def test_ls_prefix(tmux, test_cfg, helpers, tmp_path):
-    helpers.dict2tree(tmp_path, tree())
+def test_ls_prefix(tmux, test_cfg, helpers):
+    helpers.dict2tree(test_cfg['tmpdir'], tree())
     assert tmux.screen() == '$'
     tmux.send_keys("ls d", enter=False)
     assert tmux.screen() == '$ ls d'
@@ -78,8 +97,8 @@ def test_ls_prefix(tmux, test_cfg, helpers, tmp_path):
     tmux.send_keys("Tab", enter=False)
     assert tmux.screen() == '$ ls dir3/'
 
-def test_ls_prefix_middle(tmux, test_cfg, helpers, tmp_path):
-    helpers.dict2tree(tmp_path, tree())
+def test_ls_prefix_middle(tmux, test_cfg, helpers):
+    helpers.dict2tree(test_cfg['tmpdir'], tree())
     assert tmux.screen() == '$'
     tmux.send_keys("ls dm", enter=False)
     assert tmux.screen() == '$ ls dm'

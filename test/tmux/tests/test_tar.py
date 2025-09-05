@@ -13,10 +13,10 @@ def tree():
             }
     }
 
-def test_tar_arg(tmux, test_cfg, helpers, tmp_path):
+def test_tar_arg(tmux, test_cfg, helpers):
     if re.match(r'.*3\.2.*', test_cfg['docker_image']):
         pytest.skip("No - for options in bash 3.2")
-    helpers.dict2tree(tmp_path, tree())
+    helpers.dict2tree(test_cfg['tmpdir'], tree())
     assert tmux.screen() == '$'
     tmux.send_keys("tar -", enter=False)
     assert tmux.screen() == '$ tar -'

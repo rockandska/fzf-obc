@@ -14,13 +14,13 @@ def tree():
             }
     }
 
-def test_make_dir(tmux, test_cfg, helpers, tmp_path):
+def test_make_dir(tmux, test_cfg, helpers):
     if re.match(r'.*3\.2.*', test_cfg['docker_image']):
         pytest.skip("No target completion with bash 3.2")
     # Make change its completion based on COMP_TYPE
     # check this behavior
-    helpers.dict2tree(tmp_path, tree())
-    with open(tmp_path / "Makefile", "w") as w:
+    helpers.dict2tree(test_cfg['tmpdir'], tree())
+    with open(test_cfg['tmpdir'] / "Makefile", "w") as w:
         w.write(dedent("""\
         dir/test:
         \techo 'dir/test' >$@
