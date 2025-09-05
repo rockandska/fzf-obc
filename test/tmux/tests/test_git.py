@@ -12,8 +12,8 @@ def tree():
             }
     }
 
-def test_git_diff_arg(tmux, test_cfg, helpers, tmp_path):
-    helpers.dict2tree(tmp_path, tree())
+def test_git_diff_arg(tmux, test_cfg, helpers):
+    helpers.dict2tree(test_cfg['tmpdir'], tree())
     assert tmux.screen() == '$'
     tmux.send_keys("git diff --sta", enter=False)
     assert tmux.screen() == '$ git diff --sta'
