@@ -12,7 +12,23 @@ def tree():
             }
     }
 
-def test_ls_basic(tmux, test_cfg, helpers):
+@pytest.mark.parametrize(
+    'bashrc',
+    [
+        {
+            'readline': {
+                'completion-ignore-case': 'off'
+            },
+        },
+        {
+            'readline': {
+                'completion-ignore-case': 'on'
+            }
+        }
+    ]
+)
+def test_ls_basic(tmux, test_cfg, helpers, bashrc):
+    helpers.update_bashrc(test_cfg['bashrc'],bashrc)
     helpers.dict2tree(test_cfg['tmpdir'], tree())
     assert tmux.screen() == '$'
     tmux.send_keys("ls ", enter=False)
@@ -37,9 +53,9 @@ def test_ls_basic(tmux, test_cfg, helpers):
     # Testing ignore-case
     tmux.send_keys("F", enter=False)
     tmux.send_keys("Tab", enter=False)
-    if test_cfg['params']['readline']['completion-ignore-case'] == 'off':
+    if bashrc['readline']['completion-ignore-case'] == 'off':
         assert tmux.screen() == '$ ls dir1/File2'
-    elif test_cfg['params']['readline']['completion-ignore-case'] == 'on':
+    elif bashrc['readline']['completion-ignore-case'] == 'on':
         assert tmux.screen() == '$ ls dir1/File'
         tmux.send_keys("Tab", enter=False)
         expected=r"""
