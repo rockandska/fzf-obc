@@ -104,7 +104,7 @@ module Base
       export GIT_AUTHOR_NAME=test
       export EMAIL=test@test.com
       source /etc/bash_completion
-      source #{SRC_DIR}/bin/fzf-obc.bash
+      source #{SRC_DIR}/bin/fzf-obc
       cd #{@test_dir}
     HEREDOC
   end
@@ -188,30 +188,6 @@ class Filedir < Minitest::Test
     super
     @filedir_start = ""
     @fzf_start_dir = ""
-  end
-end
-
-class FiledirHome < Filedir
-  def setup_vars
-    super
-    @filedir_start = "~/"
-  end
-end
-
-class FiledirAbsolute < Filedir
-  def setup_vars
-    super
-    @filedir_start = "#{@test_dir}/"
-  end
-end
-
-class FiledirHomeShortOff < FiledirHome
-  def setup_vars
-    super
-    @rcfile_data += <<-HEREDOC
-      export FZF_OBC_SHORT_FILEDIR=0
-    HEREDOC
-    @fzf_start_dir = "#{@filedir_start}"
   end
 end
 

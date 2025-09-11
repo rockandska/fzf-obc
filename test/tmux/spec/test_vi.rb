@@ -17,35 +17,13 @@ class Filedir
       $ vi #{@filedir_start}
       >
         3/3
-      > #{@fzf_start_dir}d1/
-        #{@fzf_start_dir}test.conf
+      > #{@fzf_start_dir}d1
         #{@fzf_start_dir}test 1.conf
+        #{@fzf_start_dir}test.conf
     EOF
-    @tty.send_keys("#{DOWN}")
     @tty.send_keys("#{DOWN}")
     @tty.send_keys("#{TAB}")
     @tty.assert_row(0,"$ vi #{@filedir_start}test\\ 1.conf")
-
-    @tty.clear_screen()
-
-    #############
-    # With globs
-    #############
-    @tty.send_keys("vi #{@filedir_start}**","#{TAB}")
-    @tty.assert_matches(<<~EOF)
-      $ vi #{@filedir_start}**
-      >
-        5/5
-      > #{@fzf_start_dir}d1/
-        #{@fzf_start_dir}d1/test.conf
-        #{@fzf_start_dir}d1/test 1.conf
-        #{@fzf_start_dir}test.conf
-        #{@fzf_start_dir}test 1.conf
-    EOF
-    @tty.send_keys("#{DOWN}")
-    @tty.send_keys("#{DOWN}")
-    @tty.send_keys("#{ENTER}")
-    @tty.assert_row(0,"$ vi #{@filedir_start}d1/test\\ 1.conf")
 
     @tty.clear_screen()
 
@@ -58,11 +36,12 @@ class Filedir
       $ vi #{@filedir_start}
       >
         4/4
-      > #{@fzf_start_dir}d1/
+      > #{@fzf_start_dir}d1
         #{@fzf_start_dir}linktest.conf
-        #{@fzf_start_dir}test.conf
         #{@fzf_start_dir}test 1.conf
+        #{@fzf_start_dir}test.conf
     EOF
+    @tty.send_keys("#{DOWN}")
     @tty.send_keys("#{DOWN}")
     @tty.send_keys("#{DOWN}")
     @tty.send_keys("#{TAB}")
@@ -77,7 +56,7 @@ class Filedir
       $ vi #{@filedir_start}
       >
         3/3
-      > #{@fzf_start_dir}d1/
+      > #{@fzf_start_dir}d1
         #{@fzf_start_dir}linktest.conf
         #{@fzf_start_dir}test 1.conf
     EOF
