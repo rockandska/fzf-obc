@@ -11,19 +11,19 @@ def helpers():
     return Helpers()
 
 @pytest.fixture()
-def tmux_session_config(test_cfg, test_container):
+def tmux_session_config(test_cfg, _test_container):
     cfg ={}
     if test_cfg['docker']:
         cfg['window_command'] = f'\
             docker exec -ti -w "{test_cfg["tmpdir"]}" \
-            {test_container.name} bash --rcfile {test_cfg["bashrc"]} --noprofile \
+            {_test_container.name} bash --rcfile {test_cfg["bashrc"]} --noprofile \
             '
     else:
         cfg['window_command'] = f'env -i PS1= PATH="$PATH" bash --rcfile {test_cfg["bashrc"]} --noprofile'
     return cfg
 
 @pytest.fixture(scope='session')
-def test_session_cfg():
+def _test_session_cfg():
     cfg = {}
     if 'DOCKER_IMAGE' in os.environ:
         cfg['docker'] = True
@@ -35,26 +35,14 @@ def test_session_cfg():
     return cfg
 
 @pytest.fixture()
-def test_cfg(test_session_cfg, bashrc):
+def test_cfg(_test_session_cfg, _bashrc):
     cfg = {}
-    cfg.update(test_session_cfg)
-    cfg.update(bashrc)
+    cfg.update(_test_session_cfg)
+    cfg.update(_bashrc)
     return cfg
 
-@pytest.fixture(params=[
-    {
-        'readline':
-            {
-                'completion-ignore-case': 'off' }
-            },
-    {
-        'readline':
-            {
-                'completion-ignore-case': 'on'
-            },
-    }
-])
-def bashrc(test_session_cfg, tmp_path, request):
+@pytest.fixture()
+def _bashrc(_test_session_cfg, tmp_path, request):
     cfg = {}
     data = f"""
     source /etc/profile
@@ -67,16 +55,12 @@ def bashrc(test_session_cfg, tmp_path, request):
     export TERM="{os.environ.get('TERM','dumb')}"
     export PATH="$HOME/.local/bin:$PATH"
     source /usr/share/bash-completion/completions/*
-    source {test_session_cfg['project_dir']}/bin/fzf-obc
+    source {_test_session_cfg['project_dir']}/bin/fzf-obc
     cd "$HOME"
     """
 
-    cfg['params'] = request.param
     cfg['bashrc'] = f'{tmp_path}/.bashrc'
     cfg['tmpdir'] = tmp_path
-
-    for k in cfg['params']['readline'].keys():
-        data += f"bind 'set {k} {cfg['params']['readline'][k]}'"
 
     with open(cfg['bashrc'], 'w') as f:
         f.write(data)
@@ -84,14 +68,14 @@ def bashrc(test_session_cfg, tmp_path, request):
     return cfg
 
 @pytest.fixture(scope='session')
-def test_container(test_session_cfg, request, tmp_path_factory):
-    if test_session_cfg['docker']:
-        project_root = test_session_cfg['project_dir']
+def _test_container(_test_session_cfg, request, tmp_path_factory):
+    if _test_session_cfg['docker']:
+        project_root = _test_session_cfg['project_dir']
         tmp_dir = tmp_path_factory.getbasetemp()
         bin_path = f"{project_root}/bin/fzf-obc"
         client = docker.from_env()
         container = client.containers.run(
-            test_session_cfg['docker_image'],
+            _test_session_cfg['docker_image'],
             tty=True,
             stdin_open=True,
             remove=True,
@@ -141,4 +125,18 @@ class Helpers():
             else:
                 Path(os.path.join(root_directory,k)).mkdir(parents=True, exist_ok=True)
                 with open(os.path.join(root_directory,k,v), mode='a'): pass
+
+    @staticmethod
+    def update_bashrc(bashrc, dict):
+        data=""
+        for k in dict.keys():
+            if k == "readline":
+                for s in dict[k].keys():
+                    data += f"bind 'set {s} {dict[k][s]}'"
+            else:
+                data += dict[k]
+
+        with open(bashrc, 'a') as f:
+            f.write(data)
+
 
