@@ -12,24 +12,19 @@ jobs:
     strategy:
       matrix:
         target:
-          - .github/workflows/pull_request.yml
-          - test-shellcheck
-          - test-bats-bash-4.4.23-gnu-true
-          - test-bats-bash-3.2.57-gnu-true
-          - test-bats-bash-4.3.48-gnu-true
-          - test-bats-bash-4.1.17-gnu-true
-          - test-bats-bash-4.4.23-gnu-false
-          - test-bats-bash-3.2.57-gnu-false
-          - test-bats-bash-4.3.48-gnu-false
-          - test-bats-bash-4.1.17-gnu-false
-          - test-tmux-bash-4.4.23-gnu-true
-          - test-tmux-bash-3.2.57-gnu-true
-          - test-tmux-bash-4.3.48-gnu-true
-          - test-tmux-bash-4.1.17-gnu-true
-          - test-tmux-bash-4.4.23-gnu-false
-          - test-tmux-bash-3.2.57-gnu-false
-          - test-tmux-bash-4.3.48-gnu-false
-          - test-tmux-bash-4.1.17-gnu-false
+          - shellcheck
+          - test-bats-3.2.57
+          - test-bats-gnu-3.2.57
+          - test-bats-4.1.17
+          - test-bats-gnu-4.1.17
+          - test-bats-4.3.48
+          - test-bats-gnu-4.3.48
+          - test-tmux-3.2.57
+          - test-tmux-gnu-3.2.57
+          - test-tmux-4.1.17
+          - test-tmux-gnu-4.1.17
+          - test-tmux-4.3.48
+          - test-tmux-gnu-4.3.48
     steps:
       - name: Checkout
         uses: actions/checkout@v2

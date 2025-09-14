@@ -80,6 +80,7 @@ def _test_container(_test_session_cfg, request, tmp_path_factory):
             stdin_open=True,
             remove=True,
             detach=True,
+            entrypoint=[ "bash", "-c", "tail -f /dev/null" ],
             user=os.getuid(),
             volumes={
                 bin_path: {
