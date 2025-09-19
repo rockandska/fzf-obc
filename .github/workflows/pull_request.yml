@@ -1,42 +1,23 @@
-name: Tests
-on: [push, pull_request]
+name: On pull request
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - 'master'
+
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
 env:
   # Avoid noisy outputs like "tput: No value for $TERM and no -T specified"
   TERM: xterm-256color
+  UBUNTU_IMAGE: &UBUNTU_IMAGE ubuntu-22.04
+  CI: "True"
+
 jobs:
   Tests:
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        target:
-          - shellcheck
-          - test-bats-3.2.57
-          - test-bats-gnu-3.2.57
-          - test-bats-4.1.17
-          - test-bats-gnu-4.1.17
-          - test-bats-4.3.48
-          - test-bats-gnu-4.3.48
-          - test-tmux-3.2.57
-          - test-tmux-gnu-3.2.57
-          - test-tmux-4.1.17
-          - test-tmux-gnu-4.1.17
-          - test-tmux-4.3.48
-          - test-tmux-gnu-4.3.48
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Install Python
-        if: contains(matrix.target, 'tmux')
-        uses: actions/setup-python@v5.6.0
-        with:
-          python-version-file: 'test/tmux/.python-version'
-      - name: Install Tmux
-        if: contains(matrix.target, 'tmux')
-        run: |
-          sudo apt-get install tmux
-      - name: make ${{matrix.target}}
-        shell: 'script -qfec "bash {0}"'
-        run: make ${{matrix.target}}
+    uses: ./.github/workflows/tests.yml
+    with:
+      runner-image: *UBUNTU_IMAGE

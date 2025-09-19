@@ -1,0 +1,54 @@
+name: On push master
+on:
+  push:
+    branches:
+      - 'master'
+env:
+  TERM: xterm-256color
+  UBUNTU_IMAGE: &UBUNTU_IMAGE ubuntu-22.04
+  CI: "True"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+
+  Tests:
+    uses: ./.github/workflows/tests.yml
+    with:
+      runner-image: *UBUNTU_IMAGE
+
+  Release:
+    needs: Tests
+    runs-on: *UBUNTU_IMAGE
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Configure git
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: make release
+        if: contains(github.event.head_commit.message, '[make release]')
+        run: |
+          make release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: make prerelease
+        if: contains(github.event.head_commit.message, '[make prerelease]')
+        run: |
+          make prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: make norelease
+        if: |
+          ! contains(github.event.head_commit.message, '[make release]')
+          && ! contains(github.event.head_commit.message, '[make prerelease]')
+        run: |
+          make norelease
