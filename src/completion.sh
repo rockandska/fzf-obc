@@ -8,6 +8,8 @@ __fzf_obc::completion::show() {
 		COMP_WORDS
 	if [ "${#COMPREPLY[@]}" -eq 0 ];then
 		__fzf_obc::log::debug 'COMPREPLY is empty'
+		bind '"\e[0n": abort'
+		printf '\e[5n'
 	elif [ "$(__fzf_obc::completion::sort <(printf -- '%s\n' "${COMPREPLY[@]}") | wc -l)" -eq 1 ];then
 		__fzf_obc::log::debug 'COMPREPLY is not empty and uniq'
 	else
@@ -57,6 +59,10 @@ __fzf_obc::completion::show() {
 					#COMPREPLY=("${BACKUP_COMPREPLY[0]%${BACKUP_COMPREPLY[0]##*${BASH_REMATCH[1]}}}${COMPREPLY[0]}")
 					COMPREPLY=("${BACKUP_COMPREPLY[@]}")
 				fi
+			else
+				__fzf_obc::log::debug 'User did not choose anything'
+				bind '"\e[0n": abort'
+				printf '\e[5n'
 			fi
 			tput cuf "${curpos[1]}"
 		fi

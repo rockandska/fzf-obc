@@ -2,6 +2,17 @@ import pytest
 import stat
 from inspect import cleandoc
 
+def tree():
+    return {
+        'dir': 'file',
+        'dir1': ['file1', 'File2'],
+        'dir 2': ['file 2', 'file2'],
+        'dir3': {
+            'dir4': 'file3',
+            'dir5': 'file 3'
+            }
+    }
+
 def test_completion_with_comments(tmux, test_cfg, helpers):
     # Create a dummy completion script
     script=r"""
@@ -46,3 +57,23 @@ def test_completion_with_comments(tmux, test_cfg, helpers):
     tmux.send_keys('p', enter=False)
     tmux.send_keys("Tab", enter=False)
     assert tmux.screen() == '$ test_comp --priority'
+
+def test_no_choice(tmux, test_cfg, helpers):
+    helpers.dict2tree(test_cfg['tmpdir'], tree())
+    assert tmux.screen() == '$'
+    tmux.send_keys("ls ", enter=False)
+    assert tmux.screen() == '$ ls'
+    for i in range(0,1):
+        tmux.send_keys("Tab", enter=False)
+        expected=r"""
+        $ ls
+        >
+          5/5
+        > .bashrc
+          dir
+          dir 2
+          dir1
+          dir3
+        """
+        tmux.send_keys("Esc", enter=False)
+        assert tmux.screen() == '$ ls'
